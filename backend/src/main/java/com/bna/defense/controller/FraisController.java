@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/frais")
@@ -18,8 +17,13 @@ public class FraisController {
     private FraisService fraisService;
 
     @GetMapping
-    public List<Frais> getAll() {
-        return fraisService.getAllFrais();
+    public ResponseEntity<?> getAll() {
+        try {
+            return ResponseEntity.ok(fraisService.getAllFrais());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
     }
 
     @PostMapping

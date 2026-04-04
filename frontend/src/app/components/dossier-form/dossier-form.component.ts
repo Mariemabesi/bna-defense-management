@@ -317,10 +317,11 @@ export class DossierFormComponent {
   }
 
   loadDossier(): void {
-    // Note: Temporary logic as service might not have findByRef yet
-    this.dossierService.getDossiers().subscribe({
-      next: (dossiers) => {
-        const found = dossiers.find(d => d.reference === this.dossierId);
+    if (!this.dossierId) return;
+    this.dossierService.getDossiers(0, 1000).subscribe({
+      next: (data) => {
+        const dossiers = Array.isArray(data) ? data : (data.content || []);
+        const found = dossiers.find((d: any) => d.reference === this.dossierId);
         if (found) {
           this.dossier = { ...found };
         }

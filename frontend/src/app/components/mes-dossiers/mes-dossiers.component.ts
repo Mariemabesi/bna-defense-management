@@ -9,11 +9,12 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
 import { AIService, AIAnalysis } from '../../services/ai.service';
 import { AffaireService, Affaire } from '../../services/affaire.service';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-mes-dossiers',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, SidebarComponent, HeaderComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, SidebarComponent, HeaderComponent, ConfirmDialogComponent],
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
@@ -93,6 +94,25 @@ import { AffaireService, Affaire } from '../../services/affaire.service';
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- PAGINATION CONTROLS -->
+          <div class="pagination-controls" *ngIf="!loading && totalElements > 0">
+            <div class="pagination-info">
+              Affichage de {{ currentPage * pageSize + 1 }} à {{ Math.min((currentPage + 1) * pageSize, totalElements) }} sur {{ totalElements }} dossiers
+            </div>
+            <div class="pagination-buttons">
+              <button class="btn-page" [disabled]="currentPage === 0" (click)="onPageChange(currentPage - 1)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+              <button class="btn-page" *ngFor="let p of [].constructor(totalPages); let i = index" 
+                      [class.active]="i === currentPage" (click)="onPageChange(i)">
+                {{ i + 1 }}
+              </button>
+              <button class="btn-page" [disabled]="currentPage === totalPages - 1" (click)="onPageChange(currentPage + 1)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
           </div>
 
           <!-- EMPTY STATE WHEN NO DOSSIERS EXIST -->
@@ -205,6 +225,12 @@ import { AffaireService, Affaire } from '../../services/affaire.service';
               </div>
             </div>
           </div>
+          <app-confirm-dialog 
+            [show]="showConfirm" 
+            [message]="confirmMessage" 
+            (confirmed)="executeAction()" 
+            (cancelled)="showConfirm = false">
+          </app-confirm-dialog>
       </main>
     </div>
   `,
@@ -520,6 +546,20 @@ import { AffaireService, Affaire } from '../../services/affaire.service';
     .aff-select.perdu { background: #fef2f2; color: #991b1b; }
     .aff-select.classe { background: #f1f5f9; color: #475569; }
 
+    .pagination-controls {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding: 0 8px;
+    }
+    .pagination-info { font-size: 14px; color: #64748b; font-weight: 600; }
+    .pagination-buttons { display: flex; gap: 8px; }
+    .btn-page {
+      width: 38px; height: 38px; border-radius: 10px; border: 1px solid #e2e8f0;
+      background: white; color: #475569; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .btn-page:hover:not(:disabled) { border-color: var(--bna-green); color: var(--bna-green); background: var(--bna-green-light); transform: translateY(-2px); }
+    .btn-page.active { background: var(--bna-green); color: white; border-color: var(--bna-green); }
+    .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
+
     @media (max-width: 1024px) {
       .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
       .main-content { margin-left: 0; }
@@ -534,6 +574,13 @@ export class MesDossiersComponent implements OnInit {
   selectedDossier: Dossier | null = null;
   loading = false;
   error: string | null = null;
+  Math = Math;
+
+  // Pagination
+  currentPage = 0;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 0;
 
   // AI Analysis
   aiAnalysis: AIAnalysis | null = null;
@@ -541,6 +588,11 @@ export class MesDossiersComponent implements OnInit {
 
   // Affaires
   affaires: Affaire[] = [];
+
+  // Confirmation
+  showConfirm = false;
+  confirmMessage = '';
+  pendingAction: (() => void) | null = null;
 
   constructor(
     private authService: AuthService,
@@ -577,9 +629,18 @@ export class MesDossiersComponent implements OnInit {
   loadDossiers(): void {
     this.loading = true;
     this.error = null;
-    this.dossierService.getDossiers().subscribe({
+    this.dossierService.getDossiers(this.currentPage, this.pageSize).subscribe({
       next: (data) => {
-        this.dossiers = data;
+        if (data && data.content !== undefined) {
+          this.dossiers = data.content || [];
+          this.totalElements = data.totalElements || 0;
+          this.totalPages = data.totalPages || 0;
+        } else {
+          // Fallback if data is a plain array
+          this.dossiers = Array.isArray(data) ? data : [];
+          this.totalElements = this.dossiers.length;
+          this.totalPages = 1;
+        }
         this.loading = false;
       },
       error: (err) => {
@@ -587,8 +648,14 @@ export class MesDossiersComponent implements OnInit {
           ? 'Accès refusé. Vous n\'avez pas les droits pour voir cette liste.'
           : 'Impossible de contacter le serveur. Vérifiez que le backend est démarré.';
         this.loading = false;
+        this.dossiers = [];
       }
     });
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.loadDossiers();
   }
 
   onViewDossier(dossier: Dossier): void {
@@ -646,6 +713,20 @@ export class MesDossiersComponent implements OnInit {
   }
 
   onAction(type: string, ref: string): void {
+    this.confirmMessage = `Êtes-vous sûr de vouloir ${type.toLowerCase()} le dossier ${ref} ?`;
+    this.pendingAction = () => this.handleActionExecution(type, ref);
+    this.showConfirm = true;
+  }
+
+  executeAction(): void {
+    if (this.pendingAction) {
+      this.pendingAction();
+      this.pendingAction = null;
+      this.showConfirm = false;
+    }
+  }
+
+  private handleActionExecution(type: string, ref: string): void {
     const dossier = this.dossiers.find(d => d.reference === ref);
 
     if ((type === 'Approuver' || type === 'Valider') && dossier && dossier.id) {

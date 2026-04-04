@@ -28,7 +28,7 @@ public class AffaireController {
     }
 
     @PutMapping("/{id}/statut")
-    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN') or hasRole('VALIDATEUR') or hasRole('PRE_VALIDATEUR') or hasRole('SUPER_VALIDATEUR')")
     public ResponseEntity<Affaire> updateStatut(@PathVariable Long id, @RequestParam Affaire.StatutAffaire statut) {
         return ResponseEntity.ok(affaireService.updateStatut(id, statut));
     }

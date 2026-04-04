@@ -11,8 +11,8 @@ export class DossierService {
 
     constructor(private http: HttpClient) { }
 
-    getDossiers(): Observable<Dossier[]> {
-        return this.http.get<Dossier[]>(this.apiUrl);
+    getDossiers(page: number = 0, size: number = 10): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}?page=${page}&size=${size}`);
     }
 
     createDossier(dossier: Dossier): Observable<Dossier> {
@@ -21,6 +21,10 @@ export class DossierService {
 
     getDossierById(id: number): Observable<Dossier> {
         return this.http.get<Dossier>(`${this.apiUrl}/${id}`);
+    }
+
+    getRecentDossiers(): Observable<Dossier[]> {
+        return this.http.get<Dossier[]>(`${this.apiUrl}/recent`);
     }
 
     updateStatus(id: number, status: string): Observable<Dossier> {

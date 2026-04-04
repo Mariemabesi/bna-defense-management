@@ -23,19 +23,19 @@ public class TribunalController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL')")
     public ResponseEntity<Tribunal> create(@RequestBody Tribunal tribunal) {
         return ResponseEntity.ok(tribunalService.createTribunal(tribunal));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL')")
     public ResponseEntity<Tribunal> update(@PathVariable Long id, @RequestBody Tribunal tribunal) {
         return ResponseEntity.ok(tribunalService.updateTribunal(id, tribunal));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL')")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         tribunalService.deleteTribunal(id);
         return ResponseEntity.ok().build();

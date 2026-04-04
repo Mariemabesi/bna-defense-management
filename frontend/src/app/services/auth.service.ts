@@ -41,6 +41,35 @@ export class AuthService {
         return this.http.post(`${this.apiUrl}/register`, userData);
     }
 
+    forgotPassword(email: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/forgot-password`, { email });
+    }
+
+    verifyOtp(email: string, otp: string): Observable<{uuid: string}> {
+        return this.http.post<{uuid: string}>(`${this.apiUrl}/verify-otp`, { email, otp });
+    }
+
+    resetPassword(email: string, uuid: string, newPassword: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/reset-password`, { email, uuid, newPassword });
+    }
+
+
+    changePassword(data: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/change-password`, data);
+    }
+
+    updateProfile(data: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/update-profile`, data).pipe(map(response => {
+            const currentUser = this.currentUserValue;
+            if (currentUser) {
+                const updatedUser = { ...currentUser, ...data };
+                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                this.currentUserSubject.next(updatedUser);
+            }
+            return response;
+        }));
+    }
+
     logout() {
         localStorage.removeItem('currentUser');
         this.currentUserSubject.next(null);

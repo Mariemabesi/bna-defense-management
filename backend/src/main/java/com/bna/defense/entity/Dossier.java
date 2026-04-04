@@ -1,19 +1,15 @@
 package com.bna.defense.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "dossiers")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Dossier extends BaseEntity {
+    public Dossier() {}
 
     @Column(unique = true, nullable = false)
     private String reference;
@@ -32,15 +28,76 @@ public class Dossier extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private StatutDossier statut;
 
+    // Point 6A: Role-Based Grouping
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_validateur_id")
+    private User groupValidateur;
+
+    // Point 10: Partie Litige details
+    private String clientName;
+    private BigDecimal montantLitige;
+    private String clientType; // BNE, Physique, CJN (Point 10)
+    
+    @Enumerated(EnumType.STRING)
+    private PartieLitige.TypePartie typeClient;
+
+    // Point 8: Frais & Dépassement
+    private BigDecimal fraisInitial = BigDecimal.ZERO;
+    
+    @Column(nullable = false)
+    private BigDecimal fraisReel = BigDecimal.ZERO;
+
+    @Column(insertable = false, updatable = false)
+    private BigDecimal depassement;
+
+    private String verdict;
+
     @OneToMany(mappedBy = "dossier", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
+    @JsonManagedReference
     private List<Affaire> affaires = new ArrayList<>();
 
-    public enum Priorite {
-        HAUTE, MOYENNE, BASSE
+    // Point 10: Auto-generated Reference Hook
+    @PrePersist
+    public void generateReference() {
+        if (this.reference == null || this.reference.isEmpty()) {
+            // Ideally handled by sequence in Service, but as fallback:
+            this.reference = "TEMP-" + System.currentTimeMillis();
+        }
     }
 
-    public enum StatutDossier {
-        OUVERT, EN_COURS, CLOTURE, A_PRE_VALIDER, A_VALIDER
-    }
+    // --- MANUAL GETTERS & SETTERS ---
+    public String getReference() { return reference; }
+    public void setReference(String reference) { this.reference = reference; }
+    public String getTitre() { return titre; }
+    public void setTitre(String titre) { this.titre = titre; }
+    public Priorite getPriorite() { return priorite; }
+    public void setPriorite(Priorite priorite) { this.priorite = priorite; }
+    public BigDecimal getBudgetProvisionne() { return budgetProvisionne; }
+    public void setBudgetProvisionne(BigDecimal budgetProvisionne) { this.budgetProvisionne = budgetProvisionne; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public StatutDossier getStatut() { return statut; }
+    public void setStatut(StatutDossier statut) { this.statut = statut; }
+    public User getGroupValidateur() { return groupValidateur; }
+    public void setGroupValidateur(User groupValidateur) { this.groupValidateur = groupValidateur; }
+    public List<Affaire> getAffaires() { return affaires; }
+    public void setAffaires(List<Affaire> affaires) { this.affaires = affaires; }
+    public String getVerdict() { return verdict; }
+    public void setVerdict(String verdict) { this.verdict = verdict; }
+    public String getClientName() { return clientName; }
+    public void setClientName(String clientName) { this.clientName = clientName; }
+    public BigDecimal getMontantLitige() { return montantLitige; }
+    public void setMontantLitige(BigDecimal montantLitige) { this.montantLitige = montantLitige; }
+    public String getClientType() { return clientType; }
+    public void setClientType(String clientType) { this.clientType = clientType; }
+    public PartieLitige.TypePartie getTypeClient() { return typeClient; }
+    public void setTypeClient(PartieLitige.TypePartie typeClient) { this.typeClient = typeClient; }
+    public BigDecimal getFraisInitial() { return fraisInitial; }
+    public void setFraisInitial(BigDecimal fraisInitial) { this.fraisInitial = fraisInitial; }
+    public BigDecimal getFraisReel() { return fraisReel; }
+    public void setFraisReel(BigDecimal fraisReel) { this.fraisReel = fraisReel; }
+    public BigDecimal getDepassement() { return depassement; }
+
+    public enum Priorite { HAUTE, MOYENNE, BASSE }
+    public enum StatutDossier { OUVERT, EN_COURS, CLOTURE, A_PRE_VALIDER, A_VALIDER }
 }

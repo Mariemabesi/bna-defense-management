@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ReferentielService, Auxiliaire, Tribunal } from '../../services/referentiel.service';
 import { AuthService } from '../../services/auth.service';
 import { SidebarComponent } from '../sidebar/sidebar.component';
@@ -11,7 +11,7 @@ import { NotificationService } from '../../services/notification.service';
 @Component({
   selector: 'app-referentiel',
   standalone: true,
-  imports: [CommonModule, FormsModule, SidebarComponent, HeaderComponent],
+  imports: [CommonModule, FormsModule, RouterModule, SidebarComponent, HeaderComponent],
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
@@ -30,7 +30,7 @@ import { NotificationService } from '../../services/notification.service';
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 Exporter Annuaire
               </button>
-              <button class="btn-primary" *ngIf="isAdmin()" (click)="showModal = true">
+              <button class="btn-primary" *ngIf="canManageReferentiel()" (click)="showModal = true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="16" y1="11" x2="22" y2="11"></line></svg>
                 Nouvel Auxiliaire
               </button>
@@ -41,6 +41,8 @@ import { NotificationService } from '../../services/notification.service';
             <button class="tab" [class.active]="activeTab === 'ALL'" (click)="activeTab = 'ALL'">Tous les Partenaires</button>
             <button class="tab" [class.active]="activeTab === 'AVOCAT'" (click)="activeTab = 'AVOCAT'">Avocats</button>
             <button class="tab" [class.active]="activeTab === 'HUISSIER'" (click)="activeTab = 'HUISSIER'">Huissiers</button>
+            <button class="tab" [class.active]="activeTab === 'EXPERT'" (click)="activeTab = 'EXPERT'">Experts</button>
+            <button class="tab" [class.active]="activeTab === 'AUTRE'" (click)="activeTab = 'AUTRE'">Autres(Notaire...)</button>
             <button class="tab" [class.active]="activeTab === 'TRIBUNAL'" (click)="activeTab = 'TRIBUNAL'">Tribunaux</button>
           </div>
 
@@ -65,11 +67,12 @@ import { NotificationService } from '../../services/notification.service';
                 </div>
               </div>
               <div class="aux-footer">
-                <button class="btn-text">Consulter Dossiers</button>
-                <button class="btn-icon-only">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                <button class="btn-text" [routerLink]="['/avocat-detail', aux.id]">Consulter Profil</button>
+                <button class="btn-icon-only" [routerLink]="['/avocat-detail', aux.id]">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
+
             </div>
           </div>
 
@@ -83,7 +86,7 @@ import { NotificationService } from '../../services/notification.service';
                     <h3>{{ t.nom }}</h3>
                     <span class="region-badge">{{ t.region }}</span>
                   </div>
-                  <div class="actions" *ngIf="isAdmin()">
+                  <div class="actions" *ngIf="canManageReferentiel()">
                      <button class="btn-icon circle" (click)="editTribunal(t)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
                      <button class="btn-icon circle delete" (click)="confirmDeleteTribunal(t)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
                   </div>
@@ -102,8 +105,8 @@ import { NotificationService } from '../../services/notification.service';
             </div>
             <div *ngIf="tribunaux.length === 0" class="empty-state">
                <p>Aucun tribunal enregistré dans le référentiel.</p>
-               <button class="btn-primary" *ngIf="isAdmin()" (click)="showTribunalModal = true">Ajouter le premier tribunal</button>
-               <p *ngIf="!isAdmin()" class="subtitle">Contactez l'administrateur pour ajouter des tribunaux.</p>
+               <button class="btn-primary" *ngIf="canManageReferentiel()" (click)="showTribunalModal = true">Ajouter le premier tribunal</button>
+               <p *ngIf="!canManageReferentiel()" class="subtitle">Contactez l'administrateur pour ajouter des tribunaux.</p>
             </div>
           </div>
         </div>
@@ -131,6 +134,9 @@ import { NotificationService } from '../../services/notification.service';
                     <option value="AVOCAT">Avocat</option>
                     <option value="HUISSIER">Huissier</option>
                     <option value="EXPERT">Expert</option>
+                    <option value="NOTAIRE">Notaire</option>
+                    <option value="MANDATAIRE">Mandataire</option>
+                    <option value="GREFFIER">Greffier</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -362,6 +368,19 @@ export class ReferentielComponent implements OnInit {
     this.loadAuxiliaires();
     this.loadTribunaux();
 
+    this.route.params.subscribe(params => {
+      const type = params['type'];
+      if (type) {
+        switch(type) {
+          case 'avocats': this.activeTab = 'AVOCAT'; break;
+          case 'experts': this.activeTab = 'EXPERT'; break;
+          case 'huissiers': this.activeTab = 'HUISSIER'; break;
+          case 'tribunaux': this.activeTab = 'TRIBUNAL'; break;
+          default: this.activeTab = 'ALL';
+        }
+      }
+    });
+
     this.route.queryParams.subscribe(params => {
       if (params['action'] === 'Ajouter Auxiliaire') {
         this.showModal = true;
@@ -382,6 +401,9 @@ export class ReferentielComponent implements OnInit {
 
   filteredAuxiliaires(): Auxiliaire[] {
     if (this.activeTab === 'ALL') return this.auxiliaires;
+    if (this.activeTab === 'AUTRE') {
+        return this.auxiliaires.filter(a => ['NOTAIRE', 'MANDATAIRE', 'GREFFIER'].includes(a.type));
+    }
     return this.auxiliaires.filter(a => a.type === this.activeTab);
   }
 
@@ -390,6 +412,11 @@ export class ReferentielComponent implements OnInit {
   }
 
   isAdmin(): boolean { return this.authService.hasRole('ROLE_ADMIN'); }
+  canManageReferentiel(): boolean { 
+    return this.authService.hasRole('ROLE_ADMIN') || 
+           this.authService.hasRole('ROLE_SUPER_VALIDATEUR') || 
+           this.authService.hasRole('ROLE_REFERENTIEL'); 
+  }
   isChargeDossier(): boolean { return this.authService.hasRole('ROLE_CHARGE_DOSSIER'); }
 
   closeModal() {

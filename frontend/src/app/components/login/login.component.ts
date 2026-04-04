@@ -41,7 +41,7 @@ import { AuthService } from '../../services/auth.service';
                 <span class="checkmark"></span>
                 <span class="label-text">Se souvenir de moi</span>
               </label>
-              <a href="#" class="forgot-link">Mot de passe oublié?</a>
+              <a routerLink="/forgot-password" class="forgot-link">Mot de passe oublié?</a>
             </div>
             
             <div class="error-msg" *ngIf="error">{{ error }}</div>

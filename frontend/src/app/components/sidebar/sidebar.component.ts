@@ -4,20 +4,22 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { DossierService } from '../../services/dossier.service';
 import { Dossier } from '../../models/dossier.model';
-import { UiService } from '../../services/ui.service';
+import { SidebarService } from '../../services/sidebar.service';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
-    <div class="sidebar-overlay" *ngIf="isVisible" (click)="toggle()"></div>
-    <aside class="sidebar" [class.mobile-visible]="isVisible">
+    <div class="sidebar-overlay" *ngIf="(sidebarService.sidebarOpen$ | async)" (click)="toggle()"></div>
+    <aside class="sidebar" 
+           [class.collapsed]="!(sidebarService.sidebarOpen$ | async)"
+           [class.mobile-visible]="(sidebarService.sidebarOpen$ | async)">
       <div class="sidebar-header">
         <div class="logo-wrapper">
            <img src="/assets/images/cleanly.png" alt="BNA Logo" class="sidebar-logo">
         </div>
-        <div class="brand-text">Défense Premium</div>
+        <div class="brand-text">Action en Défense BNA</div>
       </div>
       
       <nav class="sidebar-nav">
@@ -27,41 +29,89 @@ import { UiService } from '../../services/ui.service';
             Tableau de Bord
           </a>
           
-          <div class="nav-section-title">DOSSIERS & TIERS</div>
-          <a class="nav-item" routerLink="/mes-dossiers" routerLinkActive="active">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-            Mes Dossiers
-          </a>
-          <a class="nav-item" routerLink="/nouveau-dossier" routerLinkActive="active" *ngIf="isChargeDossier() || isAdmin()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-            Créer un Dossier
-          </a>
-          <a class="nav-item" routerLink="/referentiel" routerLinkActive="active" *ngIf="isAdmin() || isChargeDossier()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            Référentiel Avocats
-          </a>
-          
-          <ng-container *ngIf="isChargeDossier() || isPreValidateur() || isValidateur() || isAdmin()">
-            <div class="nav-section-title">GESTION FINANCIÈRE</div>
-            <a class="nav-item" routerLink="/mes-frais" routerLinkActive="active">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-              Paiements & Frais
+          <ng-container *ngIf="!isAdmin()">
+            <div class="nav-section-title">GESTION DES DOSSIERS</div>
+            <a class="nav-item" routerLink="/mes-dossiers" routerLinkActive="active">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              Tous les Dossiers
             </a>
-          </ng-container>
-          
-          <ng-container *ngIf="isAdmin()">
-            <div class="nav-section-title">ADMINISTRATION</div>
-            <a class="nav-item" routerLink="/parametres" routerLinkActive="active">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-              Paramètres
+            <a class="nav-item" routerLink="/nouveau-dossier" routerLinkActive="active" *ngIf="isChargeDossier()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Nouveau Dossier
             </a>
           </ng-container>
 
-          <div class="nav-section-title" *ngIf="favDossiers.length > 0">MES FAVORIS</div>
-          <div class="fav-list">
-            <a class="fav-item" *ngFor="let fav of favDossiers" routerLink="/mes-dossiers" style="cursor: pointer">
-              <div class="fav-dot" [ngClass]="fav.statut === 'OUVERT' ? 'green' : 'grey'"></div>
-              {{ fav.reference }}
+          <div class="nav-item group-header" (click)="toggleReferentiel()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Référentiel
+            <svg class="chevron" [class.open]="isReferentielOpen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="nav-submenu" *ngIf="isReferentielOpen">
+            <!-- ⚖️ Acteurs Juridiques -->
+            <div class="menu-category-title">⚖️ Acteurs Juridiques</div>
+            <a class="nav-item sub-item" routerLink="/referentiel/avocats" routerLinkActive="active">Avocats</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/experts" routerLinkActive="active">Experts</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/huissiers" routerLinkActive="active">Huissiers</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/notaires" routerLinkActive="active">Notaires</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/mandataires" routerLinkActive="active">Mandataires</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/greffiers" routerLinkActive="active">Greffiers</a>
+
+            <!-- 🏛️ Juridictions Tunisiennes -->
+            <div class="menu-category-title">🏛️ Juridictions</div>
+            <a class="nav-item sub-item" routerLink="/referentiel/tribunaux" routerLinkActive="active">Tribunaux</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/cours-appel" routerLinkActive="active">Cours d'Appel</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/cours-cassation" routerLinkActive="active">Cours de Cassation</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/parquets" routerLinkActive="active">Parquets (Ministère Public)</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/arbitrage" routerLinkActive="active">Médiation & Arbitrage</a>
+
+            <!-- 📋 Références Procédurales -->
+            <div class="menu-category-title">📋 Procédures</div>
+            <a class="nav-item sub-item" routerLink="/referentiel/types-proceduraux" routerLinkActive="active">Types de Procédures</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/natures-affaires" routerLinkActive="active">Natures d'Affaires</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/phases-procedurales" routerLinkActive="active">Phases de Procédure</a>
+
+            <!-- 💰 Références Financières -->
+            <div class="menu-category-title">💰 Finances & Fiscalité</div>
+            <a class="nav-item sub-item" routerLink="/referentiel/baremes" routerLinkActive="active">Barèmes des Frais</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/tva-timbres" routerLinkActive="active">TVA & Timbre Fiscal</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/devises" routerLinkActive="active">Devises</a>
+            <a class="nav-item sub-item" routerLink="/referentiel/modes-reglement" routerLinkActive="active">Modes de Règlement</a>
+          </div>
+          
+          <ng-container *ngIf="(isChargeDossier() || isPreValidateur() || isValidateur()) && !isAdmin()">
+            <div class="nav-section-title"> GESTION FINANCIÈRE</div>
+            <a class="nav-item" routerLink="/mes-frais" routerLinkActive="active">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+              Suivi des Frais
+            </a>
+            <a class="nav-item" routerLink="/frais-review" routerLinkActive="active" *ngIf="isPreValidateur() || isAdmin()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              Revue des Honoraires
+            </a>
+          </ng-container>
+
+          
+          <ng-container *ngIf="isAdmin()">
+            <div class="nav-section-title">ADMINISTRATION SYSTÈME</div>
+            <a class="nav-item" routerLink="/admin/users" routerLinkActive="active">
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+               Gestion Utilisateurs
+            </a>
+            <a class="nav-item" routerLink="/admin/logs" routerLinkActive="active">
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+               Journaux d'Audit
+            </a>
+            <a class="nav-item" routerLink="/parametres" routerLinkActive="active">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              Configuration
+            </a>
+          </ng-container>
+
+          <div class="nav-section-title" *ngIf="recentDossiers.length > 0 && !isAdmin()">DOSSIERS RÉCENTS</div>
+          <div class="fav-list" *ngIf="!isAdmin()">
+            <a class="fav-item" *ngFor="let d of recentDossiers" (click)="onViewDossier(d)">
+              <div class="fav-dot" [ngClass]="d.statut === 'OUVERT' ? 'green' : 'grey'"></div>
+              <span>{{ d.reference }}</span>
             </a>
           </div>
 
@@ -101,7 +151,7 @@ import { UiService } from '../../services/ui.service';
   `,
   styles: [`
     .sidebar {
-      width: 280px;
+      width: 250px;
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
       border-right: 1px solid rgba(0,0,0,0.04);
@@ -111,8 +161,23 @@ import { UiService } from '../../services/ui.service';
       height: 100vh;
       z-index: 20;
       box-shadow: 4px 0 24px rgba(0,0,0,0.02);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .sidebar.collapsed { width: 70px; }
+    .sidebar.collapsed .brand-text, 
+    .sidebar.collapsed .nav-section-title,
+    .sidebar.collapsed .help-content,
+    .sidebar.collapsed .nav-item span:not(.icon),
+    .sidebar.collapsed .nav-item::after,
+    .sidebar.collapsed .badge-dot,
+    .sidebar.collapsed .deadline-box,
+    .sidebar.collapsed .fav-list { display: none; }
+    
+    /* Ensure icon-only mode works for navigation items */
+    .sidebar.collapsed .nav-item { justify-content: center; padding: 14px 0; }
+    .sidebar.collapsed .nav-item svg { margin: 0; }
+    .sidebar.collapsed .logo-wrapper { padding: 8px; }
+    .sidebar.collapsed .sidebar-logo { height: 32px; }
     .sidebar-overlay {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -216,34 +281,47 @@ import { UiService } from '../../services/ui.service';
       padding: 4px 6px; border-radius: 6px; min-width: 45px; text-align: center;
     }
     .deadline-text { font-size: 12px; font-weight: 600; color: #1e293b; }
+    .chevron { margin-left: auto; transition: transform 0.3s; }
+    .chevron.open { transform: rotate(180deg); }
+    .sub-item { padding-left: 52px; font-size: 14px; opacity: 0.85; }
+    .menu-category-title {
+      font-size: 10px; font-weight: 800; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 1px;
+      padding: 12px 24px 6px 44px; margin-top: 8px;
+      border-top: 1px solid rgba(0,0,0,0.02);
+    }
+    .group-header { cursor: pointer; }
+    .group-header:hover { background: rgba(0, 135, 102, 0.05); }
   `]
 })
 export class SidebarComponent implements OnInit {
-  favDossiers: Dossier[] = [];
-  isVisible = false;
-
+  recentDossiers: Dossier[] = [];
+  isReferentielOpen = false;
   constructor(
     private authService: AuthService,
     private dossierService: DossierService,
     private router: Router,
-    private uiService: UiService
+    public sidebarService: SidebarService
   ) { }
 
   ngOnInit(): void {
-    this.uiService.sidebarVisible$.subscribe(v => this.isVisible = v);
     if (this.authService.isLoggedIn()) {
-      this.loadFavDossiers();
+      this.loadRecentDossiers();
     }
   }
 
   toggle() {
-    this.uiService.toggleSidebar();
+    this.sidebarService.toggle();
   }
 
-  loadFavDossiers(): void {
-    this.dossierService.getDossiers().subscribe({
+  toggleReferentiel() {
+    this.isReferentielOpen = !this.isReferentielOpen;
+  }
+
+  loadRecentDossiers(): void {
+    this.dossierService.getRecentDossiers().subscribe({
       next: (data: Dossier[]) => {
-        this.favDossiers = data.slice(0, 3);
+        this.recentDossiers = data;
       }
     });
   }
@@ -264,8 +342,12 @@ export class SidebarComponent implements OnInit {
     return this.authService.hasRole('ROLE_ADMIN');
   }
 
+  isSuperValidateur(): boolean {
+    return this.authService.hasRole('ROLE_SUPER_VALIDATEUR');
+  }
+
   onViewDossier(d: Dossier): void {
-    this.router.navigate(['/mes-dossiers']);
+    this.router.navigate(['/mes-dossiers'], { queryParams: { highlight: d.reference } });
   }
 
 

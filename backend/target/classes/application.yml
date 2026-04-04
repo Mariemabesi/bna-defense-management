@@ -12,6 +12,17 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  mail:
+    host: localhost
+    port: 1025
+    username: user
+    password: password
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
 
 server:
   port: 8082

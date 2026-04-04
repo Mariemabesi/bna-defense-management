@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -44,20 +44,28 @@ import { AuthService } from '../../services/auth.service';
             </div>
 
             <div class="form-group">
-              <label for="role">Rôle (Acteur)</label>
+              <label>Rôle (Choisissez un seul acteur)</label>
+              <div class="roles-checkbox-grid">
+                <label *ngFor="let r of availableRoles" class="role-checkbox">
+                  <input type="radio" name="userRole" [value]="r.value" (change)="setRole(r.value)" [checked]="selectedRole === r.value">
+                  <span class="role-label">{{ r.label }}</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group" *ngIf="selectedRole === 'ROLE_CHARGE_DOSSIER'">
+              <label for="supervisorId">Superviseur (Super Validateur)</label>
               <div class="input-container">
-                <select id="role" name="role" [(ngModel)]="role" required class="form-control-select">
-                  <option value="" disabled selected>Sélectionner votre rôle</option>
-                  <option value="ROLE_CHARGE_DOSSIER">Chargé de dossier</option>
-                  <option value="ROLE_PRE_VALIDATEUR">Pré-validateur</option>
-                  <option value="ROLE_VALIDATEUR">Validateur</option>
+                <select id="supervisorId" name="supervisorId" [(ngModel)]="supervisorId" class="form-control-select">
+                  <option [ngValue]="null">Aucun superviseur</option>
+                  <option *ngFor="let s of supervisors" [value]="s.id">{{ s.username }}</option>
                 </select>
               </div>
             </div>
 
             <div class="error-msg" *ngIf="error">{{ error }}</div>
 
-            <button type="submit" [disabled]="loading" class="btn-submit">
+            <button type="submit" [disabled]="loading || !selectedRole" class="btn-submit">
               <span *ngIf="!loading">Créer mon compte</span>
               <span *ngIf="loading" class="loader"></span>
             </button>
@@ -88,212 +96,83 @@ import { AuthService } from '../../services/auth.service';
     </div>
   `,
   styles: [`
-    .split-screen {
-      height: 100vh;
-      display: flex;
-      font-family: 'Outfit', 'Inter', sans-serif;
-      background: #fff;
-    }
+    .split-screen { height: 100vh; display: flex; background: #fff; overflow: hidden; }
+    .left-pane { flex: 5; display: flex; align-items: center; justify-content: center; padding: 40px; background: #fff; }
+    .signup-content { width: 100%; max-width: 420px; }
+    .logo-container { margin-bottom: 24px; text-align: center; }
+    .bna-main-logo { height: 50px; }
+    .auth-title { font-size: 24px; font-weight: 800; color: #004d3d; margin-bottom: 32px; text-align: center; letter-spacing: 1px; }
     
-    .left-pane {
-      flex: 5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-      background: white;
-    }
+    .form-group { margin-bottom: 20px; position: relative; }
+    .form-group label { display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
     
-    .signup-content {
-      width: 100%;
-      max-width: 380px;
+    .input-container { position: relative; display: flex; align-items: center; }
+    .input-container input, .form-control-select { 
+      width: 100%; padding: 12px 12px 12px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; transition: all 0.2s; 
     }
-    
-    .logo-container {
-      margin-bottom: 40px;
-      display: flex;
-      justify-content: center;
-    }
-    
-    .bna-main-logo {
-      height: 70px;
-      width: auto;
-      object-fit: contain;
-    }
-    
-    .auth-title {
-      font-size: 28px;
-      font-weight: 800;
-      color: #004d3d;
-      margin-bottom: 30px;
-      letter-spacing: 1px;
-    }
-    
-    .form-group {
-      margin-bottom: 20px;
-    }
-    
-    .form-group label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-    }
-    
-    .input-container {
-      position: relative;
-    }
-    
-    .input-container input, .input-container .form-control-select {
-      width: 100%;
-      padding: 12px 45px 12px 16px;
-      border: 1px solid #e0e0e0;
-      border-radius: 12px;
-      font-size: 14px;
-      background: #fff;
-      transition: all 0.2s;
-    }
-    
-    .input-container .form-control-select {
-      appearance: none;
-      padding: 12px 16px;
-      cursor: pointer;
-    }
+    .input-container input:focus { border-color: #008766; box-shadow: 0 0 0 3px rgba(0,135,102,0.1); }
+    .icon { position: absolute; left: -30px; top: 50%; transform: translateY(-50%); color: #64748b; }
 
-    .input-container input:focus, .input-container .form-control-select:focus {
-      outline: none;
-      border-color: #008766;
-      box-shadow: 0 0 0 4px rgba(0, 135, 102, 0.05);
-    }
-    
-    .input-container .icon {
-      position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #999;
-    }
-    
-    .btn-submit {
-      width: 100%;
-      padding: 16px;
-      background: #008766;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 20px;
-      margin-bottom: 24px;
-    }
-    
-    .btn-submit:hover {
-      background: #00684d;
-      transform: translateY(-2px);
-    }
+    .roles-checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+    .role-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #475569; font-weight: 600; }
+    .role-checkbox input { width: 18px; height: 18px; cursor: pointer; accent-color: #008766; }
 
-    .error-msg {
-      color: #ef4444;
-      font-size: 13px;
-      margin-bottom: 16px;
-      text-align: center;
+    .btn-submit { 
+      width: 100%; padding: 14px; background: #008766; color: white; border: none; border-radius: 8px; 
+      font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 10px;
     }
-    
-    .login-prompt {
-      text-align: center;
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 40px;
-    }
-    
-    .login-prompt a {
-      color: #004d3d;
-      font-weight: 700;
-      text-decoration: none;
-    }
-    
-    .copyright {
-      text-align: center;
-      font-size: 12px;
-      color: #999;
-      font-weight: 600;
-    }
-    
-    .right-pane {
-      flex: 6;
-      background: linear-gradient(135deg, #1a3a31 0%, #2d5a4c 100%);
-      border-top-left-radius: 80px;
-      border-bottom-left-radius: 80px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 100px;
-      color: white;
-      position: relative;
-    }
-    
-    .welcome-text h1 {
-      font-size: 64px;
-      font-weight: 800;
-      line-height: 1.1;
-      margin: 0;
-    }
-    
-    .footer-links {
-      position: absolute;
-      bottom: 40px;
-      right: 60px;
-      display: flex;
-      gap: 24px;
-    }
-    
-    .footer-links a {
-      color: white;
-      text-decoration: underline;
-      font-size: 13px;
-      font-weight: 500;
-    }
+    .btn-submit:hover:not(:disabled) { background: #007256; transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    .loader {
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s linear infinite;
+    .login-prompt { margin-top: 20px; text-align: center; font-size: 14px; color: #64748b; }
+    .login-prompt a { color: #008766; text-decoration: none; font-weight: 700; }
+    .copyright { margin-top: 40px; text-align: center; font-size: 12px; color: #94a3b8; }
+
+    .right-pane { 
+      flex: 6; background: linear-gradient(135deg, #1a3a31 0%, #2d5a4c 100%); 
+      border-top-left-radius: 60px; border-bottom-left-radius: 60px; padding: 80px; 
+      display: flex; flex-direction: column; justify-content: center; color: white; position: relative;
     }
+    .welcome-text h1 { font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 40px; }
     
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    /* Responsive Styles */
-    @media (max-width: 1024px) {
-      .right-pane { padding: 40px; }
-      .welcome-text h1 { font-size: 40px; }
-    }
-    
-    @media (max-width: 768px) {
-      .split-screen { flex-direction: column; }
-      .right-pane { display: none; }
-      .left-pane { flex: 1; padding: 24px; }
-      .signup-content { max-width: 100%; }
-      .auth-title { font-size: 24px; margin-bottom: 30px; }
-    }
+    .footer-links { display: flex; gap: 24px; position: absolute; bottom: 40px; left: 80px; }
+    .footer-links a { color: rgba(255,255,255,0.6); font-size: 13px; text-decoration: none; font-weight: 600; transition: color 0.2s; }
+    .footer-links a:hover { color: white; }
+
+    .error-msg { color: #ef4444; font-size: 13px; font-weight: 600; margin-bottom: 15px; text-align: center; background: #fef2f2; padding: 10px; border-radius: 8px; }
   `]
 })
-export class SignupComponent {
+export class SignupComponent implements OnInit {
   fullName = '';
   email = '';
   password = '';
-  role = '';
+  selectedRole: string = '';
+  supervisorId: number | null = null;
+  supervisors: any[] = [];
   loading = false;
   error = '';
 
+  availableRoles = [
+    { label: 'Chargé de dossier', value: 'ROLE_CHARGE_DOSSIER' },
+    { label: 'Pré-validateur', value: 'ROLE_PRE_VALIDATEUR' },
+    { label: 'Validateur', value: 'ROLE_VALIDATEUR' },
+    { label: 'Super Validateur', value: 'ROLE_SUPER_VALIDATEUR' }
+  ];
+
   constructor(private authService: AuthService, private router: Router) { }
+
+  ngOnInit() {
+    this.loadSupervisors();
+  }
+
+  loadSupervisors() {
+    // This would fetch users with ROLE_SUPER_VALIDATEUR
+    this.supervisors = [{ id: 1, username: 'SuperV_Admin' }]; // Demo fallback
+  }
+
+  setRole(role: string) {
+    this.selectedRole = role;
+  }
 
   onSubmit() {
     this.loading = true;
@@ -304,7 +183,9 @@ export class SignupComponent {
       email: this.email,
       password: this.password,
       fullName: this.fullName,
-      role: [this.role]
+      role: [this.selectedRole],
+      supervisorId: this.supervisorId,
+      isSuperValidateur: this.selectedRole === 'ROLE_SUPER_VALIDATEUR'
     };
 
     this.authService.register(userData).subscribe({
@@ -312,8 +193,8 @@ export class SignupComponent {
         this.loading = false;
         this.router.navigate(['/login']);
       },
-      error: err => {
-        this.error = 'Erreur lors de la création du compte. Veuillez réessayer.';
+      error: (err) => {
+        this.error = err.error?.message || 'Erreur lors de la création. Veuillez réessayer.';
         this.loading = false;
       }
     });

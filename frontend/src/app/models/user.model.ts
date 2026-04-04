@@ -4,6 +4,9 @@ export interface User {
     email: string;
     roles: string[];
     token?: string;
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
 }
 
 export interface LoginResponse {
@@ -12,4 +15,7 @@ export interface LoginResponse {
     username: string;
     email: string;
     roles: string[];
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
 }

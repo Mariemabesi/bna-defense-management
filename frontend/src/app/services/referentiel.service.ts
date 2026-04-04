@@ -22,6 +22,16 @@ export interface Tribunal {
     createdAt?: string;
 }
 
+export interface GenericItem {
+    id?: number;
+    nom?: string;
+    code?: string;
+    valeur?: number;
+    taux?: number;
+    description?: string;
+    [key: string]: any;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -55,4 +65,18 @@ export class ReferentielService {
     deleteTribunal(id: number): Observable<any> {
         return this.http.delete(`${this.apiUrl}/tribunaux/${id}`);
     }
+
+    // GENERIC COLLECTIONS
+    getItems(type: string): Observable<GenericItem[]> {
+        return this.http.get<GenericItem[]>(`${this.apiUrl}/${type}`);
+    }
+
+    addItem(type: string, item: any): Observable<any> {
+        return this.http.post<any>(`${this.apiUrl}/${type}`, item);
+    }
+
+    getGroups(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/groupes`);
+    }
 }
+

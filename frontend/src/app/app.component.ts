@@ -1,14 +1,27 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './services/auth.service';
 import { Router } from '@angular/router';
+import { ConfirmDialogService, ConfirmDialogConfig } from './services/confirm-dialog.service';
+import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, CommonModule],
-  template: `<router-outlet></router-outlet>`,
+  imports: [RouterOutlet, RouterLink, CommonModule, ConfirmDialogComponent],
+  template: `
+    <router-outlet></router-outlet>
+    <app-confirm-dialog 
+      [show]="showConfirm" 
+      [title]="confirmConfig.title || 'Confirmation'"
+      [message]="confirmConfig.message || ''"
+      [confirmLabel]="confirmConfig.confirmLabel || 'Confirmer'"
+      [cancelLabel]="confirmConfig.cancelLabel || 'Annuler'"
+      (confirmed)="onConfirmed()"
+      (cancelled)="onCancelled()">
+    </app-confirm-dialog>
+  `,
   styles: [`
     .app-container { display: flex; height: 100vh; background: var(--bna-light-grey); color: var(--text-primary); font-family: 'Outfit', sans-serif; }
     
@@ -56,10 +69,41 @@ import { Router } from '@angular/router';
     }
   `]
 })
-export class AppComponent {
-  title = 'bna-defense-frontend';
+export class AppComponent implements OnInit {
+  title = 'Action en Défense BNA';
+  showConfirm = false;
+  confirmConfig: ConfirmDialogConfig = {};
+  private currentResolver: ((value: boolean) => void) | null = null;
 
-  constructor(public authService: AuthService, private router: Router) { }
+  constructor(
+    public authService: AuthService, 
+    private router: Router,
+    private confirmDialog: ConfirmDialogService
+  ) { }
+
+  ngOnInit() {
+    this.confirmDialog.confirm$.subscribe(data => {
+      this.confirmConfig = data.config;
+      this.showConfirm = true;
+      this.currentResolver = data.resolve;
+    });
+  }
+
+  onConfirmed() {
+    if (this.currentResolver) {
+      this.currentResolver(true);
+      this.currentResolver = null;
+    }
+    this.showConfirm = false;
+  }
+
+  onCancelled() {
+    if (this.currentResolver) {
+      this.currentResolver(false);
+      this.currentResolver = null;
+    }
+    this.showConfirm = false;
+  }
 
   logout() {
     this.authService.logout();

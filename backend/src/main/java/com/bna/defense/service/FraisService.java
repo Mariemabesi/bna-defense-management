@@ -4,7 +4,6 @@ import com.bna.defense.dto.FraisDTO;
 import com.bna.defense.entity.Affaire;
 import com.bna.defense.entity.Dossier;
 import com.bna.defense.entity.Frais;
-import com.bna.defense.repository.AffaireRepository;
 import com.bna.defense.repository.DossierRepository;
 import com.bna.defense.repository.FraisRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +21,8 @@ public class FraisService {
     @Autowired
     private DossierRepository dossierRepository;
 
-    @Autowired
-    private AffaireRepository affaireRepository;
-
     public List<Frais> getAllFrais() {
-        return fraisRepository.findAll();
+        return fraisRepository.findAllWithAffaire();
     }
 
     @Transactional
@@ -40,26 +36,27 @@ public class FraisService {
 
         if (affaire == null && dto.getReferenceDossier() != null) {
             Dossier dossier = dossierRepository.findByReference(dto.getReferenceDossier())
-                    .orElseThrow(() -> new RuntimeException("Dossier non trouvé: " + dto.getReferenceDossier()));
+                    .orElse(null);
 
-            if (dossier.getAffaires().isEmpty()) {
-                throw new RuntimeException("Le dossier n'a pas d'affaires liées pour imputer des frais");
+            if (dossier != null && !dossier.getAffaires().isEmpty()) {
+                affaire = dossier.getAffaires().get(0); // Take first one as default
             }
-            affaire = dossier.getAffaires().get(0); // Take first one as default
         }
 
         if (affaire == null) {
-            throw new RuntimeException("Impossible d'associer le frais à une affaire");
+            // Log warning or handle gracefully. 
+            // For now, let's keep the throw but with a better message, 
+            // though DossierService auto-creation should fix this.
+            throw new RuntimeException("L'association à une affaire est obligatoire pour les frais de règlement.");
         }
 
-        Frais frais = Frais.builder()
-                .affaire(affaire)
-                .libelle(dto.getLibelle())
-                .montant(dto.getMontant())
-                .type(dto.getType() != null ? dto.getType() : Frais.TypeFrais.AUTRE)
-                .statut(Frais.StatutFrais.ATTENTE)
-                .observation(dto.getObservation())
-                .build();
+        Frais frais = new Frais();
+        frais.setAffaire(affaire);
+        frais.setLibelle(dto.getLibelle());
+        frais.setMontant(dto.getMontant());
+        frais.setType(dto.getType() != null ? dto.getType() : Frais.TypeFrais.AUTRE);
+        frais.setStatut(Frais.StatutFrais.ATTENTE);
+        frais.setObservation(dto.getObservation());
 
         return fraisRepository.save(frais);
     }

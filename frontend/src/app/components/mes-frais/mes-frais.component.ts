@@ -34,7 +34,7 @@ import { HeaderComponent } from '../header/header.component';
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let f of listFrais">
+                <tr *ngFor="let f of paginatedList">
                   <td><strong>{{ f.affaire?.dossier?.reference || f.referenceDossier || '—' }}</strong></td>
                   <td>{{ f.libelle }}</td>
                   <td><strong>{{ f.montant | number:'1.2-2' }}</strong></td>
@@ -64,6 +64,12 @@ import { HeaderComponent } from '../header/header.component';
               </tbody>
             </table>
           </div>
+
+          <div class="pagination-container" *ngIf="listFrais.length > pageSize">
+            <button (click)="prevPage()" [disabled]="currentPage === 1" class="btn-page">Précédent</button>
+            <span class="page-info">Page {{ currentPage }} sur {{ totalPages }}</span>
+            <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="btn-page">Suivant</button>
+          </div>
         </div>
       </main>
     </div>
@@ -87,10 +93,16 @@ import { HeaderComponent } from '../header/header.component';
     .success-bg { background: #dcfce7; color: #166534; }
     .primary-bg { background: #dbeafe; color: #1e40af; }
     .warning-bg { background: #fef3c7; color: #92400e; }
+    .pagination-container { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 32px; }
+    .btn-page { padding: 8px 16px; border-radius: 8px; border: 1.5px solid #e2e8f0; background: white; font-weight: 700; cursor: pointer; }
+    .btn-page:disabled { opacity: 0.5; }
+    .page-info { font-size: 14px; font-weight: 600; color: #64748b; }
   `]
 })
 export class MesFraisComponent implements OnInit {
   listFrais: Frais[] = [];
+  currentPage = 1;
+  pageSize = 5;
 
   constructor(
     private fraisService: FraisService,
@@ -103,6 +115,18 @@ export class MesFraisComponent implements OnInit {
       this.loadFrais();
     }
   }
+
+  get paginatedList(): Frais[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.listFrais.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.listFrais.length / this.pageSize);
+  }
+
+  nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; }
+  prevPage() { if (this.currentPage > 1) this.currentPage--; }
 
   loadFrais(): void {
     this.fraisService.getFrais().subscribe(data => this.listFrais = data);

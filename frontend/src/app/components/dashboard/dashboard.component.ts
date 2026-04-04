@@ -12,6 +12,9 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
 import { ReferentielService, Auxiliaire } from '../../services/referentiel.service';
 import { AIService, AIAnalysis } from '../../services/ai.service';
+import { Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 
 @Component({
@@ -29,14 +32,7 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
       <!-- ============================================== -->
       <!-- DASHBOARD CHARGE DE DOSSIER -->
       <!-- ============================================== -->
-      <ng-container *ngIf="isChargeDossier() || isAdmin()">
-        <div class="role-welcome-banner bna">
-          <div class="banner-content">
-            <h2>Espace Chargé de Dossier</h2>
-            <p>Pilotez vos dossiers juridiques et suivez vos demandes de frais en temps réel.</p>
-          </div>
-        </div>
-
+      <ng-container *ngIf="isChargeDossier() && !isAdmin()">
         <div class="stats-grid">
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon green">
@@ -107,17 +103,7 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
       <!-- ============================================== -->
       <!-- DASHBOARD PRE-VALIDATEUR -->
       <!-- ============================================== -->
-      <ng-container *ngIf="isPreValidateur() || isAdmin()">
-        <div class="role-welcome-banner warning">
-          <div class="banner-content">
-            <h2>Espace Pré-Validation</h2>
-            <p>Vérification technique des dossiers et contrôle des bordereaux de frais.</p>
-          </div>
-          <div class="banner-actions">
-            <button class="btn-primary white" (click)="onAction('Rapport Technique', 'Export')">Générer Rapport de Conformité</button>
-          </div>
-        </div>
-
+      <ng-container *ngIf="isPreValidateur() && !isAdmin()">
         <div class="stats-grid">
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon warning">
@@ -157,6 +143,9 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
               <h2>File d'Attente de Validation Technique</h2>
               <span class="badge warning">{{ dossiers.length }} à traiter</span>
             </div>
+            <div class="actions-group">
+              <button class="btn-primary" (click)="onAction('Rapport Technique', 'Export')">Générer Rapport de Conformité</button>
+            </div>
           </div>
           <ng-container *ngTemplateOutlet="dossiersTable; context:{ filter: 'PRE_VALIDATOR' }"></ng-container>
         </section>
@@ -168,17 +157,7 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
       <!-- ============================================== -->
       <!-- DASHBOARD VALIDATEUR -->
       <!-- ============================================== -->
-      <ng-container *ngIf="isValidateur() || isAdmin()">
-        <div class="role-welcome-banner danger">
-          <div class="banner-content">
-            <h2>Espace Approbation (Validateur)</h2>
-            <p>Validation finale des règlements et ordonnancement des paiements Trésorerie.</p>
-          </div>
-          <div class="banner-actions">
-            <button class="btn-primary white" (click)="onAction('Batch Paiement', 'Trésorerie')">Transmettre Batch Trésorerie</button>
-          </div>
-        </div>
-
+      <ng-container *ngIf="isValidateur() && !isAdmin()">
         <div class="stats-grid">
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon danger">
@@ -218,28 +197,94 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
               <h2>Approbations de Règlements</h2>
               <span class="badge danger">Urgent</span>
             </div>
+            <div class="actions-group">
+              <button class="btn-primary" (click)="onAction('Batch Paiement', 'Trésorerie')">Transmettre Batch Trésorerie</button>
+            </div>
           </div>
           <ng-container *ngTemplateOutlet="dossiersTable; context:{ filter: 'VALIDATOR' }"></ng-container>
         </section>
       </ng-container>
 
       <!-- ============================================== -->
-      <!-- DASHBOARD ADMINISTRATION -->
+      <!-- DASHBOARD ADMINISTRATION & SUPER VALIDATEUR STATS -->
       <!-- ============================================== -->
-      <!-- ============================================== -->
-      <!-- DASHBOARD ADMINISTRATION -->
-      <!-- ============================================== -->
-      <ng-container *ngIf="isAdmin()">
-        <div class="role-welcome-banner bna">
-          <div class="banner-content">
-            <h2>Pannel d'Administration</h2>
-            <p>Supervision globale du système, gestion des comptes et audit des logs.</p>
+      <ng-container *ngIf="isAdmin() || isSuperValidateur()">
+        <div class="stats-grid">
+          <div class="stat-card" [class.loading-shimmer]="statsLoading">
+            <div class="stat-icon green">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <div class="stat-content">
+              <div class="label">Total Dossiers</div>
+              <div class="value">{{ stats ? stats.totalDossiers : '—' }}</div>
+              <div class="trend positive">{{ stats ? stats.openDossiers : 0 }} Actifs</div>
+            </div>
           </div>
-          <div class="banner-actions">
-            <button class="btn-primary white" (click)="onAction('Audit Logs', 'All')">Exporter Logs Audit</button>
-            <button class="btn-primary white" (click)="onAction('Config', 'System')">Paramètres Système</button>
+          <div class="stat-card" [class.loading-shimmer]="statsLoading">
+            <div class="stat-icon info">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <div class="stat-content">
+              <div class="label">Avocats & Auxiliaires</div>
+              <div class="value">{{ stats ? (stats.totalAvocats + stats.totalHuissiers) : '—' }}</div>
+              <div class="status-indicator">Inscrits dans l'annuaire</div>
+            </div>
+          </div>
+          <div class="stat-card" [class.loading-shimmer]="statsLoading">
+            <div class="stat-icon warning">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            <div class="stat-content">
+              <div class="label">Provision Globale</div>
+              <div class="value">{{ stats ? (stats.totalBudgetProvisionne | number:'1.0-0') : '—' }} <small>TND</small></div>
+              <div class="status-indicator">Engagement financier total</div>
+            </div>
+          </div>
+          <div class="stat-card" [class.loading-shimmer]="statsLoading">
+            <div class="stat-icon danger">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            </div>
+            <div class="stat-content">
+              <div class="label">Taux de Succès</div>
+              <div class="value">{{ stats ? (stats.successRate * 100 | number:'1.0-1') + '%' : '—' }}</div>
+              <div class="trend positive">Affaires Gagnées</div>
+            </div>
           </div>
         </div>
+      </ng-container>
+
+      <ng-container *ngIf="isAdmin()">
+        <section class="recent-section" *ngIf="isAdmin() || isSuperValidateur()">
+          <div class="section-header">
+            <div class="title-with-badge">
+              <h2>Analyse Statistique Globale</h2>
+              <span class="badge success">KPI Visualizer</span>
+            </div>
+          </div>
+          <div class="charts-grid">
+            <div class="chart-container-card">
+              <div class="chart-header">
+                <h3>Répartition des Dossiers</h3>
+                <p>Par statut de traitement</p>
+              </div>
+              <canvas id="dossiersStatutChart"></canvas>
+            </div>
+            <div class="chart-container-card">
+              <div class="chart-header">
+                <h3>Engagement Financier</h3>
+                <p>Top 5 Dossiers (TND)</p>
+              </div>
+              <canvas id="budgetTopChart"></canvas>
+            </div>
+            <div class="chart-container-card">
+              <div class="chart-header">
+                <h3>Allocation Budgétaire</h3>
+                <p>Par statut (TND)</p>
+              </div>
+              <canvas id="budgetStatusChart"></canvas>
+            </div>
+          </div>
+        </section>
 
         <section class="recent-section">
           <div class="section-header">
@@ -248,6 +293,7 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
               <span class="badge info">Live Audit</span>
             </div>
             <div class="actions-group">
+              <button class="btn-secondary" (click)="onAction('Audit Logs', 'All')">Exporter Logs</button>
               <button class="btn-primary">Nouveau Utilisateur</button>
             </div>
           </div>
@@ -305,108 +351,6 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
       </ng-container>
 
       <!-- ============================================== -->
-      <!-- DASHBOARD REFERENTIEL (ADMIN ONLY) -->
-      <!-- ============================================== -->
-      <ng-container *ngIf="isAdmin()">
-        <div class="role-welcome-banner info">
-          <div class="banner-content">
-            <h2>Espace Référentiel</h2>
-            <p>Gestion de la base de données des auxiliaires de justice et des juridictions nationales.</p>
-          </div>
-          <div class="banner-actions">
-            <button class="btn-primary white" (click)="onAction('Export', 'Referentiel')">Exporter Annuaire</button>
-          </div>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon info">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            </div>
-            <div class="stat-content">
-              <div class="label">Avocats & Huissiers</div>
-              <div class="value">{{ stats ? stats.totalAvocats + ' / ' + stats.totalHuissiers : '—' }}</div>
-              <div class="status-indicator">Auxiliaires actifs</div>
-            </div>
-          </div>
-          <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon info">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-            </div>
-            <div class="stat-content">
-              <div class="label">Procédures Juridiques</div>
-              <div class="value">{{ stats ? stats.totalProcedures : '—' }}</div>
-              <div class="status-indicator">Types répertoriés</div>
-            </div>
-          </div>
-          <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon info">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
-            </div>
-            <div class="stat-content">
-              <div class="label">Adversaires & Instances</div>
-              <div class="value">{{ stats ? stats.totalAdversaires : '—' }}</div>
-              <div class="status-indicator">Entités enregistrées</div>
-            </div>
-          </div>
-        </div>
-
-        <section class="recent-section">
-          <div class="section-header">
-            <div class="title-with-badge">
-               <h2>Gestion du Référentiel National</h2>
-               <span class="badge info">Données Justice</span>
-            </div>
-            <div class="actions-group">
-              <button class="btn-secondary" (click)="onAction('Nouveau Tribunal', 'National')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 21h18M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7M4 21V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v17"/></svg>
-                Nouveau Tribunal
-              </button>
-              <button class="btn-primary" (click)="onAction('Ajouter Auxiliaire', 'Nouveau')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
-                Ajouter Auxiliaire
-              </button>
-            </div>
-          </div>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Entité</th>
-                  <th>Catégorie</th>
-                  <th>Contact/Localisation</th>
-                  <th>Statut</th>
-                  <th>Date Ajout</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let aux of auxiliaires">
-                  <td><strong>{{ aux.nom }}</strong></td>
-                  <td>{{ aux.type }}</td>
-                  <td>{{ aux.adresse }} - {{ aux.telephone }}</td>
-                  <td><span class="badge success">Actif</span></td>
-                  <td>{{ aux.createdAt | date:'dd/MM/yyyy' }}</td>
-                  <td>
-                    <div class="actions-cell">
-                      <button class="btn-action" title="Détails" (click)="onAction('Voir Auxiliaire', aux.nom)">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr *ngIf="auxiliaires.length === 0">
-                  <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                    Aucun auxiliaire enregistré.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </ng-container>
-
-      <!-- ============================================== -->
       <!-- REUSABLE TABLE TEMPLATE FOR DOSSIERS & FRAIS -->
       <!-- ============================================== -->
       <ng-template #dossiersTable let-filter="filter">
@@ -434,13 +378,13 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
                     <button class="btn-action" title="Voir" (click)="$event.stopPropagation(); onViewDossier(d)">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
-                    <button class="btn-action" title="Modifier" *ngIf="isChargeDossier() || isAdmin()" [routerLink]="['/modifier-dossier', d.reference]">
+                    <button class="btn-action" title="Modifier" *ngIf="isChargeDossier()" [routerLink]="['/modifier-dossier', d.reference]">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </button>
-                    <button class="btn-action warning-bg" title="Approuver" *ngIf="isPreValidateur() || isAdmin()" (click)="$event.stopPropagation(); onAction('Approuver', d.reference)">
+                    <button class="btn-action warning-bg" title="Approuver" *ngIf="isPreValidateur()" (click)="$event.stopPropagation(); onAction('Approuver', d.reference)">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
                     </button>
-                    <button class="btn-action danger-bg" title="Valider" *ngIf="isValidateur() || isAdmin()" (click)="$event.stopPropagation(); onAction('Valider', d.reference)">
+                    <button class="btn-action danger-bg" title="Valider" *ngIf="isValidateur()" (click)="$event.stopPropagation(); onAction('Valider', d.reference)">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                     </button>
                   </div>
@@ -825,6 +769,15 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
     .btn-action.danger-bg { color: #059669; }
     .btn-action.danger-bg:hover { color: #047857; border-color: #6ee7b7; }
 
+    /* CHARTS */
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-top: 24px; }
+    .chart-container-card { 
+      background: white; border-radius: 24px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.03); 
+      height: 400px; display: flex; flex-direction: column;
+    }
+    .chart-container-card h3 { font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 24px; text-align: center; }
+    .chart-container-card canvas { flex: 1; min-height: 0; }
+
     /* ADMINISTRATION */
     .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-top: 24px; }
     .admin-card { background: white; border-radius: 24px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.03); }
@@ -929,15 +882,31 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
     @media (max-width: 1024px) {
-      .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
-      .main-content { margin-left: 0; }
-      .top-header { padding: 0 24px; }
-      .dashboard-content { padding: 24px; }
-      .stats-grid { grid-template-columns: 1fr; }
+      .main-content { margin-left: 0; width: 100%; }
+      .dashboard-content { padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr; gap: 16px; }
+      .section-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .actions-group { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+      .actions-group button { width: 100%; justify-content: center; }
+      .table-container { margin: 0 -16px; border-radius: 0; }
+      table { min-width: 800px; }
+      .modal-content { margin: 10px; max-height: 90vh; overflow-y: auto; }
+      .grid-2-col-modal { grid-template-columns: 1fr; }
+    }
+    
+    @media (max-width: 640px) {
+      .top-header { padding: 0 16px; height: 70px; }
+      .header-search { display: none; } /* Hide search on small mobile to save space */
+      .stat-card { padding: 20px; }
+      .stat-value { font-size: 24px; }
     }
     `]
 })
 export class DashboardComponent implements OnInit {
+  dossierChart: any;
+  budgetChart: any;
+
+  // ... rest of the properties ...
   currentUser: any;
   Math = Math;
 
@@ -1019,6 +988,9 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.stats = data;
         this.statsLoading = false;
+        if (this.isAdmin()) {
+          setTimeout(() => this.initCharts(), 100);
+        }
       },
       error: () => {
         this.statsLoading = false;
@@ -1026,21 +998,106 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  initCharts(): void {
+    const ctx1 = document.getElementById('dossiersStatutChart') as HTMLCanvasElement;
+    if (ctx1) {
+      if (this.dossierChart) this.dossierChart.destroy();
+      this.dossierChart = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: ['Ouverts', 'En Cours', 'A Valider', 'Clôturés'],
+          datasets: [{
+            data: [
+              this.stats?.openDossiers || 0,
+              12, // Dummy pending
+              5,  // Dummy to validate
+              this.stats?.closedDossiers || 0
+            ],
+            backgroundColor: ['#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981'],
+            borderWidth: 0,
+            hoverOffset: 15
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right', labels: { usePointStyle: true, font: { weight: 'bold' } } }
+          },
+          cutout: '70%'
+        }
+      });
+    }
+
+    // Top Budgets Chart
+    const budgetCtx = document.getElementById('budgetTopChart') as HTMLCanvasElement;
+    if (budgetCtx) {
+      new Chart(budgetCtx, {
+        type: 'bar',
+        data: {
+          labels: this.dossiers.slice(0, 5).map(d => d.reference),
+          datasets: [{
+            label: 'Budget (TND)',
+            data: this.dossiers.slice(0, 5).map(d => d.budgetProvisionne || 0),
+            backgroundColor: 'rgba(0, 135, 102, 0.6)',
+            borderColor: '#008766',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    // Budget Status Chart
+    const budgetStatusCtx = document.getElementById('budgetStatusChart') as HTMLCanvasElement;
+    if (budgetStatusCtx) {
+      new Chart(budgetStatusCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Ouvert', 'En Cours', 'Clôturé'],
+          datasets: [{
+            data: [
+              (this.stats?.totalBudgetProvisionne || 0) * 0.4,
+              (this.stats?.totalBudgetProvisionne || 0) * 0.5,
+              (this.stats?.totalBudgetProvisionne || 0) * 0.1
+            ],
+            backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    }
+  }
+
   loadDossiers(): void {
     this.dossiersLoading = true;
-    this.dossierService.getDossiers().subscribe({
+    this.dossierService.getDossiers(0, 100).subscribe({
       next: (data) => {
-        this.dossiers = data;
+        // Handle both Array and Page object (data.content)
+        this.dossiers = Array.isArray(data) ? data : (data.content || []);
         this.dossiersLoading = false;
       },
       error: () => {
         this.dossiersLoading = false;
+        this.dossiers = [];
       }
     });
   }
 
   filterDossiers(type: string): Dossier[] {
-    if (this.isAdmin()) return this.dossiers;
+    if (this.isAdmin()) return []; // Admin strictly has no access to dossier listings
 
     switch (type) {
       case 'CHARGE':
@@ -1098,6 +1155,10 @@ export class DashboardComponent implements OnInit {
 
   isAdmin(): boolean {
     return this.authService.hasRole('ROLE_ADMIN');
+  }
+
+  isSuperValidateur(): boolean {
+    return this.authService.hasRole('ROLE_SUPER_VALIDATEUR') || (this.currentUser && this.currentUser.isSuperValidateur);
   }
 
   onViewDossier(d: Dossier): void {

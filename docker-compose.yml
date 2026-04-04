@@ -3,6 +3,7 @@ version: '3.8'
 services:
   db:
     image: postgres:15
+    platform: linux/amd64
     container_name: bna-postgres
     restart: always
     environment:
@@ -16,6 +17,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
+    platform: linux/amd64
     container_name: bna-pgadmin
     restart: always
     environment:

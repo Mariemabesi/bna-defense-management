@@ -21,6 +21,7 @@ export class UiService {
 
     navigate(path: string, queryParams?: any) {
         this.router.navigate([path], { queryParams });
-        this.hideSidebar();
+        // Point 3: Sidebar must NOT auto-collapse
+        // this.hideSidebar(); 
     }
 }

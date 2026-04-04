@@ -4,9 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService, Notification } from '../../services/notification.service';
-import { UiService } from '../../services/ui.service';
+import { Router } from '@angular/router';
+import { SidebarService } from '../../services/sidebar.service';
+import { SearchService } from '../../services/search.service';
 import { DossierService } from '../../services/dossier.service';
 import { Dossier } from '../../models/dossier.model';
+import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-header',
@@ -15,13 +18,15 @@ import { Dossier } from '../../models/dossier.model';
   template: `
     <header class="top-header">
       <div class="header-left">
-        <button class="mobile-menu-btn" (click)="toggleSidebar()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <button class="manual-sidebar-toggle" (click)="toggleSidebar()" title="Afficher/Masquer le menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle>
+          </svg>
         </button>
         <div class="header-search">
            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-           <input type="text" placeholder="Rechercher un dossier, une référence..." 
-                  [(ngModel)]="searchQuery" (input)="onSearchInput($event)">
+           <input type="text" placeholder="Rechercher par référence, titre ou avocat..." 
+                  [(ngModel)]="searchQuery" (input)="onSearch($event)">
            
            <!-- SEARCH RESULTS DROPDOWN -->
            <div class="search-results-dropdown" *ngIf="searchResults.length > 0 && searchQuery">
@@ -39,28 +44,6 @@ import { Dossier } from '../../models/dossier.model';
       </div>
       
       <div class="header-actions">
-        <!-- QUICK ACTION BASED ON ROLE -->
-        <button class="header-quick-action charge" *ngIf="isChargeDossier()" (click)="quickAction('/nouveau-dossier')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-          Nouveau Dossier
-        </button>
-        <button class="header-quick-action admin" *ngIf="isAdmin()" (click)="quickAction('/referentiel')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
-          Gestion Référentiel
-        </button>
-        <button class="header-quick-action preval" *ngIf="isPreValidateur()" (click)="quickAction('/dashboard')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-          Rapport Bordereau
-        </button>
-        <button class="header-quick-action val" *ngIf="isValidateur()" (click)="quickAction('/dashboard')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-          Batch Virement
-        </button>
-        <button class="header-quick-action admin" *ngIf="isAdmin()" (click)="quickAction('/dashboard')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-          Logs Audit
-        </button>
-
         <button class="notification-btn" (click)="toggleNotifications()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           <span class="badge-dot" *ngIf="unreadCount > 0"></span>
@@ -74,7 +57,6 @@ import { Dossier } from '../../models/dossier.model';
           </div>
           <div class="notif-list">
             <div class="notif-item" *ngFor="let n of roleNotifications" [class.unread]="!n.isRead" (click)="markRead(n)">
-              <div class="notif-icon" [ngClass]="n.type.toLowerCase()"></div>
               <div class="notif-body">
                 <p class="notif-msg">{{ n.message }}</p>
                 <span class="notif-time">{{ n.timestamp | date:'shortTime' }}</span>
@@ -85,20 +67,41 @@ import { Dossier } from '../../models/dossier.model';
             </div>
           </div>
         </div>
-        <div class="user-profile">
-          <div class="user-info">
-            <span class="user-email">{{ currentUser?.username?.includes('@') ? currentUser.username : (currentUser?.username || 'Utilisateur') + '@bna.tn' }}</span>
-            <span class="user-role">{{ formatRoles() }}</span>
+        
+        <div class="profile-container">
+          <div class="user-profile" (click)="toggleProfileMenu()">
+            <div class="user-avatar">{{ getInitials() }}</div>
+            <div class="user-info">
+              <span class="user-email">{{ currentUser?.username }}</span>
+              <span class="user-role">{{ formatRoles() }}</span>
+            </div>
           </div>
-          <div class="user-avatar">{{ getInitials() }}</div>
+
+          <div class="profile-dropdown" *ngIf="showProfileDropdown">
+            <div class="dropdown-header">
+              <strong>{{ currentUser?.fullName || currentUser?.username }}</strong>
+              <span>{{ formatRoles() }}</span>
+            </div>
+            <div class="divider"></div>
+            <button class="dropdown-item" (click)="openProfile()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              Mon Profil
+            </button>
+            <button class="dropdown-item logout-inline" (click)="logout()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Déconnexion
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- Change Password Modal Removed - using Profile page -->
     </header>
   `,
   styles: [`
     .top-header {
       height: 90px;
-      background: rgba(240, 244, 248, 0.8);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(12px);
       display: flex;
       justify-content: space-between;
@@ -106,18 +109,24 @@ import { Dossier } from '../../models/dossier.model';
       padding: 0 48px;
       position: sticky;
       top: 0;
-      z-index: 10;
-      border-bottom: 1px solid rgba(0,0,0,0.03);
-    }
-
-    .header-title h1 {
-      font-size: 24px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #005641 0%, #008766 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      z-index: 100;
       margin: 0;
       letter-spacing: -0.5px;
+      border-bottom: 1px solid rgba(0,0,0,0.03);
+    }
+ 
+    /* MOBILE HEADER RESPONSIVENESS */
+    @media (max-width: 1024px) {
+      .top-header { padding: 0 20px; }
+      .header-search { width: 100%; margin-left: 12px; }
+      .header-search:focus-within { width: 100%; }
+      .manual-sidebar-toggle { display: flex !important; }
+    }
+ 
+    @media (max-width: 768px) {
+      .user-info { display: none; }
+      .header-search { display: none; }
+      .top-header { height: 75px; }
     }
 
     .header-actions {
@@ -127,247 +136,83 @@ import { Dossier } from '../../models/dossier.model';
     }
 
     .notification-btn {
-      background: white;
-      border: 1px solid rgba(0,0,0,0.05);
-      border-radius: 12px;
-      color: #64748b;
-      cursor: pointer;
-      position: relative;
-      padding: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-      transition: all 0.2s;
+      background: white; border: 1px solid rgba(0,0,0,0.05); border-radius: 12px;
+      color: #64748b; cursor: pointer; position: relative; padding: 10px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all 0.2s;
     }
     
-    .notification-btn:hover {
-      color: #008766;
-      border-color: rgba(0, 135, 102, 0.08);
-      background: rgba(0, 135, 102, 0.08);
-    }
+    .notification-btn:hover { color: #008766; border-color: rgba(0, 135, 102, 0.08); background: rgba(0, 135, 102, 0.08); }
 
-    .badge-dot {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 10px;
-      height: 10px;
-      background-color: #ef4444;
-      border-radius: 50%;
-      border: 2px solid white;
-    }
+    .badge-dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; border: 2px solid white; }
 
-    .header-search {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: white;
-      padding: 10px 18px;
-      border-radius: 14px;
-      border: 1px solid rgba(0,0,0,0.05);
-      width: 400px;
-      margin-left: 24px;
-      transition: all 0.3s;
-    }
-    .header-search:focus-within {
-      width: 480px;
-      border-color: #008766;
-      box-shadow: 0 4px 12px rgba(0,135,102,0.05);
-    }
+    .header-search { display: flex; align-items: center; gap: 12px; background: white; padding: 10px 18px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.05); width: 400px; margin-left: 24px; transition: all 0.3s; position: relative; }
+    .header-search:focus-within { width: 480px; border-color: #008766; box-shadow: 0 4px 12px rgba(0,135,102,0.05); }
     .header-search svg { color: #94a3b8; }
-    .header-search input {
-      border: none;
-      outline: none;
-      font-size: 14px;
-      font-weight: 500;
-      color: #1e293b;
-      width: 100%;
-    }
-    .header-search input::placeholder { color: #94a3b8; }
-    .header-search { position: relative; }
+    .header-search input { border: none; outline: none; font-size: 14px; font-weight: 500; color: #1e293b; width: 100%; }
 
-    .search-results-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: white;
-      border-radius: 16px;
-      margin-top: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      border: 1px solid rgba(0,0,0,0.05);
-      z-index: 1000;
-      max-height: 400px;
-      overflow-y: auto;
-      padding: 8px;
-    }
+    .search-results-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 16px; margin-top: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); z-index: 1000; max-height: 400px; overflow-y: auto; padding: 8px; }
 
-    .search-result-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 12px 16px;
-      border-radius: 12px;
-      cursor: pointer;
-       transition: all 0.2s;
-    }
+    .search-result-item { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
     .search-result-item:hover { background: #f8fafc; }
-    .result-icon { font-size: 20px; }
-    .result-details { flex: 1; display: flex; flex-direction: column; }
-    .result-ref { font-size: 13px; font-weight: 800; color: var(--bna-green); }
-    .result-title { font-size: 14px; color: #1e293b; font-weight: 500; }
+    .result-ref { font-size: 13px; font-weight: 800; color: #008766; }
     .result-status { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; }
     .result-status.ouvert { background: #dcfce7; color: #166534; }
-    .result-status.cloture { background: #f1f5f9; color: #475569; }
 
-    .header-quick-action {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 18px;
-      border-radius: 12px;
-      border: none;
-      font-size: 13px;
-      font-weight: 700;
-      color: white;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }
-    .header-quick-action:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
-    .header-quick-action.charge { background: linear-gradient(135deg, #008766 0%, #00a87f 100%); }
-    .header-quick-action.referentiel { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-    .header-quick-action.preval { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-    .header-quick-action.val { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-    .header-quick-action.admin { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+    .user-profile { display: flex; align-items: center; gap: 16px; padding: 8px 16px; background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.03); cursor: pointer; border: 1px solid rgba(0,0,0,0.02); margin-left: 12px; }
+    .user-info { text-align: right; }
+    .user-email { display: block; font-size: 14px; font-weight: 700; color: #1e293b; }
+    .user-role { display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+    .user-avatar { width: 44px; height: 44px; background: linear-gradient(135deg, #008766 0%, #10b981 100%); border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; box-shadow: 0 4px 10px rgba(0,135,102,0.2); }
 
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 8px 16px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.03);
-      cursor: pointer;
-      border: 1px solid rgba(0,0,0,0.02);
-      margin-left: 12px;
-    }
-
-    .user-info {
-      text-align: right;
-    }
-
-    .user-email {
-      display: block;
-      font-size: 14px;
-      font-weight: 700;
-      color: #1e293b;
-    }
-
-    .user-role {
-      display: block;
-      font-size: 12px;
-      color: #64748b;
-      text-transform: uppercase;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .user-avatar {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, #008766 0%, #10b981 100%);
-      border-radius: 12px;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 18px;
-    }
-
-    .count-badge {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      background: #ef4444;
-      color: white;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 10px;
-      border: 2px solid white;
-    }
-
-    .notif-dropdown {
-      position: absolute;
-      top: 80px;
-      right: 48px;
-      width: 320px;
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-      border: 1px solid rgba(0,0,0,0.05);
-      z-index: 100;
-      overflow: hidden;
-    }
-
-    .notif-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid #f1f5f9;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
+    .notif-dropdown { position: absolute; top: 80px; right: 48px; width: 320px; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); z-index: 100; overflow: hidden; }
+    .notif-header { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
     .notif-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: #1e293b; }
     .btn-clear { background: none; border: none; color: #64748b; font-size: 12px; cursor: pointer; }
-    .btn-clear:hover { color: #ef4444; }
 
-    .notif-list { max-height: 350px; overflow-y: auto; }
-    .notif-item {
-      padding: 16px 20px;
-      display: flex;
-      gap: 12px;
-      cursor: pointer;
-      border-bottom: 1px solid #f8fafc;
-      transition: background 0.2s;
-    }
-    .notif-item:hover { background: #f8fafc; }
-    .notif-item.unread { background: #f0f9ff; }
+    .profile-dropdown { position: absolute; top: calc(100% + 12px); right: 0; width: 240px; background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15); border: 1px solid rgba(0,0,0,0.05); padding: 12px; z-index: 110; animation: slideIn 0.2s ease-out; }
+    .dropdown-header { padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; }
+    .dropdown-header strong { font-size: 15px; color: #1e293b; font-weight: 800; }
+    .dropdown-header span { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+    .divider { height: 1px; background: #f1f5f9; margin: 8px 0; }
     
-    .notif-icon { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
-    .notif-icon.info { background: #3b82f6; }
-    .notif-icon.success { background: #10b981; }
-    .notif-icon.warning { background: #f59e0b; }
+    .dropdown-item { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: none; background: none; color: #475569; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 12px; transition: all 0.2s; }
+    .dropdown-item:hover { background: #f8fafc; color: #008766; transform: translateX(5px); }
+    .dropdown-item.logout-inline { color: #ef4444; }
+    .dropdown-item.logout-inline:hover { background: #fef2f2; color: #dc2626; }
 
-    .notif-msg { margin: 0; font-size: 13px; color: #334155; line-height: 1.4; font-weight: 500; }
-    .notif-time { font-size: 11px; color: #94a3b8; }
-    .notif-empty { padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 14px; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 2000; transition: 0.3s; }
+    .modal-content { background: white; border-radius: 28px; width: 100%; max-width: 440px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; animation: zoomIn 0.3s ease-out; }
+    .modal-header { padding: 24px 32px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
+    .modal-header h3 { margin: 0; font-size: 18px; font-weight: 800; color: #1e293b; }
+    .btn-close { background: none; border: none; cursor: pointer; color: #94a3b8; transition: 0.2s; }
+    .btn-close:hover { color: #ef4444; transform: rotate(90deg); }
+    
+    .modal-body { padding: 32px; display: flex; flex-direction: column; gap: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 10px; }
+    .form-group label { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-control { padding: 12px 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 15px; font-weight: 500; background: #f8fafc; transition: 0.2s; }
+    .form-control:focus { border-color: #008766; background: white; outline: none; box-shadow: 0 0 0 4px rgba(0,135,102,0.1); }
+    
+    .password-strength-meter { margin-top: 8px; display: flex; align-items: center; gap: 12px; }
+    .strength-bar { height: 6px; border-radius: 3px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #e2e8f0; width: 100px; overflow: hidden; }
+    .strength-bar.weak { background: #ef4444; }
+    .strength-bar.good { background: #f59e0b; }
+    .strength-bar.strong { background: #10b981; }
+    .strength-label { font-size: 12px; font-weight: 800; color: #64748b; }
 
-    .mobile-menu-btn {
-      display: none;
-      background: none;
-      border: none;
-      color: #005641;
-      cursor: pointer;
-      padding: 0;
-      margin-right: 16px;
-    }
+    .error-msg { color: #ef4444; font-size: 13px; font-weight: 700; text-align: center; background: #fef2f2; padding: 10px; border-radius: 10px; }
+    .modal-footer { padding: 24px 32px; background: #fafafa; border-top: 1px solid #f1f5f9; display: flex; gap: 16px; }
+    .btn-primary { flex: 1; background: #008766; color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,135,102,0.2); }
+    .btn-secondary { flex: 1; background: white; color: #64748b; border: 2px solid #e2e8f0; padding: 14px; border-radius: 14px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+    .btn-primary:hover { background: #007256; transform: translateY(-2px); }
+    .btn-secondary:hover { background: #f1f5f9; transform: translateY(-2px); }
 
-    .header-left {
-      display: flex;
-      align-items: center;
-    }
+    .manual-sidebar-toggle { background: none; border: none; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 8px; transition: 0.2s; }
+    .manual-sidebar-toggle:hover { color: #008766; transform: scale(1.1); }
 
-    @media (max-width: 1024px) {
-      .top-header { padding: 0 24px; }
-      .mobile-menu-btn { display: block; }
-      .user-info { display: none; }
-      .header-title h1 { font-size: 20px; }
-    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
   `]
 })
 export class HeaderComponent implements OnInit {
@@ -379,18 +224,26 @@ export class HeaderComponent implements OnInit {
 
   searchQuery = '';
   searchResults: Dossier[] = [];
+  showProfileDropdown = false;
   private searchSubject = new Subject<string>();
 
+
+
   constructor(
-    private authService: AuthService,
+    public authService: AuthService,
     private notificationService: NotificationService,
-    private uiService: UiService,
-    private dossierService: DossierService
-  ) {
+    private router: Router,
+    public sidebarService: SidebarService,
+    private searchService: SearchService,
+    private dossierService: DossierService,
+    private confirmDialog: ConfirmDialogService
+  ) { }
+
+  ngOnInit(): void {
     this.currentUser = this.authService.currentUserValue;
 
     this.notificationService.notifications$.subscribe(all => {
-      if (this.currentUser) {
+      if (this.currentUser && this.currentUser.roles) {
         this.roleNotifications = all.filter(n =>
           n.role === 'ROLE_ADMIN' ||
           this.currentUser.roles.includes(n.role)
@@ -398,9 +251,7 @@ export class HeaderComponent implements OnInit {
         this.unreadCount = this.roleNotifications.filter(n => !n.isRead).length;
       }
     });
-  }
 
-  ngOnInit(): void {
     this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged()
@@ -415,14 +266,17 @@ export class HeaderComponent implements OnInit {
     });
   }
 
-  onSearchInput(event: any) {
-    this.searchSubject.next(this.searchQuery);
+  onSearch(event: any) {
+    const query = event.target.value;
+    this.searchQuery = query;
+    this.searchService.updateSearch(query);
+    this.searchSubject.next(query);
   }
 
   viewDossier(dossier: Dossier) {
     this.searchQuery = '';
     this.searchResults = [];
-    this.uiService.navigate('/mes-dossiers', { highlight: dossier.reference }); 
+    this.sidebarService.navigate('/mes-dossiers', { highlight: dossier.reference }); 
   }
 
   toggleNotifications() {
@@ -430,7 +284,7 @@ export class HeaderComponent implements OnInit {
   }
 
   toggleSidebar() {
-    this.uiService.toggleSidebar();
+    this.sidebarService.toggle();
   }
 
   markRead(n: Notification) {
@@ -441,22 +295,41 @@ export class HeaderComponent implements OnInit {
     this.notificationService.clearAll();
   }
 
-  isChargeDossier(): boolean { return this.authService.hasRole('ROLE_CHARGE_DOSSIER'); }
-  isPreValidateur(): boolean { return this.authService.hasRole('ROLE_PRE_VALIDATEUR'); }
-  isValidateur(): boolean { return this.authService.hasRole('ROLE_VALIDATEUR'); }
-  isAdmin(): boolean { return this.authService.hasRole('ROLE_ADMIN'); }
-
-  quickAction(path: string, queryParams?: any) {
-    this.uiService.navigate(path, queryParams);
-  }
-
   getInitials(): string {
-    if (!this.currentUser || !this.currentUser.username) return 'U';
-    return this.currentUser.username.substring(0, 2).toUpperCase();
+    if (!this.currentUser) return 'U';
+    if (this.currentUser.fullName) {
+      const parts = this.currentUser.fullName.split(' ');
+      if (parts.length > 1) return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+      return parts[0][0].toUpperCase();
+    }
+    return (this.currentUser.username || 'U').substring(0, 2).toUpperCase();
   }
 
   formatRoles(): string {
     if (!this.currentUser || !this.currentUser.roles) return 'Rôle';
     return this.currentUser.roles.map((r: string) => r.replace('ROLE_', '').replace('_', ' ')).join(', ');
+  }
+
+  toggleProfileMenu() {
+    this.showProfileDropdown = !this.showProfileDropdown;
+  }
+
+  openProfile() {
+    this.router.navigate(['/profil']);
+    this.showProfileDropdown = false;
+  }
+
+  logout() {
+    this.confirmDialog.open({
+      title: 'Déconnexion',
+      message: 'Êtes-vous sûr de vouloir vous déconnecter ?',
+      confirmLabel: 'Se déconnecter',
+      cancelLabel: 'Annuler'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.authService.logout();
+        this.router.navigate(['/login']);
+      }
+    });
   }
 }
