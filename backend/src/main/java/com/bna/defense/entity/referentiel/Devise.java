@@ -3,26 +3,33 @@ package com.bna.defense.entity.referentiel;
 import com.bna.defense.entity.BaseEntity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ref_devises")
 public class Devise extends BaseEntity {
 
-    @Column(nullable = false, unique = true)
-    private String code; 
-
     @Column(nullable = false)
-    private String symbole; 
+    private String nom;
 
-    @Column(nullable = false)
-    private BigDecimal tauxConversionVersTnd;
+    private String codeIso; // TND, EUR, USD
+
+    private String symbole;
+
+    private BigDecimal tauxConversionVersTND;
+
+    private LocalDateTime dateMiseAJourTaux;
 
     public Devise() {}
 
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
+    public String getNom() { return nom; }
+    public void setNom(String n) { this.nom = n; }
+    public String getCodeIso() { return codeIso; }
+    public void setCodeIso(String c) { this.codeIso = c; }
     public String getSymbole() { return symbole; }
-    public void setSymbole(String symbole) { this.symbole = symbole; }
-    public BigDecimal getTauxConversionVersTnd() { return tauxConversionVersTnd; }
-    public void setTauxConversionVersTnd(BigDecimal tauxConversionVersTnd) { this.tauxConversionVersTnd = tauxConversionVersTnd; }
+    public void setSymbole(String s) { this.symbole = s; }
+    public BigDecimal getTauxConversionVersTND() { return tauxConversionVersTND; }
+    public void setTauxConversionVersTND(BigDecimal t) { this.tauxConversionVersTND = t; }
+    public LocalDateTime getDateMiseAJourTaux() { return dateMiseAJourTaux; }
+    public void setDateMiseAJourTaux(LocalDateTime d) { this.dateMiseAJourTaux = d; }
 }

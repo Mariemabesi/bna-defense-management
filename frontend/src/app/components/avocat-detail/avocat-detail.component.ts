@@ -6,15 +6,20 @@ import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 
+import { SidebarComponent } from '../sidebar/sidebar.component';
+
 @Component({
   selector: 'app-avocat-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SidebarComponent],
   template: `
-    <div class="detail-page shadow-premium" *ngIf="data">
-      <div class="breadcrumb">
-        <a routerLink="/referentiel/avocats">← Retour à la liste des Avocats</a>
-      </div>
+    <div class="app-layout">
+      <app-sidebar></app-sidebar>
+      <main class="main-content">
+        <div class="detail-page shadow-premium" *ngIf="data">
+          <div class="breadcrumb">
+            <a routerLink="/referentiel/avocats">← Retour à la liste des Avocats</a>
+          </div>
 
       <!-- SECTION 1: PROFILE & STATS -->
       <div class="profile-grid">
@@ -124,12 +129,18 @@ Chart.register(...registerables);
           </div>
         </div>
       </div>
+        </div>
+      </main>
     </div>
   `,
   styles: [`
-    .detail-page { padding: 40px; background: #f8fafc; min-height: 100vh; animation: fadeIn 0.4s ease-out; }
+    .app-layout { display: flex; min-height: 100vh; background-color: #f8fafc; font-family: 'Outfit', sans-serif; }
+    .main-content { flex: 1; padding-left: 250px; display: flex; flex-direction: column; overflow-y: auto; }
+    
+    .detail-page { padding: 40px; animation: fadeIn 0.4s ease-out; max-width: 1400px; width: 100%; margin: 0 auto; }
     .breadcrumb { margin-bottom: 24px; }
-    .breadcrumb a { color: #64748b; font-weight: 700; text-decoration: none; }
+    .breadcrumb a { color: #64748b; font-weight: 700; text-decoration: none; font-size: 14px; }
+    .breadcrumb a:hover { color: #008766; }
 
     .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px; }
     .section { background: white; border-radius: 24px; padding: 32px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02); }

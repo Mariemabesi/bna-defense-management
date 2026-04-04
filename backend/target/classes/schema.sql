@@ -1,0 +1,1 @@
+ALTER TABLE roles DROP CONSTRAINT IF EXISTS roles_name_check;

@@ -6,7 +6,18 @@ export interface UserDTO {
     id: number;
     username: string;
     email: string;
+    enabled: boolean;
     roles: string[];
+}
+
+export interface AuditLogDTO {
+    id: number;
+    userEmail: string;
+    action: string;
+    entityName: string;
+    entityId: number;
+    details: string;
+    timestamp: string;
 }
 
 @Injectable({
@@ -19,5 +30,9 @@ export class AdminService {
 
     getUsers(): Observable<UserDTO[]> {
         return this.http.get<UserDTO[]>(`${this.apiUrl}/users`);
+    }
+
+    getLogs(): Observable<AuditLogDTO[]> {
+        return this.http.get<AuditLogDTO[]>(`${this.apiUrl}/logs`);
     }
 }

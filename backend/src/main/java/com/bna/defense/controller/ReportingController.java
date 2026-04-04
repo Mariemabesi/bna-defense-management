@@ -13,6 +13,15 @@ public class ReportingController {
     @Autowired
     private ReportingService reportingService;
 
+    @GetMapping("/dashboard/export/pdf")
+    public ResponseEntity<byte[]> exportDashboardStatsPdf() {
+        byte[] data = reportingService.exportDashboardStatsToPdf();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.attachment().filename("analyse_statistique_globale.pdf").build());
+        return new ResponseEntity<>(data, headers, HttpStatus.OK);
+    }
+
     @GetMapping("/frais/export/pdf")
     public ResponseEntity<byte[]> exportPdf(
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate start,

@@ -4,14 +4,16 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from './services/auth.service';
 import { Router } from '@angular/router';
 import { ConfirmDialogService, ConfirmDialogConfig } from './services/confirm-dialog.service';
-import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
+import { ConfirmDialogComponent } from './components/shared/confirm-dialog/confirm-dialog.component';
+import { ChatWidgetComponent } from './components/chat-widget/chat-widget.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, CommonModule, ConfirmDialogComponent],
+  imports: [RouterOutlet, RouterLink, CommonModule, ConfirmDialogComponent, ChatWidgetComponent],
   template: `
     <router-outlet></router-outlet>
+    <app-chat-widget *ngIf="authService.isLoggedIn()"></app-chat-widget>
     <app-confirm-dialog 
       [show]="showConfirm" 
       [title]="confirmConfig.title || 'Confirmation'"

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 export interface Notification {
@@ -19,9 +20,27 @@ export class NotificationService {
 
     private nextId = 1;
 
-    constructor() {
-        // Some initial demo notifications
+    private chatUnreadCountSubject = new BehaviorSubject<number>(0);
+    public chatUnreadCount$ = this.chatUnreadCountSubject.asObservable();
+
+    constructor(private http: HttpClient) {
+        // Initial check and periodic polling
         this.addNotification('Système initialisé', 'ROLE_ADMIN', 'SUCCESS');
+        setInterval(() => this.updateChatUnreadCount(), 10000);
+    }
+
+    private updateChatUnreadCount() {
+        // We need auth token, if not logged in this might fail.
+        // Assuming interceptor handles it.
+        this.http.get<{count: number}>('http://localhost:8082/api/chat/unread-count')
+            .subscribe({
+                next: (res: {count: number}) => this.chatUnreadCountSubject.next(res.count),
+                error: () => {} // Silent ignore if not logged in
+            });
+    }
+
+    setChatUnreadCount(count: number) {
+        this.chatUnreadCountSubject.next(count);
     }
 
     addNotification(message: string, role: string, type: 'INFO' | 'SUCCESS' | 'WARNING' = 'INFO') {

@@ -27,4 +27,16 @@ export class ReportingService {
     getDashboardStats(): Observable<DashboardStats> {
         return this.http.get<DashboardStats>(`${this.apiUrl}/dashboard-stats`);
     }
+
+    exportDashboardPdf(): void {
+        this.http.get(`${this.apiUrl}/dashboard/export/pdf`, { responseType: 'blob' })
+            .subscribe(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'analyse_statistique_globale.pdf';
+                link.click();
+                window.URL.revokeObjectURL(url);
+            });
+    }
 }

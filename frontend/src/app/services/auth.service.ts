@@ -70,6 +70,20 @@ export class AuthService {
         }));
     }
 
+    uploadAvatar(file: File): Observable<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.http.post<any>(`${this.apiUrl}/upload-avatar`, formData).pipe(map(res => {
+            const currentUser = this.currentUserValue;
+            if (currentUser && res.message) {
+                const updatedUser = { ...currentUser, avatarUrl: res.message };
+                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                this.currentUserSubject.next(updatedUser);
+            }
+            return res;
+        }));
+    }
+
     logout() {
         localStorage.removeItem('currentUser');
         this.currentUserSubject.next(null);

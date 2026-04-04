@@ -6,21 +6,20 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="modal-overlay" (click)="onCancel.emit()">
+    <div class="modal-overlay" *ngIf="show" (click)="onCancel()">
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
+          <div class="warning-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </div>
           <h3>{{ title }}</h3>
-          <button class="btn-close" (click)="onCancel.emit()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
         </div>
         <div class="modal-body">
           <p class="message">{{ message }}</p>
-          <p class="warning">Cette opération est irréversible.</p>
         </div>
         <div class="modal-footer">
-          <button class="btn-secondary" (click)="onCancel.emit()">{{ cancelLabel }}</button>
-          <button class="btn-primary" (click)="onConfirm.emit()">{{ confirmLabel }}</button>
+          <button class="btn-secondary" (click)="onCancel()">{{ cancelLabel }}</button>
+          <button class="btn-primary" (click)="onConfirm()">{{ confirmLabel }}</button>
         </div>
       </div>
     </div>
@@ -29,57 +28,64 @@ import { CommonModule } from '@angular/common';
     .modal-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center; z-index: 3000;
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
       animation: fadeIn 0.2s ease-out;
     }
     .modal-content {
-      background: white; border-radius: 24px; width: 100%; max-width: 440px;
+      background: white; border-radius: 24px; width: 100%; max-width: 440px; padding: 32px;
       box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden;
       animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     .modal-header {
-      padding: 24px 32px; border-bottom: 1px solid #f1f5f9;
-      display: flex; justify-content: space-between; align-items: center;
+      display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 24px;
     }
-    .modal-header h3 { margin: 0; font-size: 18px; font-weight: 800; color: #1e293b; }
-    .btn-close {
-      background: none; border: none; cursor: pointer; color: #94a3b8;
-      display: flex; align-items: center; justify-content: center; transition: 0.2s;
+    .warning-icon {
+      width: 64px; height: 64px; background: #fff7ed; color: #f97316;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
     }
-    .btn-close:hover { color: #ef4444; transform: rotate(90deg); }
+    .modal-header h3 { margin: 0; font-size: 20px; font-weight: 800; color: #1e293b; }
     
-    .modal-body { padding: 32px; text-align: center; }
-    .message { font-size: 15px; color: #334155; font-weight: 600; line-height: 1.6; margin-bottom: 8px; }
-    .warning { font-size: 13px; color: #ef4444; font-weight: 700; margin: 0; }
+    .modal-body { text-align: center; margin-bottom: 32px; }
+    .message { font-size: 16px; color: #64748b; font-weight: 500; line-height: 1.6; }
     
-    .modal-footer { padding: 24px 32px; background: #f8fafc; display: flex; gap: 12px; }
+    .modal-footer { display: flex; gap: 12px; }
     .btn-primary { 
-      flex: 1; background: #008766; color: white; border: none; padding: 12px; 
-      border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;
+      flex: 1; background: #008766; color: white; border: none; padding: 14px; 
+      border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.2s;
     }
     .btn-secondary { 
-      flex: 1; background: white; color: #64748b; border: 1.5px solid #e2e8f0; 
-      padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;
+      flex: 1; background: #f1f5f9; color: #64748b; border: none; 
+      padding: 14px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.2s;
     }
-    .btn-primary:hover { background: #007256; transform: translateY(-2px); }
-    .btn-secondary:hover { background: #f1f5f9; border-color: #cbd5e1; transform: translateY(-2px); }
+    .btn-primary:hover { background: #007256; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 135, 102, 0.3); }
+    .btn-secondary:hover { background: #e2e8f0; transform: translateY(-2px); }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
   `]
 })
 export class ConfirmDialogComponent {
+  @Input() show: boolean = false;
   @Input() title: string = 'Confirmation';
   @Input() message: string = 'Êtes-vous sûr de vouloir effectuer cette action ?';
   @Input() confirmLabel: string = 'Confirmer';
   @Input() cancelLabel: string = 'Annuler';
 
-  @Output() onConfirm = new EventEmitter<void>();
-  @Output() onCancel = new EventEmitter<void>();
+  @Output() confirmed = new EventEmitter<void>();
+  @Output() cancelled = new EventEmitter<void>();
+
+  onConfirm() {
+    this.confirmed.emit();
+  }
+
+  onCancel() {
+    this.cancelled.emit();
+  }
 
   @HostListener('window:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') this.onCancel.emit();
-    if (event.key === 'Enter') this.onConfirm.emit();
+    if (!this.show) return;
+    if (event.key === 'Escape') this.onCancel();
+    if (event.key === 'Enter') this.onConfirm();
   }
 }

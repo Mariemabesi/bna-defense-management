@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ReferentielService, Auxiliaire, Tribunal } from '../../services/referentiel.service';
+import { ChatService } from '../../services/chat.service';
 import { AuthService } from '../../services/auth.service';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
@@ -38,12 +39,14 @@ import { NotificationService } from '../../services/notification.service';
           </div>
 
           <div class="filter-tabs">
-            <button class="tab" [class.active]="activeTab === 'ALL'" (click)="activeTab = 'ALL'">Tous les Partenaires</button>
+            <button class="tab" [class.active]="activeTab === 'ALL'" (click)="activeTab = 'ALL'">Partenaires</button>
             <button class="tab" [class.active]="activeTab === 'AVOCAT'" (click)="activeTab = 'AVOCAT'">Avocats</button>
             <button class="tab" [class.active]="activeTab === 'HUISSIER'" (click)="activeTab = 'HUISSIER'">Huissiers</button>
             <button class="tab" [class.active]="activeTab === 'EXPERT'" (click)="activeTab = 'EXPERT'">Experts</button>
-            <button class="tab" [class.active]="activeTab === 'AUTRE'" (click)="activeTab = 'AUTRE'">Autres(Notaire...)</button>
-            <button class="tab" [class.active]="activeTab === 'TRIBUNAL'" (click)="activeTab = 'TRIBUNAL'">Tribunaux</button>
+            <button class="tab" [class.active]="activeTab === 'ACTEURS_JURIDIQUES'" (click)="activeTab = 'ACTEURS_JURIDIQUES'">Acteures Juridiques (Notaires...)</button>
+            <button class="tab" [class.active]="activeTab === 'TRIBUNAL'" (click)="activeTab = 'TRIBUNAL'">Jurisdictions</button>
+            <button class="tab" [class.active]="activeTab === 'PROCEDURES'" (click)="activeTab = 'PROCEDURES'">Procédures</button>
+            <button class="tab" [class.active]="activeTab === 'FINANCE'" (click)="activeTab = 'FINANCE'">Finance & Fiscalité</button>
           </div>
 
           <div class="aux-grid" *ngIf="activeTab !== 'TRIBUNAL'">
@@ -67,46 +70,80 @@ import { NotificationService } from '../../services/notification.service';
                 </div>
               </div>
               <div class="aux-footer">
-                <button class="btn-text" [routerLink]="['/avocat-detail', aux.id]">Consulter Profil</button>
-                <button class="btn-icon-only" [routerLink]="['/avocat-detail', aux.id]">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                  <button class="btn-text" [routerLink]="['/avocat-detail', aux.id]">Profil</button>
+                  <button class="btn-text highlight" (click)="contacter(aux)">Contacter</button>
+                </div>
+                <button class="btn-icon-only" (click)="contacter(aux)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 </button>
               </div>
 
             </div>
           </div>
 
-          <!-- TRIBUNAL VIEW -->
+          <!-- TRIBUNAL / JURISDICTION VIEW -->
           <div class="tribunal-container" *ngIf="activeTab === 'TRIBUNAL'">
             <div class="card-list">
-              <div class="table-card" *ngFor="let t of tribunaux">
+              <div class="table-card" *ngFor="let t of filteredTribunaux()">
                 <div class="table-card-header">
-                  <div class="court-icon">🏛️</div>
+                  <div class="court-icon">{{ getCourtIcon(t.type) }}</div>
                   <div class="court-info">
                     <h3>{{ t.nom }}</h3>
-                    <span class="region-badge">{{ t.region }}</span>
-                  </div>
-                  <div class="actions" *ngIf="canManageReferentiel()">
-                     <button class="btn-icon circle" (click)="editTribunal(t)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
-                     <button class="btn-icon circle delete" (click)="confirmDeleteTribunal(t)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                    <div class="badge-group">
+                      <span class="region-badge">{{ t.region }}</span>
+                      <span class="type-badge" *ngIf="t.type">{{ t.type }}</span>
+                    </div>
                   </div>
                 </div>
                 <div class="table-card-body">
+                  <div class="info-row" *ngIf="t.chefParquet">
+                    <strong>Chef du Parquet:</strong> <span>{{ t.chefParquet }}</span>
+                  </div>
+                  <div class="info-row" *ngIf="t.arbitreDesigne">
+                    <strong>Arbitre désigné:</strong> <span>{{ t.arbitreDesigne }}</span>
+                  </div>
                   <div class="info-row">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                     <span>{{ t.adresse || 'Adresse non renseignée' }}</span>
                   </div>
-                  <div class="info-row">
+                  <div class="info-row" *ngIf="t.telephone">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                    <span>{{ t.telephone || '—' }}</span>
+                    <span>{{ t.telephone }}</span>
+                  </div>
+                  
+                  <div class="card-actions-bottom" *ngIf="canManageReferentiel()">
+                     <button class="btn-action-outline" (click)="editTribunal(t)">
+                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                       Modifier
+                     </button>
+                     <button class="btn-action-outline delete" (click)="confirmDeleteTribunal(t)">
+                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                       Supprimer
+                     </button>
                   </div>
                 </div>
               </div>
             </div>
-            <div *ngIf="tribunaux.length === 0" class="empty-state">
-               <p>Aucun tribunal enregistré dans le référentiel.</p>
-               <button class="btn-primary" *ngIf="canManageReferentiel()" (click)="showTribunalModal = true">Ajouter le premier tribunal</button>
-               <p *ngIf="!canManageReferentiel()" class="subtitle">Contactez l'administrateur pour ajouter des tribunaux.</p>
+          </div>
+
+          <!-- PROCEDURES & FINANCE LISTS -->
+          <div class="generic-list-container" *ngIf="['PROCEDURES', 'FINANCE'].includes(activeTab)">
+            <div class="referentiel-info-card">
+              <h3>Référentiels {{ activeTab === 'PROCEDURES' ? 'Procéduraux' : 'Financiers' }}</h3>
+              <p>Liste des nomenclatures et grilles tarifaires officielles.</p>
+              
+              <div class="list-grid">
+                <div class="list-item-pro" *ngFor="let item of genericList">
+                   <div class="item-main">
+                     <span class="item-name">{{ item.nom }}</span>
+                     <span class="item-desc" *ngIf="item.description">{{ item.description }}</span>
+                   </div>
+                   <div class="item-value" *ngIf="item.valeur || item.taux">
+                     {{ item.valeur ? (item.valeur | number:'1.2-2') + ' TND' : (item.taux + '%') }}
+                   </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -263,6 +300,8 @@ import { NotificationService } from '../../services/notification.service';
     .aux-footer { display: flex; justify-content: space-between; align-items: center; }
     .btn-text { background: none; border: none; color: var(--bna-green); font-weight: 700; font-size: 14px; cursor: pointer; padding: 0; transition: 0.2s; border-bottom: 2px solid transparent; }
     .btn-text:hover { color: var(--bna-green-dark); border-bottom-color: var(--bna-green-dark); }
+    .btn-text.highlight { color: #2563eb; }
+    .btn-text.highlight:hover { border-bottom-color: #2563eb; }
     
     .btn-icon-only { width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: white; color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; }
     .btn-icon-only:hover { background: var(--bna-green-light); color: var(--bna-green); border-color: var(--bna-green); transform: rotate(15deg); }
@@ -336,6 +375,55 @@ import { NotificationService } from '../../services/notification.service';
       .actions-group { width: 100%; }
       .btn-primary, .btn-secondary { flex: 1; justify-content: center; }
     }
+
+    /* TRIBUNAL & GENERIC LIST STYLING */
+    .card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 24px; }
+    .table-card { 
+      background: white; border-radius: 20px; padding: 24px; border: 1px solid #f1f5f9;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: 0.3s;
+    }
+    .table-card:hover { transform: translateY(-5px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1); border-color: var(--bna-green-light); }
+    
+    .table-card-header { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; position: relative; }
+    .court-icon { 
+      width: 48px; height: 48px; border-radius: 12px; background: #f8fafc; 
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+      border: 1px solid #f1f5f9;
+    }
+    .court-info h3 { margin: 0 0 8px 0; font-size: 18px; font-weight: 800; color: var(--text-main); line-height: 1.2; }
+    .badge-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .region-badge { padding: 4px 10px; background: #eff6ff; color: #2563eb; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .type-badge { padding: 4px 10px; background: #f1f5f9; color: #64748b; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    
+    .table-card-body { border-top: 1px solid #f8fafc; padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .info-row { display: flex; gap: 10px; font-size: 14px; color: var(--text-main); align-items: center; }
+    .info-row svg { color: var(--text-muted); flex-shrink: 0; }
+    .info-row strong { font-weight: 700; color: var(--text-muted); min-width: 110px; }
+
+    .actions { position: absolute; top: 0; right: 0; }
+    
+    .card-actions-bottom { display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
+    .btn-action-outline {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white;
+      color: var(--text-muted); font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s;
+    }
+    .btn-action-outline:hover { background: var(--bna-green-light); color: var(--bna-green); border-color: var(--bna-green); }
+    .btn-action-outline.delete:hover { background: #fef2f2; color: #ef4444; border-color: #fca5a5; }
+
+    /* GENERIC LISTS */
+    .referentiel-info-card { background: white; border-radius: 24px; padding: 40px; border: 1px solid #f1f5f9; }
+    .referentiel-info-card h3 { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
+    .list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 16px; margin-top: 32px; }
+    .list-item-pro { 
+      padding: 20px 24px; background: #f8fafc; border-radius: 16px; display: flex; 
+      justify-content: space-between; align-items: center; border: 1px solid transparent; transition: 0.2s;
+    }
+    .list-item-pro:hover { border-color: var(--bna-green); background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .item-main { display: flex; flex-direction: column; gap: 4px; }
+    .item-name { font-weight: 700; color: var(--text-main); font-size: 15px; }
+    .item-desc { font-size: 13px; color: var(--text-muted); }
+    .item-value { font-weight: 800; color: var(--bna-green); font-size: 16px; }
   `]
 })
 export class ReferentielComponent implements OnInit {
@@ -344,6 +432,7 @@ export class ReferentielComponent implements OnInit {
   activeTab: string = 'ALL';
   showModal = false;
   showTribunalModal = false;
+  genericList: any[] = [];
 
   newAux: Omit<Auxiliaire, 'id' | 'createdAt'> = {
     nom: '',
@@ -351,7 +440,8 @@ export class ReferentielComponent implements OnInit {
     adresse: '',
     telephone: '',
     email: '',
-    specialite: ''
+    specialite: '',
+    numOrdreNational: ''
   };
 
   newTribunal: any = { nom: '', region: '', adresse: '', telephone: '' };
@@ -359,6 +449,7 @@ export class ReferentielComponent implements OnInit {
 
   constructor(
     private referentielService: ReferentielService,
+    private chatService: ChatService,
     private authService: AuthService,
     private notificationService: NotificationService,
     private route: ActivatedRoute
@@ -375,7 +466,19 @@ export class ReferentielComponent implements OnInit {
           case 'avocats': this.activeTab = 'AVOCAT'; break;
           case 'experts': this.activeTab = 'EXPERT'; break;
           case 'huissiers': this.activeTab = 'HUISSIER'; break;
+          case 'notaires': this.activeTab = 'ACTEURS_JURIDIQUES'; break;
+          case 'mandataires': this.activeTab = 'ACTEURS_JURIDIQUES'; break;
+          case 'greffiers': this.activeTab = 'ACTEURS_JURIDIQUES'; break;
           case 'tribunaux': this.activeTab = 'TRIBUNAL'; break;
+          case 'cours-appel': this.activeTab = 'TRIBUNAL'; break;
+          case 'cours-cassation': this.activeTab = 'TRIBUNAL'; break;
+          case 'parquets': this.activeTab = 'TRIBUNAL'; break;
+          case 'arbitrage': this.activeTab = 'TRIBUNAL'; break;
+          case 'types-proceduraux': this.activeTab = 'PROCEDURES'; this.loadGeneric('types-proceduraux'); break;
+          case 'natures-affaires': this.activeTab = 'PROCEDURES'; this.loadGeneric('natures-affaires'); break;
+          case 'phases-procedurales': this.activeTab = 'PROCEDURES'; this.loadGeneric('phases-procedurales'); break;
+          case 'baremes': this.activeTab = 'FINANCE'; this.loadGeneric('baremes'); break;
+          case 'tva-timbres': this.activeTab = 'FINANCE'; this.loadGeneric('tva-timbres'); break;
           default: this.activeTab = 'ALL';
         }
       }
@@ -401,10 +504,14 @@ export class ReferentielComponent implements OnInit {
 
   filteredAuxiliaires(): Auxiliaire[] {
     if (this.activeTab === 'ALL') return this.auxiliaires;
-    if (this.activeTab === 'AUTRE') {
+    if (this.activeTab === 'ACTEURS_JURIDIQUES') {
         return this.auxiliaires.filter(a => ['NOTAIRE', 'MANDATAIRE', 'GREFFIER'].includes(a.type));
     }
-    return this.auxiliaires.filter(a => a.type === this.activeTab);
+    const standardTypes = ['AVOCAT', 'HUISSIER', 'EXPERT'];
+    if (standardTypes.includes(this.activeTab)) {
+        return this.auxiliaires.filter(a => a.type === this.activeTab);
+    }
+    return [];
   }
 
   getInitials(nom: string): string {
@@ -488,6 +595,24 @@ export class ReferentielComponent implements OnInit {
     }
   }
 
+  loadGeneric(type: string) {
+    this.referentielService.getItems(type).subscribe(data => this.genericList = data);
+  }
+
+  filteredTribunaux() {
+    return this.tribunaux;
+  }
+
+  getCourtIcon(type: string | undefined): string {
+    switch (type) {
+      case 'APPEL': return '⚖️';
+      case 'CASSATION': return '🏛️';
+      case 'PARQUET': return '🛡️';
+      case 'ARBITRAGE': return '🤝';
+      default: return '🏛️';
+    }
+  }
+
   exportAnnuaire(): void {
     if (this.auxiliaires.length === 0) {
       this.notificationService.addNotification("Aucun auxiliaire à exporter.", "ROLE_REFERENTIEL", "WARNING");
@@ -506,7 +631,7 @@ export class ReferentielComponent implements OnInit {
     const csvContent = [
       headers.join(';'),
       ...rows.map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(';'))
-    ].join('\\n');
+    ].join('\n');
 
     const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -514,5 +639,22 @@ export class ReferentielComponent implements OnInit {
     link.download = 'annuaire_auxiliaires.csv';
     link.click();
     this.notificationService.addNotification("Annuaire exporté (CSV).", "ROLE_REFERENTIEL", "SUCCESS");
+  }
+
+  contacter(aux: Auxiliaire) {
+    this.chatService.findByAuxiliaire(aux.id!).subscribe({
+        next: (user: any) => {
+            if (window && (window as any).openChatWith) {
+                (window as any).openChatWith(user.id, user.fullName);
+            }
+        },
+        error: () => {
+            this.notificationService.addNotification(
+                `Cet auxiliaire (${aux.nom}) n'est pas encore inscrit à la messagerie directe.`, 
+                'ROLE_REFERENTIEL', 
+                'WARNING'
+            );
+        }
+    });
   }
 }

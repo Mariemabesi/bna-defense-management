@@ -12,9 +12,13 @@ public class CourCassation extends BaseEntity {
 
     private String referenceArret;
 
-    private String resultat;
-
+    private String resultat; // Cassé / Rejeté / Renvoyé
     private String notes;
+    private java.time.LocalDate dateArret;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dossier_id")
+    private com.bna.defense.entity.Dossier dossier;
 
     public CourCassation() {}
 
@@ -26,4 +30,8 @@ public class CourCassation extends BaseEntity {
     public void setResultat(String resultat) { this.resultat = resultat; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public java.time.LocalDate getDateArret() { return dateArret; }
+    public void setDateArret(java.time.LocalDate d) { this.dateArret = d; }
+    public com.bna.defense.entity.Dossier getDossier() { return dossier; }
+    public void setDossier(com.bna.defense.entity.Dossier d) { this.dossier = d; }
 }

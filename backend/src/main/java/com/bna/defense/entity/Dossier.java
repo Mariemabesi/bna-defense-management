@@ -20,6 +20,14 @@ public class Dossier extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Priorite priorite;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "nature_affaire_id")
+    private com.bna.defense.entity.referentiel.NatureAffaire natureAffaire;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_phase_id")
+    private com.bna.defense.entity.referentiel.PhaseProcedure currentPhase;
+
     private BigDecimal budgetProvisionne;
 
     @Column(columnDefinition = "TEXT")
@@ -51,6 +59,8 @@ public class Dossier extends BaseEntity {
     private BigDecimal depassement;
 
     private String verdict;
+    
+    private String riskScore; // FAIBLE, MOYEN, ÉLEVÉ (Feature 2)
 
     @OneToMany(mappedBy = "dossier", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -84,6 +94,8 @@ public class Dossier extends BaseEntity {
     public void setAffaires(List<Affaire> affaires) { this.affaires = affaires; }
     public String getVerdict() { return verdict; }
     public void setVerdict(String verdict) { this.verdict = verdict; }
+    public String getRiskScore() { return riskScore; }
+    public void setRiskScore(String riskScore) { this.riskScore = riskScore; }
     public String getClientName() { return clientName; }
     public void setClientName(String clientName) { this.clientName = clientName; }
     public BigDecimal getMontantLitige() { return montantLitige; }
@@ -97,6 +109,11 @@ public class Dossier extends BaseEntity {
     public BigDecimal getFraisReel() { return fraisReel; }
     public void setFraisReel(BigDecimal fraisReel) { this.fraisReel = fraisReel; }
     public BigDecimal getDepassement() { return depassement; }
+    
+    public com.bna.defense.entity.referentiel.NatureAffaire getNatureAffaire() { return natureAffaire; }
+    public void setNatureAffaire(com.bna.defense.entity.referentiel.NatureAffaire n) { this.natureAffaire = n; }
+    public com.bna.defense.entity.referentiel.PhaseProcedure getCurrentPhase() { return currentPhase; }
+    public void setCurrentPhase(com.bna.defense.entity.referentiel.PhaseProcedure p) { this.currentPhase = p; }
 
     public enum Priorite { HAUTE, MOYENNE, BASSE }
     public enum StatutDossier { OUVERT, EN_COURS, CLOTURE, A_PRE_VALIDER, A_VALIDER }

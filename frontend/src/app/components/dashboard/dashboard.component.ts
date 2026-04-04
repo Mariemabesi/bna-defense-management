@@ -5,7 +5,7 @@ import { DossierService } from '../../services/dossier.service';
 import { FraisService } from '../../services/frais.service';
 import { ReportingService, DashboardStats } from '../../services/reporting.service';
 import { AuthService } from '../../services/auth.service';
-import { AdminService } from '../../services/admin.service';
+import { AdminService, UserDTO, AuditLogDTO } from '../../services/admin.service';
 import { NotificationService } from '../../services/notification.service';
 import { Dossier } from '../../models/dossier.model';
 import { SidebarComponent } from '../sidebar/sidebar.component';
@@ -29,6 +29,12 @@ Chart.register(...registerables);
         <app-header title="Espace {{ getSpaceName() }}"></app-header>
 
         <div class="dashboard-content">
+          <div class="global-report-btn-container mb-6">
+            <button class="btn-primary generate-pdf-btn" (click)="exportGlobalStats()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              Générer Analyse Globale (PDF)
+            </button>
+          </div>
       <!-- ============================================== -->
       <!-- DASHBOARD CHARGE DE DOSSIER -->
       <!-- ============================================== -->
@@ -287,63 +293,69 @@ Chart.register(...registerables);
         </section>
 
         <section class="recent-section">
-          <div class="section-header">
-            <div class="title-with-badge">
-              <h2>Gestion des Utilisateurs & Sécurité</h2>
-              <span class="badge info">Live Audit</span>
-            </div>
-            <div class="actions-group">
-              <button class="btn-secondary" (click)="onAction('Audit Logs', 'All')">Exporter Logs</button>
-              <button class="btn-primary">Nouveau Utilisateur</button>
-            </div>
-          </div>
-          
-          <div class="admin-grid">
-            <div class="admin-card">
-              <div class="admin-card-header">
-                <span class="admin-card-title">Utilisateurs Récents</span>
-                <span class="badge info">{{ users.length }} Utilisateurs</span>
-              </div>
-              <div class="user-list">
-                <div class="user-row" *ngFor="let user of users?.slice(0, 5)">
-                  <div class="user-info-brief">
-                    <div class="user-avatar-small">{{ user.username.substring(0,2).toUpperCase() }}</div>
-                    <div class="user-name-role">
-                      <span class="user-name">{{ user.username }}</span>
-                      <span class="user-role-tag">{{ user.roles[0].replace('ROLE_', '') }}</span>
-                    </div>
-                  </div>
-                  <button class="btn-action" (click)="onAction('Modifier Utilisateur', user.username)">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                  </button>
+          <div class="monitor-grid">
+            <!-- USER & GROUP MANAGEMENT -->
+            <div class="monitor-card card-users">
+              <div class="monitor-header">
+                <div>
+                  <h3>Utilisateurs & Groupes</h3>
+                  <p>Gestion des accès et affectations</p>
                 </div>
+                <button class="btn-primary-sm" routerLink="/admin/users">Gérer</button>
               </div>
-              <button class="btn-secondary" style="margin-top: 8px;">Voir tous les utilisateurs</button>
+              <div class="monitor-body">
+                <div class="user-item-pro" *ngFor="let user of users.slice(0, 4)">
+                  <div class="user-avatar-text">{{ user.username.substring(0,1).toUpperCase() }}</div>
+                  <div class="user-details">
+                    <span class="user-name">{{ user.username }}</span>
+                    <span class="user-group-link">{{ user.roles && user.roles.length > 0 ? user.roles[0].replace('ROLE_', '') : 'Utilisateur' }} • {{ user.enabled ? 'Actif' : 'Suspendu' }}</span>
+                  </div>
+                  <div class="user-status-dot" [class.active]="user.enabled"></div>
+                </div>
+                <div *ngIf="users.length === 0" class="empty-mini">Chargement utilisateurs...</div>
+              </div>
             </div>
 
-            <div class="admin-card">
-              <div class="admin-card-header">
-                <span class="admin-card-title">Santé & Mémoire Système</span>
+            <!-- AUDIT LOGS -->
+            <div class="monitor-card card-logs">
+              <div class="monitor-header">
+                <div>
+                  <h3>Journal d'Audit</h3>
+                  <p>Suivi des actions en temps réel</p>
+                </div>
+                <button class="btn-secondary-sm" routerLink="/admin/logs">Voir tout</button>
               </div>
-              <div class="system-stats" style="display: flex; flex-direction: column; gap: 16px;">
-                <div class="stat-item" style="display: flex; flex-direction: column; gap: 8px;">
-                  <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
-                    <span>Utilisation Base de Données</span>
-                    <span>14%</span>
-                  </div>
-                  <div style="height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden;">
-                    <div style="width: 14%; height: 100%; background: var(--bna-green);"></div>
-                  </div>
-                </div>
-                <div class="stat-item" style="display: flex; flex-direction: column; gap: 8px;">
-                  <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;">
-                    <span>Stockage Documents</span>
-                    <span>42%</span>
-                  </div>
-                  <div style="height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden;">
-                    <div style="width: 42%; height: 100%; background: #3b82f6;"></div>
+              <div class="monitor-body logs-scroll">
+                <div class="log-entry" *ngFor="let log of auditLogs.slice(0, 6)">
+                  <div class="log-time">{{ log.timestamp | date:'HH:mm' }}</div>
+                  <div class="log-content">
+                    <span class="log-user">{{ log.userEmail }}</span>
+                    <span class="log-action">{{ log.action }}</span>
+                    <span class="log-target">{{ log.entityName }} #{{ log.entityId }}</span>
                   </div>
                 </div>
+                <div *ngIf="auditLogs.length === 0" class="empty-mini">Aucun log récent.</div>
+              </div>
+            </div>
+
+            <!-- SYSTEM HEALTH -->
+            <div class="monitor-card card-system">
+              <div class="monitor-header">
+                 <h3>Santé du Système</h3>
+              </div>
+              <div class="system-stats-pro">
+                 <div class="sys-item">
+                   <div class="sys-label"><span>Base de Données</span> <span>14%</span></div>
+                   <div class="sys-bar"><div class="fill green" style="width: 14%"></div></div>
+                 </div>
+                 <div class="sys-item">
+                   <div class="sys-label"><span>Stockage Documents</span> <span>42%</span></div>
+                   <div class="sys-bar"><div class="fill blue" style="width: 42%"></div></div>
+                 </div>
+                 <div class="sys-item">
+                   <div class="sys-label"><span>Charge Serveur (Port 8082)</span> <span>Stable</span></div>
+                   <div class="sys-bar"><div class="fill green" style="width: 10%"></div></div>
+                 </div>
               </div>
             </div>
           </div>
@@ -561,9 +573,10 @@ Chart.register(...registerables);
     /* PREMIUM MAIN CONTENT */
     .main-content {
       flex: 1;
-      margin-left: var(--sidebar-width);
+      padding-left: var(--sidebar-width);
       display: flex;
       flex-direction: column;
+      min-width: 0;
     }
 
     .user-info {
@@ -799,14 +812,39 @@ Chart.register(...registerables);
     .user-name { font-size: 15px; font-weight: 700; color: #1e293b; }
     .user-role-tag { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
 
-    .loading-shimmer { animation: shimmer 1.5s infinite; background: linear-gradient(90deg, #f0f4f8 25%, #e2e8f0 50%, #f0f4f8 75%); background-size: 200% 100%; }
-    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-    .table-loading { display: flex; align-items: center; gap: 12px; padding: 40px 24px; color: var(--text-muted); font-size: 15px; }
-    .spinner-sm { width: 24px; height: 24px; border: 3px solid var(--bna-green-light); border-top: 3px solid var(--bna-green); border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .table-empty { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 60px 24px; color: var(--text-muted); text-align: center; }
-    .link { color: var(--bna-green); font-weight: 700; text-decoration: none; }
-    .link:hover { text-decoration: underline; }
+    /* MONITORING TOOLS */
+    .monitor-grid { display: grid; grid-template-columns: 1.2fr 1.5fr 1fr; gap: 24px; }
+    .monitor-card { background: white; border-radius: 24px; padding: 24px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.02); display: flex; flex-direction: column; }
+    .monitor-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    .monitor-header h3 { font-size: 17px; font-weight: 800; color: #1e293b; margin: 0; }
+    .monitor-header p { font-size: 12px; color: #64748b; margin: 4px 0 0 0; }
+    
+    .btn-primary-sm { padding: 6px 12px; background: var(--bna-green-light); color: var(--bna-green); border: none; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+    .btn-secondary-sm { padding: 6px 12px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+
+    .user-item-pro { display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 12px; margin-bottom: 8px; }
+    .user-avatar-text { width: 36px; height: 36px; border-radius: 10px; background: white; color: var(--bna-green); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 1px solid #f1f5f9; }
+    .user-details { flex: 1; display: flex; flex-direction: column; }
+    .user-name { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .user-group-link { font-size: 11px; color: #64748b; }
+    .user-status-dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; }
+    .user-status-dot.active { background: #10b981; }
+
+    .logs-scroll { max-height: 300px; overflow-y: auto; }
+    .log-entry { padding: 8px 0; border-bottom: 1px solid #f8fafc; display: flex; gap: 12px; font-size: 12px; }
+    .log-time { color: #94a3b8; font-weight: 700; min-width: 40px; }
+    .log-user { font-weight: 800; color: var(--bna-green); }
+    .log-action { color: #1e293b; }
+    .log-target { color: #64748b; font-style: italic; }
+
+    .sys-item { margin-bottom: 16px; }
+    .sys-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 6px; }
+    .sys-bar { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+    .sys-bar .fill { height: 100%; border-radius: 3px; }
+    .sys-bar .fill.green { background: #10b981; }
+    .sys-bar .fill.blue { background: #3b82f6; }
+
+    .empty-mini { padding: 20px; text-align: center; color: #94a3b8; font-size: 13px; }
 
     /* MODAL STYLES */
     .modal-overlay {
@@ -900,7 +938,28 @@ Chart.register(...registerables);
       .stat-card { padding: 20px; }
       .stat-value { font-size: 24px; }
     }
-    `]
+      .global-report-btn-container {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .generate-pdf-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      font-weight: 800;
+      box-shadow: 0 4px 15px rgba(0, 135, 102, 0.2);
+    }
+    .loading-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid white;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  `]
 })
 export class DashboardComponent implements OnInit {
   dossierChart: any;
@@ -928,6 +987,9 @@ export class DashboardComponent implements OnInit {
   auxiliaires: Auxiliaire[] = [];
   auxiliairesLoading = false;
 
+  auditLogs: AuditLogDTO[] = [];
+  logsLoading = false;
+
   constructor(
     private dossierService: DossierService,
     private fraisService: FraisService,
@@ -948,6 +1010,7 @@ export class DashboardComponent implements OnInit {
       this.loadDossiers();
       if (this.isAdmin()) {
         this.loadUsers();
+        this.loadLogs();
       }
       if (this.isAdmin() || this.isChargeDossier()) {
         this.loadAuxiliaires();
@@ -979,6 +1042,17 @@ export class DashboardComponent implements OnInit {
         console.error('Error loading users', err);
         this.usersLoading = false;
       }
+    });
+  }
+
+  loadLogs(): void {
+    this.logsLoading = true;
+    this.adminService.getLogs().subscribe({
+      next: (data) => {
+        this.auditLogs = data;
+        this.logsLoading = false;
+      },
+      error: () => this.logsLoading = false
     });
   }
 
@@ -1250,6 +1324,23 @@ export class DashboardComponent implements OnInit {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  exportGlobalStats(): void {
+    const btn = document.querySelector('.generate-pdf-btn') as HTMLButtonElement;
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner"></span> Génération...';
+    }
+    
+    this.reportingService.exportDashboardPdf();
+    
+    setTimeout(() => {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Générer Analyse Globale (PDF)';
+      }
+    }, 2000);
   }
 
   getSpaceName(): string {

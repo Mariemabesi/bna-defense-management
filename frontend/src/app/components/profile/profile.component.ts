@@ -3,113 +3,156 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 
+import { SidebarComponent } from '../sidebar/sidebar.component';
+import { HeaderComponent } from '../header/header.component';
+
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SidebarComponent, HeaderComponent],
   template: `
-    <div class="profile-container p-6">
-      <div class="header mb-6 profile-header-flex">
-        <div class="user-avatar-large shadow-lg">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!currentUser?.fullName && !profileData.firstName">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span *ngIf="currentUser?.fullName || profileData.firstName">{{ getInitials() }}</span>
-        </div>
-        <div>
-          <h1 class="text-2xl font-bold text-slate-800">Mon Profil</h1>
-          <p class="text-sm text-slate-500">Gérez vos informations personnelles et votre sécurité.</p>
-        </div>
-      </div>
+    <div class="app-layout">
+      <app-sidebar></app-sidebar>
 
-      <div class="cards-container">
-        <!-- Informations personnelles -->
-        <div class="card">
-          <div class="card-header">
-            <h3>Données Personnelles</h3>
-          </div>
-          <div class="card-body">
-            <div *ngIf="profileSuccess" class="success-msg">{{ profileSuccess }}</div>
-            <div *ngIf="profileError" class="error-msg">{{ profileError }}</div>
-            
-            <div class="form-group">
-              <label>Nom d'utilisateur</label>
-              <input type="text" [value]="currentUser?.username" class="form-control" disabled>
-            </div>
-            
-            <div class="form-row">
-              <div class="form-group flex-1">
-                <label>Nom</label>
-                <input type="text" [(ngModel)]="profileData.lastName" class="form-control" placeholder="Votre nom">
-              </div>
-              <div class="form-group flex-1">
-                <label>Prénom</label>
-                <input type="text" [(ngModel)]="profileData.firstName" class="form-control" placeholder="Votre prénom">
-              </div>
-            </div>
+      <main class="main-content">
+        <app-header title="Mon Profil"></app-header>
 
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" [(ngModel)]="profileData.email" class="form-control" placeholder="votre.email@bna.dz">
-            </div>
-
-            <div class="actions mt-4">
-              <button class="btn-primary" [disabled]="isSavingProfile" (click)="saveProfile()">
-                {{ isSavingProfile ? 'Enregistrement...' : 'Enregistrer les modifications' }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mot de passe -->
-        <div class="card">
-          <div class="card-header">
-            <h3>Mot de passe</h3>
-          </div>
-          <div class="card-body">
-            <div *ngIf="passwordSuccess" class="success-msg">{{ passwordSuccess }}</div>
-            <div *ngIf="passwordError" class="error-msg">{{ passwordError }}</div>
-
-            <div class="form-group">
-              <label>Ancien mot de passe</label>
-              <input type="password" [(ngModel)]="passwordData.oldPassword" class="form-control" placeholder="••••••••">
-            </div>
-
-            <div class="form-group">
-              <label>Nouveau mot de passe</label>
-              <input type="password" [(ngModel)]="passwordData.newPassword" (input)="onPasswordInput($event)" class="form-control" placeholder="••••••••">
-              <div class="password-strength-meter" *ngIf="passwordData.newPassword">
-                <div class="strength-bar" 
-                     [style.width.%]="(passwordStrength/4)*100" 
-                     [class.weak]="passwordStrength <= 1" 
-                     [class.good]="passwordStrength === 2" 
-                     [class.strong]="passwordStrength >= 3">
+        <div class="dashboard-content">
+          <div class="profile-container">
+            <div class="header mb-6 profile-header-flex">
+              <div class="user-avatar-large shadow-lg hover-trigger" (click)="fileInput.click()">
+                <img *ngIf="currentUser?.avatarUrl" [src]="getFullUrl(currentUser.avatarUrl)" class="avatar-img">
+                <div *ngIf="!currentUser?.avatarUrl" class="avatar-placeholder">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!currentUser?.fullName && !profileData.firstName">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span *ngIf="currentUser?.fullName || profileData.firstName">{{ getInitials() }}</span>
                 </div>
-                <span class="strength-label">{{ passwordStrengthLabel }}</span>
+                <div class="upload-overlay">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                </div>
+              </div>
+              <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" style="display: none">
+              <div>
+                <h1 class="text-2xl font-bold text-slate-800">Paramètres du Compte</h1>
+                <p class="text-sm text-slate-500">Gérez vos informations personnelles et votre sécurité.</p>
               </div>
             </div>
 
-            <div class="form-group">
-              <label>Confirmer le nouveau mot de passe</label>
-              <input type="password" [(ngModel)]="passwordData.confirmPassword" class="form-control" placeholder="••••••••">
-            </div>
+            <div class="cards-container">
+              <!-- Informations personnelles -->
+              <div class="card">
+                <div class="card-header">
+                  <h3>Données Personnelles</h3>
+                </div>
+                <div class="card-body">
+                  <div *ngIf="profileSuccess" class="success-msg">{{ profileSuccess }}</div>
+                  <div *ngIf="profileError" class="error-msg">{{ profileError }}</div>
+                  
+                  <div class="form-group">
+                    <label>Nom d'utilisateur</label>
+                    <input type="text" [value]="currentUser?.username" class="form-control" disabled>
+                  </div>
+                  
+                  <div class="form-row">
+                    <div class="form-group flex-1">
+                      <label>Nom</label>
+                      <input type="text" [(ngModel)]="profileData.lastName" class="form-control" placeholder="Votre nom">
+                    </div>
+                    <div class="form-group flex-1">
+                      <label>Prénom</label>
+                      <input type="text" [(ngModel)]="profileData.firstName" class="form-control" placeholder="Votre prénom">
+                    </div>
+                  </div>
 
-            <div class="actions mt-4">
-              <button class="btn-primary" [disabled]="isChangingPassword" (click)="changePassword()">
-                {{ isChangingPassword ? 'Enregistrement...' : 'Changer le mot de passe' }}
-              </button>
+                  <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" [(ngModel)]="profileData.email" class="form-control" placeholder="votre.email@bna.dz">
+                  </div>
+
+                  <div class="actions mt-4">
+                    <button class="btn-primary" [disabled]="isSavingProfile" (click)="saveProfile()">
+                      {{ isSavingProfile ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mot de passe -->
+              <div class="card">
+                <div class="card-header">
+                  <h3>Mot de passe</h3>
+                </div>
+                <div class="card-body">
+                  <div *ngIf="passwordSuccess" class="success-msg">{{ passwordSuccess }}</div>
+                  <div *ngIf="passwordError" class="error-msg">{{ passwordError }}</div>
+
+                  <div class="form-group">
+                    <label>Ancien mot de passe</label>
+                    <input type="password" [(ngModel)]="passwordData.oldPassword" class="form-control" placeholder="••••••••">
+                  </div>
+
+                  <div class="form-group">
+                    <label>Nouveau mot de passe</label>
+                    <input type="password" [(ngModel)]="passwordData.newPassword" (input)="onPasswordInput($event)" class="form-control" placeholder="••••••••">
+                    <div class="password-strength-meter" *ngIf="passwordData.newPassword">
+                      <div class="strength-bar" 
+                           [style.width.%]="(passwordStrength/4)*100" 
+                           [class.weak]="passwordStrength <= 1" 
+                           [class.good]="passwordStrength === 2" 
+                           [class.strong]="passwordStrength >= 3">
+                      </div>
+                      <span class="strength-label">{{ passwordStrengthLabel }}</span>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Confirmer le nouveau mot de passe</label>
+                    <input type="password" [(ngModel)]="passwordData.confirmPassword" class="form-control" placeholder="••••••••">
+                  </div>
+
+                  <div class="actions mt-4">
+                    <button class="btn-primary" [disabled]="isChangingPassword" (click)="changePassword()">
+                      {{ isChangingPassword ? 'Enregistrement...' : 'Changer le mot de passe' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   `,
   styles: [`
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+      background-color: #f0f4f8;
+    }
+
+    .main-content {
+      flex: 1;
+      padding-left: 250px; /* MATCH SIDEBAR WIDTH */
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .dashboard-content {
+      padding: 32px;
+      flex: 1;
+    }
+
     .profile-container {
       max-width: 1000px;
       margin: 0 auto;
-      padding: 32px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-content { margin-left: 0; width: 100%; }
+      .dashboard-content { padding: 16px; }
     }
     .profile-header-flex {
       display: flex;
@@ -128,6 +171,35 @@ import { AuthService } from '../../services/auth.service';
       font-weight: 800;
       font-size: 32px;
       box-shadow: 0 10px 25px rgba(0,135,102,0.3);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .avatar-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .user-avatar-large:hover .upload-overlay {
+      opacity: 1;
     }
     .header h1 {
       margin: 0;
@@ -394,5 +466,26 @@ export class ProfileComponent implements OnInit {
       return this.currentUser.username.substring(0, 2).toUpperCase();
     }
     return 'U';
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.authService.uploadAvatar(file).subscribe({
+        next: (res) => {
+          this.profileSuccess = 'Photo de profil mise à jour.';
+          this.currentUser = this.authService.currentUserValue;
+          setTimeout(() => this.profileSuccess = '', 3000);
+        },
+        error: (err) => {
+          this.profileError = 'Erreur lors de l’upload de l’image.';
+        }
+      });
+    }
+  }
+
+  getFullUrl(path: string): string {
+    if (!path) return '';
+    return `http://localhost:8082${path}`;
   }
 }

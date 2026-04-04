@@ -9,12 +9,13 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
 import { AIService, AIAnalysis } from '../../services/ai.service';
 import { AffaireService, Affaire } from '../../services/affaire.service';
-import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
+import { SearchService } from '../../services/search.service';
 
 @Component({
   selector: 'app-mes-dossiers',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, SidebarComponent, HeaderComponent, ConfirmDialogComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, SidebarComponent, HeaderComponent],
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
@@ -225,14 +226,8 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
               </div>
             </div>
           </div>
-          <app-confirm-dialog 
-            [show]="showConfirm" 
-            [message]="confirmMessage" 
-            (confirmed)="executeAction()" 
-            (cancelled)="showConfirm = false">
-          </app-confirm-dialog>
-      </main>
-    </div>
+       </main>
+     </div>
   `,
   styles: [`
     :host {
@@ -601,13 +596,32 @@ export class MesDossiersComponent implements OnInit {
     private aiService: AIService,
     private affaireService: AffaireService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private searchService: SearchService,
+    private confirmService: ConfirmDialogService
   ) {
     this.currentUser = this.authService.currentUserValue;
   }
 
   ngOnInit(): void {
     this.loadDossiers();
+
+    this.searchService.searchQuery$.subscribe((query: string) => {
+      if (query && query.trim().length > 1) {
+        this.loading = true;
+        this.dossierService.searchDossiers(query).subscribe({
+          next: (results) => {
+            this.dossiers = results;
+            this.totalElements = results.length;
+            this.totalPages = 1;
+            this.loading = false;
+          },
+          error: () => this.loading = false
+        });
+      } else {
+        this.loadDossiers();
+      }
+    });
 
     this.route.queryParams.subscribe(params => {
       if (params['highlight']) {
@@ -713,17 +727,14 @@ export class MesDossiersComponent implements OnInit {
   }
 
   onAction(type: string, ref: string): void {
-    this.confirmMessage = `Êtes-vous sûr de vouloir ${type.toLowerCase()} le dossier ${ref} ?`;
-    this.pendingAction = () => this.handleActionExecution(type, ref);
-    this.showConfirm = true;
-  }
-
-  executeAction(): void {
-    if (this.pendingAction) {
-      this.pendingAction();
-      this.pendingAction = null;
-      this.showConfirm = false;
-    }
+    this.confirmService.open({
+        title: 'Confirmation',
+        message: 'Êtes-vous sûr de vouloir effectuer cette action ?'
+    }).subscribe(ok => {
+        if (ok) {
+            this.handleActionExecution(type, ref);
+        }
+    });
   }
 
   private handleActionExecution(type: string, ref: string): void {

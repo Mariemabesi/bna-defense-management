@@ -35,6 +35,11 @@ public class User extends BaseEntity {
 
     private String resetToken;
     private LocalDateTime tokenExpiry;
+    private String avatarUrl;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "auxiliaire_id")
+    private Auxiliaire linkedAuxiliaire;
 
     public User() {}
 
@@ -62,4 +67,8 @@ public class User extends BaseEntity {
     public void setResetToken(String resetToken) { this.resetToken = resetToken; }
     public LocalDateTime getTokenExpiry() { return tokenExpiry; }
     public void setTokenExpiry(LocalDateTime tokenExpiry) { this.tokenExpiry = tokenExpiry; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public Auxiliaire getLinkedAuxiliaire() { return linkedAuxiliaire; }
+    public void setLinkedAuxiliaire(Auxiliaire linkedAuxiliaire) { this.linkedAuxiliaire = linkedAuxiliaire; }
 }

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
@@ -56,25 +57,36 @@ public class UserController {
     }
 
     @PostMapping("/users")
-    public ResponseEntity<?> register(@RequestBody com.bna.defense.controller.AuthController.SignupRequest signUpRequest) {
+    public ResponseEntity<?> register(@jakarta.validation.Valid @RequestBody com.bna.defense.controller.AuthController.SignupRequest signUpRequest) {
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity.badRequest().body("Error: Username is already taken!");
+            return ResponseEntity.badRequest().body(new com.bna.defense.controller.AuthController.MessageResponse("Erreur : Ce nom d'utilisateur est déjà pris !"));
         }
+        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+            return ResponseEntity.badRequest().body(new com.bna.defense.controller.AuthController.MessageResponse("Erreur : Cet e-mail est déjà utilisé !"));
+        }
+
         User user = new User();
         user.setUsername(signUpRequest.getUsername());
         user.setEmail(signUpRequest.getEmail());
-        user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+        user.setPassword(signUpRequest.getPassword());
         user.setEnabled(true);
+        user.setFullName(signUpRequest.getFullName() != null ? signUpRequest.getFullName() : signUpRequest.getUsername());
         
-        java.util.Set<com.bna.defense.entity.Role> roles = new java.util.HashSet<>();
-        signUpRequest.getRole().forEach(role -> {
-            com.bna.defense.entity.Role adminRole = roleRepository.findByName(com.bna.defense.entity.Role.RoleType.valueOf(role))
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(adminRole);
-        });
-        user.setRoles(roles);
-        userRepository.save(user);
-        return ResponseEntity.ok("User registered successfully!");
+        java.util.Set<com.bna.defense.entity.Role.RoleType> strRoles = signUpRequest.getRole() != null
+                ? signUpRequest.getRole().stream().map(r -> {
+                    try { return com.bna.defense.entity.Role.RoleType.valueOf(r); }
+                    catch (Exception e) { return com.bna.defense.entity.Role.RoleType.ROLE_CHARGE_DOSSIER; }
+                }).collect(Collectors.toSet())
+                : new java.util.HashSet<>();
+
+        if (signUpRequest.getAuxiliaireId() != null) {
+             com.bna.defense.entity.Auxiliaire aux = new com.bna.defense.entity.Auxiliaire();
+             aux.setId(signUpRequest.getAuxiliaireId());
+             user.setLinkedAuxiliaire(aux);
+        }
+
+        userService.createUser(user, strRoles);
+        return ResponseEntity.ok(new com.bna.defense.controller.AuthController.MessageResponse("Utilisateur enregistré avec succès !"));
     }
 
     public static record UserDTO(Long id, String username, String email, boolean enabled, List<String> roles) {

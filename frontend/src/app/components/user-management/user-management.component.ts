@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
 import { FormsModule } from '@angular/forms';
+import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 
 interface UserDTO {
   id: number;
@@ -39,18 +40,26 @@ interface UserDTO {
               <thead>
                 <tr>
                   <th>Utilisateur</th>
-                  <th>Email</th>
-                  <th>Roles</th>
+                  <th>Roles & Responsabilités</th>
                   <th>Statut</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let u of users">
-                  <td><strong>{{ u.username }}</strong></td>
-                  <td>{{ u.email }}</td>
                   <td>
-                    <span class="role-badge" *ngFor="let r of u.roles">{{ r.replace('ROLE_', '') }}</span>
+                    <div class="user-cell">
+                      <div class="user-avatar">{{ u.username[0].toUpperCase() }}</div>
+                      <div class="user-info">
+                        <h4>{{ u.username }}</h4>
+                        <p>{{ u.email }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                      <span class="role-badge" *ngFor="let r of u.roles">{{ r.replace('ROLE_', '').replace('_', ' ') }}</span>
+                    </div>
                   </td>
                   <td>
                     <span class="badge" [ngClass]="u.enabled ? 'active' : 'suspended'">
@@ -59,7 +68,7 @@ interface UserDTO {
                   </td>
                   <td>
                     <button class="btn-toggle" [ngClass]="u.enabled ? 'suspend' : 'restore'" (click)="toggleUserStatus(u)">
-                      {{ u.enabled ? 'Suspendre' : 'Restaurer' }}
+                      {{ u.enabled ? "Suspendre l'accès" : "Réactiver l'accès" }}
                     </button>
                   </td>
                 </tr>
@@ -94,7 +103,18 @@ interface UserDTO {
                             <option value="ROLE_CHARGE_DOSSIER">Chargé de Dossier</option>
                             <option value="ROLE_PRE_VALIDATEUR">Pré-validateur</option>
                             <option value="ROLE_VALIDATEUR">Validateur</option>
+                            <option value="ROLE_SUPER_VALIDATEUR">Super Validateur</option>
+                            <option value="ROLE_AVOCAT">Avocat</option>
                             <option value="ROLE_ADMIN">Administrateur</option>
+                        </select>
+                    </div>
+
+                    <!-- Lawyer selection if ROLE_AVOCAT is selected -->
+                    <div class="form-group" *ngIf="isAvocatSelected()">
+                        <label>Associer à un profil Avocat</label>
+                        <select [(ngModel)]="newAccount.auxiliaireId" name="auxiliaireId" class="form-control" required>
+                            <option [ngValue]="null">Choisir un avocat...</option>
+                            <option *ngFor="let a of auxiliaires" [ngValue]="a.id">{{ a.nom }} ({{ a.specialite }})</option>
                         </select>
                     </div>
                     <div class="modal-footer">
@@ -102,51 +122,115 @@ interface UserDTO {
                         <button type="submit" class="btn-primary">Créer le compte</button>
                     </div>
                 </form>
-             </div>
-        </div>
-      </main>
-    </div>
+              </div>
+         </div>
+       </main>
+     </div>
   `,
   styles: [`
-    .app-layout { display: flex; min-height: 100vh; background-color: #f8fafc; }
-    .main-content { flex: 1; margin-left: 280px; }
-    .dashboard-content { padding: 40px; }
-    .table-container { background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; margin-top: 32px; }
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; padding: 20px; background: #f1f5f9; font-size: 13px; color: #64748b; }
-    td { padding: 20px; border-bottom: 1px solid #f1f5f9; }
-    .role-badge { padding: 4px 8px; background: #e2e8f0; border-radius: 6px; font-size: 11px; font-weight: 700; margin-right: 4px; }
-    .badge { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; }
-    .badge.active { background: #f0fdf4; color: #16a34a; }
-    .badge.suspended { background: #fef2f2; color: #dc2626; }
-    .btn-toggle { padding: 8px 16px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
-    .btn-toggle.suspend { background: #fee2e2; color: #dc2626; }
-    .btn-toggle.restore { background: #dcfce7; color: #16a34a; }
-    .btn-toggle:hover { opacity: 0.8; transform: translateY(-2px); }
+    :host {
+      --bna-green: #008766;
+      --bna-green-light: rgba(0, 135, 102, 0.08);
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+    }
+
+    .app-layout { display: flex; min-height: 100vh; background-color: #f8fafc; font-family: 'Outfit', sans-serif; }
+    .main-content { flex: 1; padding-left: 250px; display: flex; flex-direction: column; }
+    .dashboard-content { padding: 40px; max-width: 1400px; width: 100%; margin: 0 auto; }
     
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-    .modal-content { background: white; border-radius: 24px; width: 500px; padding: 0; overflow: hidden; }
-    .modal-header { padding: 24px 32px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
-    form { padding: 32px; display: flex; flex-direction: column; gap: 20px; }
+    .page-header-actions { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+    .page-header-actions h2 { font-size: 32px; font-weight: 800; color: var(--text-main); margin: 0; }
+    .subtitle { color: var(--text-muted); font-size: 16px; margin: 4px 0 0 0; }
+
+    .table-container { 
+      background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+      overflow: hidden; border: 1px solid rgba(0,0,0,0.04);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 24px; background: #f8fafc; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #f1f5f9; }
+    td { padding: 24px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    
+    .user-cell { display: flex; align-items: center; gap: 16px; }
+    .user-avatar { width: 44px; height: 44px; border-radius: 14px; background: var(--bna-green-light); color: var(--bna-green); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; }
+    .user-info h4 { margin: 0; color: var(--text-main); font-size: 16px; font-weight: 700; }
+    .user-info p { margin: 0; color: var(--text-muted); font-size: 13px; }
+
+    .role-badge { 
+      padding: 6px 12px; background: #f1f5f9; border-radius: 8px; font-size: 11px; 
+      font-weight: 800; color: #475569; margin-right: 6px; text-transform: uppercase;
+    }
+    
+    .badge { padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; }
+    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+    .badge.active { background: #f0fdf4; color: #16a34a; }
+    .badge.active::before { background: #16a34a; }
+    .badge.suspended { background: #fef2f2; color: #dc2626; }
+    .badge.suspended::before { background: #dc2626; }
+
+    .btn-toggle { 
+      padding: 10px 20px; border-radius: 12px; border: none; font-weight: 700; 
+      cursor: pointer; transition: all 0.2s; font-size: 14px;
+    }
+    .btn-toggle.suspend { background: #fef2f2; color: #dc2626; }
+    .btn-toggle.restore { background: #f0fdf4; color: #16a34a; }
+    .btn-toggle:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+    .btn-primary { 
+      background: linear-gradient(135deg, var(--bna-green) 0%, #10b981 100%); 
+      color: white; border: none; padding: 12px 28px; border-radius: 14px; 
+      font-weight: 800; cursor: pointer; transition: all 0.3s; 
+      box-shadow: 0 10px 20px -5px rgba(0, 135, 102, 0.3);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 25px -5px rgba(0, 135, 102, 0.4); }
+
+    .modal-overlay { 
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+      background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); 
+      z-index: 2000; display: flex; align-items: center; justify-content: center; 
+    }
+    .modal-content { background: white; border-radius: 32px; width: 100%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; }
+    .modal-header { padding: 32px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
+    .modal-header h2 { margin: 0; font-size: 24px; font-weight: 800; color: var(--text-main); }
+    .btn-close { width: 40px; height: 40px; border-radius: 50%; border: none; background: #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--text-muted); transition: 0.2s; }
+    .btn-close:hover { background: #fee2e2; color: #ef4444; }
+
+    form { padding: 32px; display: flex; flex-direction: column; gap: 24px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
-    .form-control { padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; }
-    .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; }
-    .btn-primary { background: #008766; color: white; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
-    .btn-secondary { background: #f1f5f9; color: #64748b; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
-    .btn-close { font-size: 24px; border: none; background: none; cursor: pointer; }
-    .page-header-actions { display: flex; justify-content: space-between; align-items: flex-start; }
-    .subtitle { color: #64748b; margin-top: 4px; }
+    .form-group label { font-size: 13px; font-weight: 700; color: var(--role-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-control { padding: 14px; border-radius: 12px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; }
+    .form-control:focus { outline: none; border-color: var(--bna-green); box-shadow: 0 0 0 4px var(--bna-green-light); }
+    
+    .modal-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 24px 32px; background: #fafafa; border-top: 1px solid #f1f5f9; }
+    .btn-secondary { background: white; border: 2px solid #e2e8f0; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; color: var(--text-main); }
+
+    @media (max-width: 1024px) {
+      .main-content { padding-left: 0; }
+    }
   `]
 })
 export class UserManagementComponent implements OnInit {
   users: UserDTO[] = [];
+  auxiliaires: any[] = [];
   showSignupModal = false;
-  newAccount = { username: '', email: '', password: '', role: ['ROLE_CHARGE_DOSSIER'] };
-
-  constructor(private http: HttpClient) {}
+  newAccount = { username: '', email: '', password: '', role: ['ROLE_CHARGE_DOSSIER'], auxiliaireId: null as number | null };
+  
+  constructor(private http: HttpClient, private confirmService: ConfirmDialogService) {}
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadAuxiliaires();
+  }
+
+  loadAuxiliaires() {
+    this.http.get<any[]>('http://localhost:8082/api/referentiel/auxiliaires').subscribe(data => {
+        this.auxiliaires = data.filter(a => a.type === 'AVOCAT');
+    });
+  }
+
+  isAvocatSelected(): boolean {
+    return this.newAccount.role.includes('ROLE_AVOCAT');
   }
 
   loadUsers() {
@@ -154,7 +238,16 @@ export class UserManagementComponent implements OnInit {
   }
 
   toggleUserStatus(u: UserDTO) {
-    this.http.put(`http://localhost:8082/api/admin/users/${u.id}/toggle-status`, {}).subscribe(() => this.loadUsers());
+    this.confirmService.open({
+        title: 'Confirmation de modification',
+        message: 'Êtes-vous sûr de vouloir effectuer cette action ?'
+    }).subscribe(ok => {
+        if (ok) {
+            this.http.put(`http://localhost:8082/api/admin/users/${u.id}/toggle-status`, {}).subscribe(() => {
+                this.loadUsers();
+            });
+        }
+    });
   }
 
   onSignup() {

@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
+import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-mes-frais',
@@ -107,7 +108,8 @@ export class MesFraisComponent implements OnInit {
   constructor(
     private fraisService: FraisService,
     private authService: AuthService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private confirmService: ConfirmDialogService
   ) { }
 
   ngOnInit(): void {
@@ -134,28 +136,49 @@ export class MesFraisComponent implements OnInit {
 
   onPreValidate(f: Frais): void {
     if (!f.id) return;
-    this.fraisService.preValidate(f.id).subscribe(() => {
-      const ref = f.affaire?.dossier?.reference || f.referenceDossier || 'N/A';
-      this.notificationService.addNotification(`Frais pour ${ref} pré-validés.`, "ROLE_PRE_VALIDATEUR", "SUCCESS");
-      this.loadFrais();
+    this.confirmService.open({
+        title: 'Confirmation',
+        message: 'Êtes-vous sûr de vouloir effectuer cette action ?'
+    }).subscribe(ok => {
+        if (ok) {
+            this.fraisService.preValidate(f.id!).subscribe(() => {
+                const ref = f.affaire?.dossier?.reference || f.referenceDossier || 'N/A';
+                this.notificationService.addNotification(`Frais pour ${ref} pré-validés.`, "ROLE_PRE_VALIDATEUR", "SUCCESS");
+                this.loadFrais();
+            });
+        }
     });
   }
 
   onValidate(f: Frais): void {
     if (!f.id) return;
-    this.fraisService.validate(f.id).subscribe(() => {
-      const ref = f.affaire?.dossier?.reference || f.referenceDossier || 'N/A';
-      this.notificationService.addNotification(`Frais pour ${ref} validés définitivement.`, "ROLE_VALIDATEUR", "SUCCESS");
-      this.loadFrais();
+    this.confirmService.open({
+        title: 'Confirmation',
+        message: 'Êtes-vous sûr de vouloir effectuer cette action ?'
+    }).subscribe(ok => {
+        if (ok) {
+            this.fraisService.validate(f.id!).subscribe(() => {
+                const ref = f.affaire?.dossier?.reference || f.referenceDossier || 'N/A';
+                this.notificationService.addNotification(`Frais pour ${ref} validés définitivement.`, "ROLE_VALIDATEUR", "SUCCESS");
+                this.loadFrais();
+            });
+        }
     });
   }
 
   onSendToTreasury(f: Frais): void {
     if (!f.id) return;
-    this.fraisService.sendToTreasury(f.id).subscribe(() => {
-      const ref = f.affaire?.dossier?.reference || f.referenceDossier || 'N/A';
-      this.notificationService.addNotification(`Frais pour ${ref} envoyés à la trésorerie.`, "ROLE_VALIDATEUR", "INFO");
-      this.loadFrais();
+    this.confirmService.open({
+        title: 'Confirmation',
+        message: 'Êtes-vous sûr de vouloir effectuer cette action ?'
+    }).subscribe(ok => {
+        if (ok) {
+            this.fraisService.sendToTreasury(f.id!).subscribe(() => {
+                const ref = f.affaire?.dossier?.reference || f.referenceDossier || 'N/A';
+                this.notificationService.addNotification(`Frais pour ${ref} envoyés à la trésorerie.`, "ROLE_VALIDATEUR", "INFO");
+                this.loadFrais();
+            });
+        }
     });
   }
 

@@ -9,7 +9,7 @@ import { SidebarService } from '../../services/sidebar.service';
 import { SearchService } from '../../services/search.service';
 import { DossierService } from '../../services/dossier.service';
 import { Dossier } from '../../models/dossier.model';
-import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 
 @Component({
   selector: 'app-header',
@@ -25,8 +25,8 @@ import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.se
         </button>
         <div class="header-search">
            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-           <input type="text" placeholder="Rechercher par référence, titre ou avocat..." 
-                  [(ngModel)]="searchQuery" (input)="onSearch($event)">
+           <input type="text" placeholder="Rechercher par référence, titre ou nom d'avocat..." 
+                  [(ngModel)]="searchQuery" (input)="onSearch($event)" (keyup.enter)="goToDossiers()">
            
            <!-- SEARCH RESULTS DROPDOWN -->
            <div class="search-results-dropdown" *ngIf="searchResults.length > 0 && searchQuery">
@@ -56,6 +56,14 @@ import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.se
             <button class="btn-clear" (click)="clearAll()">Tout effacer</button>
           </div>
           <div class="notif-list">
+            <!-- CHAT NOTIFICATION ITEM -->
+            <div class="notif-item unread chat-notif" *ngIf="chatUnreadCount > 0">
+               <div class="notif-body">
+                 <p class="notif-msg">Vous avez {{ chatUnreadCount }} nouveaux messages chat</p>
+                 <span class="notif-time">Maintenant</span>
+               </div>
+            </div>
+            
             <div class="notif-item" *ngFor="let n of roleNotifications" [class.unread]="!n.isRead" (click)="markRead(n)">
               <div class="notif-body">
                 <p class="notif-msg">{{ n.message }}</p>
@@ -70,7 +78,10 @@ import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.se
         
         <div class="profile-container">
           <div class="user-profile" (click)="toggleProfileMenu()">
-            <div class="user-avatar">{{ getInitials() }}</div>
+            <div class="user-avatar">
+              <img *ngIf="currentUser?.avatarUrl" [src]="getFullUrl(currentUser.avatarUrl)" class="header-avatar-img">
+              <span *ngIf="!currentUser?.avatarUrl">{{ getInitials() }}</span>
+            </div>
             <div class="user-info">
               <span class="user-email">{{ currentUser?.username }}</span>
               <span class="user-role">{{ formatRoles() }}</span>
@@ -153,8 +164,8 @@ import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.se
 
     .search-results-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 16px; margin-top: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); z-index: 1000; max-height: 400px; overflow-y: auto; padding: 8px; }
 
-    .search-result-item { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
-    .search-result-item:hover { background: #f8fafc; }
+    .notif-item.chat-notif { border-left: 4px solid #008766; background: rgba(0, 135, 102, 0.03); }
+    .notif-item { display: flex; align-items: center; gap: 16px; padding: 12px 16px; transition: all 0.2s; cursor: pointer; }
     .result-ref { font-size: 13px; font-weight: 800; color: #008766; }
     .result-status { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; }
     .result-status.ouvert { background: #dcfce7; color: #166534; }
@@ -163,7 +174,12 @@ import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.se
     .user-info { text-align: right; }
     .user-email { display: block; font-size: 14px; font-weight: 700; color: #1e293b; }
     .user-role { display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
-    .user-avatar { width: 44px; height: 44px; background: linear-gradient(135deg, #008766 0%, #10b981 100%); border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; box-shadow: 0 4px 10px rgba(0,135,102,0.2); }
+    .user-avatar { width: 44px; height: 44px; background: linear-gradient(135deg, #008766 0%, #10b981 100%); border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; box-shadow: 0 4px 10px rgba(0,135,102,0.2); overflow: hidden; }
+    .header-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
     .notif-dropdown { position: absolute; top: 80px; right: 48px; width: 320px; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); z-index: 100; overflow: hidden; }
     .notif-header { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
@@ -219,6 +235,7 @@ export class HeaderComponent implements OnInit {
   @Input() title: string = 'Action en Défense';
   currentUser: any;
   unreadCount = 0;
+  chatUnreadCount = 0;
   showDropdown = false;
   roleNotifications: Notification[] = [];
 
@@ -240,7 +257,9 @@ export class HeaderComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.currentUser = this.authService.currentUserValue;
+    this.authService.currentUser.subscribe(user => {
+      this.currentUser = user;
+    });
 
     this.notificationService.notifications$.subscribe(all => {
       if (this.currentUser && this.currentUser.roles) {
@@ -248,17 +267,23 @@ export class HeaderComponent implements OnInit {
           n.role === 'ROLE_ADMIN' ||
           this.currentUser.roles.includes(n.role)
         );
-        this.unreadCount = this.roleNotifications.filter(n => !n.isRead).length;
+        this.updateTotalUnread();
       }
+    });
+
+    this.notificationService.chatUnreadCount$.subscribe(count => {
+      this.chatUnreadCount = count;
+      this.updateTotalUnread();
     });
 
     this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged()
     ).subscribe(query => {
+      this.searchService.updateSearch(query);
       if (query.trim().length > 1) {
         this.dossierService.searchDossiers(query).subscribe(results => {
-          this.searchResults = results;
+          this.searchResults = results.slice(0, 5); // Limit to 5 results
         });
       } else {
         this.searchResults = [];
@@ -269,14 +294,27 @@ export class HeaderComponent implements OnInit {
   onSearch(event: any) {
     const query = event.target.value;
     this.searchQuery = query;
-    this.searchService.updateSearch(query);
     this.searchSubject.next(query);
   }
 
+  updateTotalUnread() {
+    const systemUnread = this.roleNotifications.filter(n => !n.isRead).length;
+    this.unreadCount = systemUnread + (this.chatUnreadCount || 0);
+  }
+
   viewDossier(dossier: Dossier) {
+    const ref = dossier.reference;
     this.searchQuery = '';
     this.searchResults = [];
-    this.sidebarService.navigate('/mes-dossiers', { highlight: dossier.reference }); 
+    this.searchService.updateSearch(''); // Reset global search to show specific dossier
+    this.router.navigate(['/mes-dossiers'], { queryParams: { highlight: ref } });
+  }
+
+  goToDossiers() {
+    if (this.searchQuery.trim().length > 1) {
+      this.router.navigate(['/mes-dossiers']);
+      this.searchResults = [];
+    }
   }
 
   toggleNotifications() {
@@ -320,6 +358,7 @@ export class HeaderComponent implements OnInit {
   }
 
   logout() {
+    this.showProfileDropdown = false;
     this.confirmDialog.open({
       title: 'Déconnexion',
       message: 'Êtes-vous sûr de vouloir vous déconnecter ?',
@@ -331,5 +370,10 @@ export class HeaderComponent implements OnInit {
         this.router.navigate(['/login']);
       }
     });
+  }
+
+  getFullUrl(path: string): string {
+    if (!path) return '';
+    return `http://localhost:8082${path}`;
   }
 }

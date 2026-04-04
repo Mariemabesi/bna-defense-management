@@ -13,6 +13,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+import com.bna.defense.entity.User;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -52,13 +58,52 @@ public class AuthController {
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
 
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+        String avatarUrl = user != null ? user.getAvatarUrl() : null;
+
         return ResponseEntity.ok(new JwtResponse(jwt,
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getEmail(),
                 roles,
+                avatarUrl,
                 userDetails.getGroupeId(),
                 userDetails.isSuperValidateur()));
+    }
+
+    @PostMapping("/upload-avatar")
+    public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(401).body(new MessageResponse("Pas authentifié"));
+            }
+            String username = authentication.getName();
+            User user = userRepository.findByUsername(username).orElseThrow();
+
+            String extension = "";
+            String originalFileName = file.getOriginalFilename();
+            if (originalFileName != null && originalFileName.contains(".")) {
+                extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+            }
+            
+            String fileName = UUID.randomUUID().toString() + extension;
+            Path uploadPath = Paths.get("uploads/avatars");
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+            
+            Path filePath = uploadPath.resolve(fileName);
+            Files.write(filePath, file.getBytes());
+
+            String avatarUrl = "/uploads/avatars/" + fileName;
+            user.setAvatarUrl(avatarUrl);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(new MessageResponse(avatarUrl));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Erreur pendant l'upload : " + e.getMessage()));
+        }
     }
 
     @PostMapping("/register")
@@ -98,6 +143,12 @@ public class AuthController {
                         catch (Exception e) { return com.bna.defense.entity.Role.RoleType.ROLE_CHARGE_DOSSIER; }
                     }).collect(Collectors.toSet())
                     : new java.util.HashSet<>();
+
+            if (signUpRequest.getAuxiliaireId() != null) {
+                com.bna.defense.entity.Auxiliaire aux = new com.bna.defense.entity.Auxiliaire();
+                aux.setId(signUpRequest.getAuxiliaireId());
+                user.setLinkedAuxiliaire(aux);
+            }
 
             userService.createUser(user, strRoles);
             return ResponseEntity.ok(new MessageResponse("Utilisateur enregistré avec succès !"));
@@ -217,6 +268,7 @@ public class AuthController {
         private String username; private String email; private String password;
         private List<String> role; private String fullName; private Long groupeId;
         private Boolean isSuperValidateur = false;
+        private Long auxiliaireId;
         public SignupRequest() {}
         public String getUsername() { return username; }
         public void setUsername(String u) { this.username = u; }
@@ -232,6 +284,8 @@ public class AuthController {
         public void setGroupeId(Long g) { this.groupeId = g; }
         public Boolean getIsSuperValidateur() { return isSuperValidateur; }
         public void setIsSuperValidateur(Boolean s) { this.isSuperValidateur = s; }
+        public Long getAuxiliaireId() { return auxiliaireId; }
+        public void setAuxiliaireId(Long a) { this.auxiliaireId = a; }
     }
 
     public static class TokenResponse {
@@ -251,10 +305,10 @@ public class AuthController {
 
     public static class JwtResponse {
         private String token; private Long id; private String username; private String email; private List<String> roles;
-        private Long groupeId; private boolean isSuperValidateur;
-        public JwtResponse(String t, Long i, String u, String e, List<String> r, Long g, boolean s) {
+        private Long groupeId; private boolean isSuperValidateur; private String avatarUrl;
+        public JwtResponse(String t, Long i, String u, String e, List<String> r, String a, Long g, boolean s) {
             this.token = t; this.id = i; this.username = u; this.email = e; this.roles = r;
-            this.groupeId = g; this.isSuperValidateur = s;
+            this.avatarUrl = a; this.groupeId = g; this.isSuperValidateur = s;
         }
         public String getToken() { return token; }
         public Long getId() { return id; }
@@ -263,5 +317,6 @@ public class AuthController {
         public List<String> getRoles() { return roles; }
         public Long getGroupeId() { return groupeId; }
         public boolean isSuperValidateur() { return isSuperValidateur; }
+        public String getAvatarUrl() { return avatarUrl; }
     }
 }

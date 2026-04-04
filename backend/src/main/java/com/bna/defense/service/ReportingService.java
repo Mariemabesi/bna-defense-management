@@ -29,6 +29,77 @@ public class ReportingService {
         @Autowired
         private AffaireRepository affaireRepository;
 
+    public byte[] exportDashboardStatsToPdf() {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            DashboardStatsDTO stats = getDashboardStats();
+            com.lowagie.text.Document document = new com.lowagie.text.Document(com.lowagie.text.PageSize.A4);
+            com.lowagie.text.pdf.PdfWriter.getInstance(document, out);
+            document.open();
+
+            com.lowagie.text.Font fontTitle = com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.HELVETICA_BOLD, 20);
+            com.lowagie.text.Font fontSubTitle = com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.HELVETICA_BOLD, 14);
+            com.lowagie.text.Font fontNormal = com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.HELVETICA, 11);
+
+            com.lowagie.text.Paragraph title = new com.lowagie.text.Paragraph("Analyse Statistique Globale - BNA LegalOps", fontTitle);
+            title.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            document.add(title);
+            document.add(new com.lowagie.text.Paragraph("Date du rapport : " + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
+            document.add(new com.lowagie.text.Chunk("\n"));
+
+            // Section 1: Dossiers
+            document.add(new com.lowagie.text.Paragraph("1. État des Dossiers", fontSubTitle));
+            com.lowagie.text.pdf.PdfPTable tableDossiers = new com.lowagie.text.pdf.PdfPTable(2);
+            tableDossiers.setWidthPercentage(100);
+            tableDossiers.setSpacingBefore(10f);
+            tableDossiers.addCell("Total des Dossiers"); tableDossiers.addCell(String.valueOf(stats.getTotalDossiers()));
+            tableDossiers.addCell("Dossiers Ouverts / En cours"); tableDossiers.addCell(String.valueOf(stats.getOpenDossiers()));
+            tableDossiers.addCell("Dossiers Clôturés"); tableDossiers.addCell(String.valueOf(stats.getClosedDossiers()));
+            document.add(tableDossiers);
+
+            // Section 2: Finances
+            document.add(new com.lowagie.text.Chunk("\n"));
+            document.add(new com.lowagie.text.Paragraph("2. Aperçu Financier", fontSubTitle));
+            com.lowagie.text.pdf.PdfPTable tableFinances = new com.lowagie.text.pdf.PdfPTable(2);
+            tableFinances.setWidthPercentage(100);
+            tableFinances.setSpacingBefore(10f);
+            tableFinances.addCell("Budget Global Provisionné"); tableFinances.addCell(stats.getTotalBudgetProvisionne().toString() + " TND");
+            tableFinances.addCell("Frais en Attente de Validation"); tableFinances.addCell(String.valueOf(stats.getTotalFraisPending()));
+            tableFinances.addCell("Montant Total en Attente"); tableFinances.addCell(stats.getTotalFraisAmountPending().toString() + " TND");
+            document.add(tableFinances);
+
+            // Section 3: Performance
+            document.add(new com.lowagie.text.Chunk("\n"));
+            document.add(new com.lowagie.text.Paragraph("3. Performance & Contentieux", fontSubTitle));
+            com.lowagie.text.pdf.PdfPTable tablePerformance = new com.lowagie.text.pdf.PdfPTable(2);
+            tablePerformance.setWidthPercentage(100);
+            tablePerformance.setSpacingBefore(10f);
+            tablePerformance.addCell("Taux de Réussite global"); tablePerformance.addCell(String.format("%.2f%%", stats.getSuccessRate() * 100));
+            tablePerformance.addCell("Types de Procédures actifs"); tablePerformance.addCell(String.valueOf(stats.getTotalProcedures()));
+            tablePerformance.addCell("Nombre d'Adversaires"); tablePerformance.addCell(String.valueOf(stats.getTotalAdversaires()));
+            document.add(tablePerformance);
+            
+            // Section 4: Réseau
+            document.add(new com.lowagie.text.Chunk("\n"));
+            document.add(new com.lowagie.text.Paragraph("4. Réseau d'Auxiliaires", fontSubTitle));
+            com.lowagie.text.pdf.PdfPTable tableAuxiliaires = new com.lowagie.text.pdf.PdfPTable(2);
+            tableAuxiliaires.setWidthPercentage(100);
+            tableAuxiliaires.setSpacingBefore(10f);
+            tableAuxiliaires.addCell("Nombre d'Avocats conventionnés"); tableAuxiliaires.addCell(String.valueOf(stats.getTotalAvocats()));
+            tableAuxiliaires.addCell("Nombre d'Huissiers"); tableAuxiliaires.addCell(String.valueOf(stats.getTotalHuissiers()));
+            document.add(tableAuxiliaires);
+
+            document.add(new com.lowagie.text.Chunk("\n"));
+            com.lowagie.text.Paragraph footer = new com.lowagie.text.Paragraph("Ce rapport est généré automatiquement par la plateforme BNA LegalOps.", fontNormal);
+            footer.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            document.add(footer);
+
+            document.close();
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la génération du rapport global PDF: " + e.getMessage());
+        }
+    }
+
     public byte[] exportFraisToPdf(java.time.LocalDate startDate, java.time.LocalDate endDate, Long groupeId) {
         try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
             com.lowagie.text.Document document = new com.lowagie.text.Document(com.lowagie.text.PageSize.A4);

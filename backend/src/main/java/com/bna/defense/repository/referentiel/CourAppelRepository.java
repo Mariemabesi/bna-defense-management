@@ -1,6 +1,10 @@
 package com.bna.defense.repository.referentiel;
-import com.bna.defense.entity.referentiel.*;
+
+import com.bna.defense.entity.referentiel.CourAppel;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
+
 @Repository
-public interface CourAppelRepository extends JpaRepository<CourAppel, Long> {}
+public interface CourAppelRepository extends JpaRepository<CourAppel, Long>, JpaSpecificationExecutor<CourAppel> {
+}

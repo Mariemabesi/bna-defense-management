@@ -28,6 +28,7 @@ public class Role {
         ROLE_VALIDATEUR,
         ROLE_SUPER_VALIDATEUR,
         ROLE_REFERENTIEL,
-        ROLE_ADMIN
+        ROLE_ADMIN,
+        ROLE_AVOCAT
     }
 }

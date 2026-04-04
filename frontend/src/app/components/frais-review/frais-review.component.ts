@@ -5,28 +5,35 @@ import { FormsModule } from '@angular/forms';
 import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 import { ReferentielService } from '../../services/referentiel.service';
 
+import { SidebarComponent } from '../sidebar/sidebar.component';
+import { HeaderComponent } from '../header/header.component';
+
 @Component({
   selector: 'app-frais-review',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SidebarComponent, HeaderComponent],
   template: `
-    <div class="review-page shadow-premium">
-      <div class="header-section">
-        <div>
-          <h1>Revue des Honoraires & Frais</h1>
-          <p class="subtitle">Espace Pré-Validation & Reporting (Point 9)</p>
-        </div>
-        <div class="export-actions">
-           <button (click)="exportPdf()" class="btn-export pdf" [disabled]="loading">
-             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-             Rapport PDF
-           </button>
-           <button (click)="exportExcel()" class="btn-export excel" [disabled]="loading">
-             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-             Batch Excel
-           </button>
-        </div>
-      </div>
+    <div class="app-layout">
+      <app-sidebar></app-sidebar>
+      <main class="main-content">
+        <app-header title="Revue des Honoraires & Frais"></app-header>
+        <div class="dashboard-content animate-fade">
+          <div class="header-section">
+            <div>
+              <h2>Revue & Pré-Validation</h2>
+              <p class="subtitle">Espace de contrôle et reporting financier (Point 9)</p>
+            </div>
+            <div class="export-actions">
+               <button (click)="exportPdf()" class="btn-export pdf" [disabled]="loading">
+                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                 Rapport PDF
+               </button>
+               <button (click)="exportExcel()" class="btn-export excel" [disabled]="loading">
+                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                 Batch Excel
+               </button>
+            </div>
+          </div>
 
       <!-- ADVANCED FILTERS -->
       <div class="filter-panel">
@@ -83,13 +90,18 @@ import { ReferentielService } from '../../services/referentiel.service';
            <p>Aucun frais correspondant aux filtres.</p>
         </div>
       </div>
+      </div>
+      </main>
     </div>
   `,
   styles: [`
-    .review-page { padding: 40px; background: #f8fafc; min-height: 100vh; animation: fadeIn 0.4s ease-out; }
-    .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-    h1 { font-size: 28px; font-weight: 800; color: #1e293b; margin: 0; }
-    .subtitle { color: #64748b; font-weight: 600; }
+    .app-layout { display: flex; min-height: 100vh; background-color: #f8fafc; font-family: 'Outfit', sans-serif; }
+    .main-content { flex: 1; padding-left: 250px; display: flex; flex-direction: column; }
+    .dashboard-content { padding: 40px; max-width: 1400px; width: 100%; margin: 0 auto; }
+    
+    .header-section { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+    h2 { font-size: 32px; font-weight: 800; color: #1e293b; margin: 0; }
+    .subtitle { color: #64748b; font-size: 16px; margin-top: 4px; }
     
     .export-actions { display: flex; gap: 12px; }
     .btn-export { display: flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 12px; border: 1px solid #e2e8f0; font-weight: 700; cursor: pointer; transition: 0.2s; background: white; }
@@ -174,7 +186,7 @@ export class FraisReviewComponent implements OnInit {
   preValidate(f: any) {
     this.confirmService.open({
       title: 'Confirmer la Pré-validation',
-      message: `Pré-valider le frais "${f.libelle}" ?`
+      message: `Êtes-vous sûr de vouloir effectuer cette action ?`
     }).subscribe(ok => {
       if (ok) {
         this.http.put(`${this.apiUrl}/${f.id}/pre-valider`, {}).subscribe(() => this.fetchFrais());

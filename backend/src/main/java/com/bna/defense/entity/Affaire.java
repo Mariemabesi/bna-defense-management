@@ -30,6 +30,10 @@ public class Affaire extends BaseEntity {
     @JoinColumn(name = "avocat_id")
     private Auxiliaire avocat;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tribunal_id")
+    private Tribunal tribunal;
+
     @Enumerated(EnumType.STRING)
     private StatutAffaire statut;
 
@@ -46,6 +50,8 @@ public class Affaire extends BaseEntity {
     public void setAdversaire(PartieLitige adversaire) { this.adversaire = adversaire; }
     public Auxiliaire getAvocat() { return avocat; }
     public void setAvocat(Auxiliaire avocat) { this.avocat = avocat; }
+    public Tribunal getTribunal() { return tribunal; }
+    public void setTribunal(Tribunal tribunal) { this.tribunal = tribunal; }
     public StatutAffaire getStatut() { return statut; }
     public void setStatut(StatutAffaire statut) { this.statut = statut; }
 

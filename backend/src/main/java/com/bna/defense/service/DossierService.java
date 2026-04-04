@@ -114,6 +114,6 @@ public class DossierService {
 
     @Transactional
     public List<Dossier> searchDossiers(String query) {
-        return dossierRepository.findByReferenceContainingIgnoreCaseOrTitreContainingIgnoreCaseOrDescriptionContainingIgnoreCase(query, query, query);
+        return dossierRepository.searchDossiers(query);
     }
 }

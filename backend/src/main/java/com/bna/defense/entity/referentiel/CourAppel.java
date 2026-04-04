@@ -14,8 +14,10 @@ public class CourAppel extends BaseEntity {
     private String region;
 
     private String competenceTerritoriale;
-
     private String adresse;
+    private String telephone;
+    private String president;
+    private Boolean actif = true;
 
     public CourAppel() {}
 
@@ -27,4 +29,10 @@ public class CourAppel extends BaseEntity {
     public void setCompetenceTerritoriale(String competenceTerritoriale) { this.competenceTerritoriale = competenceTerritoriale; }
     public String getAdresse() { return adresse; }
     public void setAdresse(String adresse) { this.adresse = adresse; }
+    public String getTelephone() { return telephone; }
+    public void setTelephone(String t) { this.telephone = t; }
+    public String getPresident() { return president; }
+    public void setPresident(String p) { this.president = p; }
+    public Boolean getActif() { return actif; }
+    public void setActif(Boolean a) { this.actif = a; }
 }

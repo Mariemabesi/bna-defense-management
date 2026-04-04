@@ -1,35 +1,42 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, delay, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
 export interface AIAnalysis {
-    summary: string;
-    riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-    suggestions: string[];
-    confidence: number;
+  typeProcedure: string;
+  natureAffaire: string;
+  phaseInitiale: string;
+  confidence: number;
+  summary: string;
+  riskLevel: string;
+  suggestions: string[];
 }
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class AIService {
-    constructor(private http: HttpClient) { }
+  private apiUrl = 'http://localhost:8082/api/ai';
 
-    analyzeDossier(description: string): Observable<AIAnalysis> {
-        // En mode réel, ceci appellerait un endpoint Python/FastAPI ou un service OpenAI/Google Vertex AI
-        // Pour la démo, nous simulons une analyse intelligente
+  constructor(private http: HttpClient) {}
 
-        const mockAnalysis: AIAnalysis = {
-            summary: "L'analyse automatique détecte un litige commercial à fort enjeu. La documentation semble complète mais une vérification de la compétence territoriale du tribunal est conseillée.",
-            riskLevel: description.length > 200 ? 'MEDIUM' : 'LOW',
-            suggestions: [
-                "Vérifier les délais de prescription (30 jours)",
-                "Mandater un huissier pour constat immédiat",
-                "Préparer une provision pour frais d'expertise"
-            ],
-            confidence: 0.94
-        };
+  classifyDossier(description: string): Observable<AIAnalysis> {
+    return this.http.post<AIAnalysis>(`${this.apiUrl}/classify-dossier`, { description });
+  }
 
-        return of(mockAnalysis).pipe(delay(2000)); // Simule le temps de réflexion de l'IA
-    }
+  analyzeDossier(dossierId: number | string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/analyze-dossier`, { dossierId });
+  }
+
+  getRiskScore(dossierId: number | string, data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/risk-score`, { dossierId, ...data });
+  }
+
+  getSummary(dossierId: number | string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/summarize-dossier`, { dossierId });
+  }
+
+  generateDocument(dossierId: number | string, documentType: string): Observable<Blob> {
+    return this.http.post(`${this.apiUrl}/generate-document`, { dossierId, documentType }, { responseType: 'blob' });
+  }
 }

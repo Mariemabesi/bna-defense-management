@@ -16,8 +16,8 @@ public class Parquet extends BaseEntity {
     private String chefParquet;
 
     private String telephone;
-
     private String email;
+    private String region;
 
     public Parquet() {}
 
@@ -29,4 +29,6 @@ public class Parquet extends BaseEntity {
     public void setTelephone(String telephone) { this.telephone = telephone; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    public String getRegion() { return region; }
+    public void setRegion(String r) { this.region = r; }
 }

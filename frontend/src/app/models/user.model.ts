@@ -7,6 +7,7 @@ export interface User {
     firstName?: string;
     lastName?: string;
     fullName?: string;
+    avatarUrl?: string;
 }
 
 export interface LoginResponse {
@@ -18,4 +19,5 @@ export interface LoginResponse {
     firstName?: string;
     lastName?: string;
     fullName?: string;
+    avatarUrl?: string;
 }

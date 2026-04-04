@@ -1,35 +1,35 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 
 export interface Auxiliaire {
     id: number;
     nom: string;
-    type: 'AVOCAT' | 'HUISSIER' | 'EXPERT';
+    type: 'AVOCAT' | 'HUISSIER' | 'EXPERT' | 'NOTAIRE' | 'MANDATAIRE' | 'GREFFIER';
     adresse: string;
     telephone: string;
     email: string;
     specialite?: string;
     createdAt?: string;
+    numOrdreNational?: string;
+    region?: string;
+    perimetreMandat?: string;
+    dateFinMandat?: string;
+    tribunalRattache?: string;
 }
 
 export interface Tribunal {
     id?: number;
     nom: string;
+    type?: string;
     region: string;
+    gouvernorat?: string;
     adresse?: string;
     telephone?: string;
-    createdAt?: string;
-}
-
-export interface GenericItem {
-    id?: number;
-    nom?: string;
-    code?: string;
-    valeur?: number;
-    taux?: number;
-    description?: string;
-    [key: string]: any;
+    email?: string;
+    president?: string;
+    competenceTerritoriale?: string;
+    actif?: boolean;
 }
 
 @Injectable({
@@ -40,18 +40,44 @@ export class ReferentielService {
 
     constructor(private http: HttpClient) { }
 
-    // AUXILIAIRES
+    // GENERIC PAGINATED FETCH
+    getData(path: string, params: any = {}): Observable<any> {
+        let httpParams = new HttpParams();
+        Object.keys(params).forEach(key => {
+            if (params[key] !== null && params[key] !== undefined) {
+                httpParams = httpParams.append(key, params[key].toString());
+            }
+        });
+        return this.http.get<any>(`${this.apiUrl}/${path}`, { params: httpParams });
+    }
+
+    saveData(path: string, id: number | null, data: any): Observable<any> {
+        if (id) {
+            return this.http.put<any>(`${this.apiUrl}/${path}/${id}`, data);
+        } else {
+            return this.http.post<any>(`${this.apiUrl}/${path}`, data);
+        }
+    }
+
+    deleteData(path: string, id: number | string): Observable<any> {
+        return this.http.delete(`${this.apiUrl}/${path}/${id}`);
+    }
+
+    // LEGACY METHODS (to keep compatibility with existing components)
     getAuxiliaires(): Observable<Auxiliaire[]> {
-        return this.http.get<Auxiliaire[]>(`${this.apiUrl}/auxiliaires`);
+        return this.http.get<any>(`${this.apiUrl}/auxiliaires`).pipe(
+            map(res => res.content || res)
+        );
     }
 
     addAuxiliaire(auxiliaire: Omit<Auxiliaire, 'id' | 'createdAt'>): Observable<Auxiliaire> {
         return this.http.post<Auxiliaire>(`${this.apiUrl}/auxiliaires`, auxiliaire);
     }
 
-    // TRIBUNAUX
     getTribunaux(): Observable<Tribunal[]> {
-        return this.http.get<Tribunal[]>(`${this.apiUrl}/tribunaux`);
+        return this.http.get<any>(`${this.apiUrl}/tribunaux`).pipe(
+            map(res => res.content || res)
+        );
     }
 
     addTribunal(tribunal: Tribunal): Observable<Tribunal> {
@@ -66,17 +92,15 @@ export class ReferentielService {
         return this.http.delete(`${this.apiUrl}/tribunaux/${id}`);
     }
 
-    // GENERIC COLLECTIONS
-    getItems(type: string): Observable<GenericItem[]> {
-        return this.http.get<GenericItem[]>(`${this.apiUrl}/${type}`);
-    }
-
-    addItem(type: string, item: any): Observable<any> {
-        return this.http.post<any>(`${this.apiUrl}/${type}`, item);
+    getItems(type: string): Observable<any[]> {
+        return this.http.get<any>(`${this.apiUrl}/${type}`).pipe(
+            map(res => res.content || res)
+        );
     }
 
     getGroups(): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiUrl}/groupes`);
+        return this.http.get<any>(`${this.apiUrl}/groupes`).pipe(
+            map(res => res.content || res)
+        );
     }
 }
-

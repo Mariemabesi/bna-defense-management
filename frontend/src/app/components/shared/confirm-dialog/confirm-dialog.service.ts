@@ -35,12 +35,12 @@ export class ConfirmDialogService {
     if (config.cancelLabel) this.componentRef.instance.cancelLabel = config.cancelLabel;
 
     // 3. Set up outputs
-    this.componentRef.instance.onConfirm.subscribe(() => {
+    this.componentRef.instance.confirmed.subscribe(() => {
       confirmation$.next(true);
       this.close();
     });
 
-    this.componentRef.instance.onCancel.subscribe(() => {
+    this.componentRef.instance.cancelled.subscribe(() => {
       confirmation$.next(false);
       this.close();
     });
