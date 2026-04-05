@@ -21,6 +21,9 @@ public class Notification {
     @Column(nullable = false)
     private String type; // DEPASSEMENT, VALIDATION_REQUIRED, REFUS, INFO, AI_ACTION, FRAUD_ALERT
 
+    @Column(nullable = true)
+    private String role; // Which role this info was meant for
+
     @Column(nullable = false)
     private boolean read = false;
 
@@ -54,6 +57,8 @@ public class Notification {
     public void setMessage(String message) { this.message = message; }
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
     public boolean isRead() { return read; }
     public void setRead(boolean read) { this.read = read; }
     public Dossier getDossier() { return dossier; }

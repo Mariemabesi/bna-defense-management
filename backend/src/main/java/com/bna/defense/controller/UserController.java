@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -74,6 +75,33 @@ public class UserController {
         User user = userRepository.findById(id).orElseThrow();
         user.setEnabled(!user.isEnabled());
         return ResponseEntity.ok(userRepository.save(user));
+    }
+
+    @DeleteMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        User user = userRepository.findById(id).orElseThrow();
+        
+        // 1. Safety Check: If user has history (Dossiers), we block the delete to preserve audit trail
+        // Instead of hard delete, those users should be "Suspended"
+        long dossierCount = userRepository.countDossiersByUserId(id);
+        if (dossierCount > 0) {
+            return ResponseEntity.status(409).body(new AuthController.MessageResponse(
+                "Impossible de supprimer cet utilisateur car il est lié à " + dossierCount + " dossiers. Veuillez plutôt suspendre son compte."
+            ));
+        }
+
+        // 2. Cleanup subordinates: Users who report to this manager
+        userRepository.clearManagerLinksForSubordinates(id);
+
+        // 3. Cleanup ephemeral data
+        userRepository.deleteNotificationsByUserId(id);
+        userRepository.deleteRecentDossiersByUserId(id);
+
+        // 4. Perform final deletion
+        userRepository.delete(user);
+        return ResponseEntity.ok(new AuthController.MessageResponse("Utilisateur supprimé avec succès !"));
     }
 
     @GetMapping("/logs")

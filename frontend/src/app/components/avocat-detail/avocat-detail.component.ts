@@ -184,7 +184,7 @@ export class AvocatDetailComponent implements OnInit, AfterViewInit {
   id: string | null = null;
   data: any = null;
   chart: any;
-  private apiUrl = 'http://localhost:8082/api/referentiel/auxiliaires';
+  private apiUrl = '/api/referentiel/auxiliaires';
 
   constructor(private route: ActivatedRoute, private http: HttpClient) {}
 

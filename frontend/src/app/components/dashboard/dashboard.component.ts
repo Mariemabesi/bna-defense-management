@@ -35,9 +35,53 @@ Chart.register(...registerables);
               Générer Analyse Globale (PDF)
             </button>
           </div>
-      <!-- ============================================== -->
-      <!-- DASHBOARD CHARGE DE DOSSIER -->
-      <!-- ============================================== -->      <ng-container *ngIf="isChargeDossier() && !isAdmin()">
+      <ng-container *ngIf="isChargeDossier() && !isAdmin()">
+        <section class="deadline-premium-section fade-in">
+          <div class="section-header-sovereign">
+             <div class="title-deck">
+                <div class="aura-pulse-emerald"></div>
+                <div>
+                   <h2 class="executive-title">ÉCHÉANCES CLÉS</h2>
+                   <p class="executive-subtitle">Priorités opérationnelles et jalons judiciaires de la semaine.</p>
+                </div>
+             </div>
+          </div>
+
+          <div class="sovereign-timeline-grid">
+            <div class="executive-timeline-card shadow-premium pulse-active">
+              <div class="deadline-badge-deck">
+                <span class="day-val">24</span>
+                <span class="month-val">MAR</span>
+              </div>
+              <div class="timeline-content-deck">
+                <div class="type-tier">AUDIENCE TRIBUNAL</div>
+                <h3 class="subject-val">Palais de Justice - Tunis</h3>
+                <p class="summary-val">Représentation BNA • Instance Correctionnelle • Dossier REF-2024-X</p>
+                <div class="timeline-meta-deck">
+                  <span class="indicator-tag justice">JURIDIQUE</span>
+                  <span class="chronos-sentinel urgent">DEMAIN</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="executive-timeline-card shadow-premium">
+              <div class="deadline-badge-deck upcoming">
+                <span class="day-val">02</span>
+                <span class="month-val">AVR</span>
+              </div>
+              <div class="timeline-content-deck">
+                <div class="type-tier">DÉPÔT DOCUMENTAIRE</div>
+                <h3 class="subject-val">Bordereau des Frais</h3>
+                <p class="summary-val">Consolidation des honoraires auxiliaires T1 2024 • Validation N2</p>
+                <div class="timeline-meta-deck">
+                  <span class="indicator-tag finance">FINANCE</span>
+                  <span class="chronos-sentinel">J-8</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div class="stats-grid">
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon green">
@@ -119,6 +163,36 @@ Chart.register(...registerables);
       <!-- DASHBOARD PRE-VALIDATEUR -->
       <!-- ============================================== -->
       <ng-container *ngIf="isPreValidateur() && !isAdmin()">
+        <!-- STRATEGIC DEADLINES SECTION (Universal) -->
+        <section class="deadline-premium-section fade-in">
+          <div class="section-header-sovereign">
+             <div class="title-deck">
+                <div class="aura-pulse-emerald"></div>
+                <div><h2 class="executive-title">ÉCHÉANCES CLÉS</h2><p class="executive-subtitle">Priorités opérationnelles et jalons judiciaires de la semaine.</p></div>
+             </div>
+          </div>
+          <div class="sovereign-timeline-grid">
+            <div class="executive-timeline-card shadow-premium pulse-active">
+              <div class="deadline-badge-deck"><span class="day-val">24</span><span class="month-val">MAR</span></div>
+              <div class="timeline-content-deck">
+                <div class="type-tier">AUDIENCE TRIBUNAL</div>
+                <h3 class="subject-val">Palais de Justice - Tunis</h3>
+                <p class="summary-val">Représentation BNA • Instance Correctionnelle • Dossier REF-2024-X</p>
+                <div class="timeline-meta-deck"><span class="indicator-tag justice">JURIDIQUE</span><span class="chronos-sentinel urgent">DEMAIN</span></div>
+              </div>
+            </div>
+            <div class="executive-timeline-card shadow-premium">
+              <div class="deadline-badge-deck upcoming"><span class="day-val">02</span><span class="month-val">AVR</span></div>
+              <div class="timeline-content-deck">
+                <div class="type-tier">DÉPÔT DOCUMENTAIRE</div>
+                <h3 class="subject-val">Bordereau des Frais</h3>
+                <p class="summary-val">Consolidation des honoraires auxiliaires T1 2024 • Validation N2</p>
+                <div class="timeline-meta-deck"><span class="indicator-tag finance">FINANCE</span><span class="chronos-sentinel">J-8</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div class="stats-grid">
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon warning">
@@ -173,6 +247,36 @@ Chart.register(...registerables);
       <!-- DASHBOARD VALIDATEUR -->
       <!-- ============================================== -->
       <ng-container *ngIf="isValidateur() && !isAdmin()">
+        <!-- STRATEGIC DEADLINES SECTION (Universal) -->
+        <section class="deadline-premium-section fade-in">
+          <div class="section-header-sovereign">
+             <div class="title-deck">
+                <div class="aura-pulse-emerald"></div>
+                <div><h2 class="executive-title">ÉCHÉANCES CLÉS</h2><p class="executive-subtitle">Priorités opérationnelles et jalons judiciaires de la semaine.</p></div>
+             </div>
+          </div>
+          <div class="sovereign-timeline-grid">
+            <div class="executive-timeline-card shadow-premium pulse-active">
+              <div class="deadline-badge-deck"><span class="day-val">24</span><span class="month-val">MAR</span></div>
+              <div class="timeline-content-deck">
+                <div class="type-tier">AUDIENCE TRIBUNAL</div>
+                <h3 class="subject-val">Palais de Justice - Tunis</h3>
+                <p class="summary-val">Représentation BNA • Instance Correctionnelle • Dossier REF-2024-X</p>
+                <div class="timeline-meta-deck"><span class="indicator-tag justice">JURIDIQUE</span><span class="chronos-sentinel urgent">DEMAIN</span></div>
+              </div>
+            </div>
+            <div class="executive-timeline-card shadow-premium">
+              <div class="deadline-badge-deck upcoming"><span class="day-val">02</span><span class="month-val">AVR</span></div>
+              <div class="timeline-content-deck">
+                <div class="type-tier">DÉPÔT DOCUMENTAIRE</div>
+                <h3 class="subject-val">Bordereau des Frais</h3>
+                <p class="summary-val">Consolidation des honoraires auxiliaires T1 2024 • Validation N2</p>
+                <div class="timeline-meta-deck"><span class="indicator-tag finance">FINANCE</span><span class="chronos-sentinel">J-8</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div class="stats-grid">
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon danger">
@@ -504,23 +608,14 @@ Chart.register(...registerables);
   `,
   styles: [`
     :host {
-      --bg-color: #f0f4f8;
-      --sidebar-width: 280px;
-      --header-height: 90px;
-      --bna-green: #008766;
-      --bna-green-light: rgba(0, 135, 102, 0.08);
-      --bna-green-hover: #007256;
-      --bna-green-dark: #005641;
-      --bna-grey: #40514e;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-      --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      --bg-color: transparent;
+      --sidebar-width: 285px;
+      --bna-emerald: #008766;
+      --bna-emerald-light: rgba(0, 135, 102, 0.06);
+      --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
     }
 
     .app-layout {
-      display: flex;
-      min-height: 100vh;
-      background-color: var(--bg-color);
       font-family: 'Outfit', 'Inter', sans-serif;
     }
 
@@ -581,85 +676,61 @@ Chart.register(...registerables);
       padding: 4px 6px; border-radius: 6px; min-width: 45px; text-align: center;
     }
     .deadline-text { font-size: 12px; font-weight: 600; color: var(--text-main); }
-    /* PREMIUM MAIN CONTENT */
-    .main-content {
-      flex: 1;
-      padding-left: var(--sidebar-width);
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
+    .dashboard-content { padding: 48px; max-width: 1600px; margin: 0 auto; display: flex; flex-direction: column; gap: 48px; animation: slideUpFade 0.6s ease-out; }
 
-    .user-info {
-      text-align: right;
+    /* SOVEREIGN TIMELINE ARCHITECTURE */
+    .deadline-premium-section { animation: fadeIn 0.8s ease-out; }
+    .section-header-sovereign { margin-bottom: 32px; }
+    .title-deck { display: flex; align-items: center; gap: 24px; position: relative; }
+    .aura-pulse-emerald { 
+      width: 12px; height: 12px; border-radius: 50%; background: var(--bna-emerald);
+      box-shadow: 0 0 0 rgba(0, 135, 102, 0.4); animation: pulseAura 2s infinite; 
     }
+    .executive-title { font-size: 26px; font-weight: 850; color: #0f172a; margin: 0; letter-spacing: -0.8px; }
+    .executive-subtitle { font-size: 15px; color: #64748b; margin: 4px 0 0 0; font-weight: 600; }
 
-    .user-email {
-      display: block;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .user-role {
-      display: block;
-      font-size: 12px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .user-avatar {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, var(--bna-green) 0%, #10b981 100%);
-      border-radius: 12px;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 18px;
-      box-shadow: 0 4px 10px rgba(0,135,102,0.3);
-    }
-
-    .dashboard-content {
-      padding: 32px 48px 48px 48px;
-      max-width: 1400px;
-      width: 100%;
-      margin: 0 auto;
-    }
-
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 40px; }
-    .stat-card {
-      background: white; padding: 32px; border-radius: 24px;
-      display: flex; align-items: center; gap: 24px;
-      border: 1px solid rgba(0,0,0,0.03);
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    .sovereign-timeline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 32px; }
+    .executive-timeline-card { 
+      background: white; border-radius: 32px; border: 1.5px solid #f1f5f9; 
+      display: flex; gap: 28px; padding: 28px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       position: relative; overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.02);
     }
-    .stat-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); border-color: rgba(0, 135, 102, 0.1); }
-    .stat-card::after {
-      content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px;
-      background: radial-gradient(circle, rgba(0, 135, 102, 0.03) 0%, transparent 70%);
-      border-radius: 50%; transform: translate(30%, -30%);
-    }
-    .stat-icon {
-      width: 64px; height: 64px; border-radius: 20px;
-      display: flex; align-items: center; justify-content: center;
-      transition: transform 0.3s;
-    }
-    .stat-card:hover .stat-icon { transform: scale(1.1) rotate(5deg); }
+    .executive-timeline-card:hover { transform: translateY(-8px); border-color: var(--bna-emerald); box-shadow: 0 25px 50px rgba(0, 135, 102, 0.08); }
     
-    .stat-icon.green { background: linear-gradient(135deg, #008766 0%, #00a87f 100%); color: white; }
-    .stat-icon.info { background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%); color: white; }
-    .stat-icon.warning { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: white; }
-    .stat-icon.danger { background: linear-gradient(135deg, #ef4444 0%, #f87171 100%); color: white; }
+    .deadline-badge-deck { 
+      min-width: 80px; height: 95px; background: #0f172a; border-radius: 20px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .deadline-badge-deck.upcoming { background: #475569; }
+    .day-val { font-size: 32px; font-weight: 900; line-height: 1; }
+    .month-val { font-size: 11px; font-weight: 850; letter-spacing: 1.5px; margin-top: 4px; }
     
-    .stat-content .label { font-size: 13px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
-    .stat-content .value { font-size: 32px; font-weight: 850; color: #1e293b; letter-spacing: -1px; margin-bottom: 4px; }
+    .timeline-content-deck { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .type-tier { font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 1px; }
+    .subject-val { font-size: 19px; font-weight: 850; color: #1e293b; margin: 0; }
+    .summary-val { font-size: 14px; font-weight: 600; color: #64748b; line-height: 1.5; margin: 0 0 12px 0; }
+    
+    .timeline-meta-deck { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+    .indicator-tag { padding: 5px 12px; border-radius: 10px; font-size: 9px; font-weight: 900; letter-spacing: 0.5px; }
+    .indicator-tag.justice { background: #ecfdf5; color: #059669; }
+    .indicator-tag.finance { background: #eff6ff; color: #2563eb; }
+    .chronos-sentinel { font-size: 12px; font-weight: 850; color: #64748b; }
+    .chronos-sentinel.urgent { color: var(--bna-emerald); }
+
+    .pulse-active { border-color: var(--bna-emerald); border-width: 2px; }
+
+    @keyframes pulseAura {
+      0% { box-shadow: 0 0 0 0 rgba(0, 135, 102, 0.6); }
+      70% { box-shadow: 0 0 0 15px rgba(0, 135, 102, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 135, 102, 0); }
+    }
+
+    @media (max-width: 1024px) {
+      .sovereign-timeline-grid { grid-template-columns: 1fr; }
+      .executive-timeline-card { padding: 24px; gap: 20px; }
+    }
+    
     .stat-content .trend { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
     .trend.positive { color: #10b981; }
     .status-indicator, .action-needed { font-size: 12px; font-weight: 600; color: #64748b; }

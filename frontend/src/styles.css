@@ -1,70 +1,110 @@
-/* Global Styles */
+/* BNA SOVEREIGN DESIGN SYSTEM 🏙️💎 */
 :root {
-  --bna-green: #008766;
-  --bna-green-dark: #00684d;
-  --bna-grey: #58595b;
-  --bna-light-grey: #f4f7f6;
-  --bna-border: #e2e8f0;
-  --text-primary: #333333;
-  --text-secondary: #64748b;
-  --white: #ffffff;
+  /* OBSIDIAN CHROMA */
+  --bna-obsidian: #0f172a;
+  --bna-emerald: #008766;
+  --bna-emerald-light: rgba(0, 135, 102, 0.1);
+  --bna-emerald-glow: rgba(0, 135, 102, 0.4);
+  
+  /* NEUTRAL HUD */
+  --bna-slate: #f8fafc;
+  --bna-slate-border: #e2e8f0;
+  --bna-text-main: #1e293b;
+  --bna-text-muted: #64748b;
+  
+  /* SPACING EXECUTIVE */
+  --sidebar-width: 285px;
+  --header-height: 95px;
+  --glass-blur: 25px;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Outfit', 'Inter', sans-serif;
-  background-color: var(--bna-light-grey);
-  color: var(--text-primary);
+  margin: 0; padding: 0;
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #f1f5f9;
+  color: var(--bna-text-main);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
-/* Responsive Utilities */
+/* --- SOVEREIGN APP LAYOUT --- */
+.app-layout { display: flex; min-height: 100vh; width: 100%; }
+
+/* --- OBSIDIAN MAIN HUB --- */
+.main-content {
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
+  margin-left: var(--sidebar-width);
+  transition: margin-left 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  background: transparent; /* Allows global f1f5f9 to flow */
+}
+
+/* --- PREMIUM CARD ARCHITECTURE --- */
+.dashboard-content { 
+  padding: 42px 48px; flex: 1; 
+  background-image: radial-gradient(circle at 0% 0%, rgba(0, 135, 102, 0.03) 0%, transparent 100%);
+}
+
+.executive-card {
+  background: white; border-radius: 32px; border: 1.5px solid #f1f5f9;
+  padding: 32px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.executive-card:hover { transform: translateY(-8px); box-shadow: 0 20px 45px rgba(0, 0, 0, 0.06); border-color: var(--bna-emerald-light); }
+
+/* --- SOVEREIGN BUTTONS --- */
+.btn-primary {
+  background: linear-gradient(135deg, var(--bna-emerald) 0%, #005a44 100%);
+  color: white; border: none; padding: 14px 28px; border-radius: 16px;
+  font-weight: 800; cursor: pointer; transition: 0.3s;
+  box-shadow: 0 10px 20px rgba(0, 135, 102, 0.2);
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 30px rgba(0, 135, 102, 0.35); }
+
+.btn-secondary {
+  background: white; color: var(--bna-text-main); border: 1.8px solid var(--bna-slate-border);
+  padding: 12px 24px; border-radius: 16px; font-weight: 800; cursor: pointer; transition: 0.2s;
+}
+.btn-secondary:hover { border-color: var(--bna-emerald); color: var(--bna-emerald); background: var(--bna-emerald-light); }
+
+/* --- GLOBAL TABLES PROFESSIONNEL --- */
+.table-container { 
+  background: white; border-radius: 28px; border: 1px solid rgba(0,0,0,0.02); 
+  box-shadow: 0 10px 25px rgba(0,0,0,0.02); overflow: hidden;
+}
+table th { 
+  padding: 20px 24px; background: #f8fafc; color: var(--bna-text-muted);
+  font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.8px;
+}
+table td { padding: 22px 24px; border-bottom: 1px solid #f1f5f9; font-size: 14.5px; font-weight: 600; }
+
+/* --- SELECTION & SCROLL AURA --- */
+::selection { background: var(--bna-emerald-light); color: var(--bna-emerald); }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 12px; border: 3px solid #f1f5f9; }
+::-webkit-scrollbar-thumb:hover { background: var(--bna-emerald); }
+
+/* --- ANIMATIONS EXECUTIVE --- */
+.fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- SOVEREIGN RESPONSIVE GRID --- */
 @media (max-width: 1024px) {
-  .main-content {
-    margin-left: 0 !important;
-  }
-  .dashboard-content {
-    padding: 16px !important;
-  }
-  .top-header {
-    padding: 0 16px !important;
-  }
-  .table-container {
-    overflow-x: auto !important;
-  }
-  .form-container {
-    padding: 16px !important;
-  }
+  :root { --sidebar-width: 0px; }
+  .main-content { margin-left: 0 !important; }
+  .dashboard-content { padding: 24px 20px !important; }
+  .app-layout { font-size: 14px; }
+  
+  /* Hide search bar on tablets/phones to give space */
+  .header-search { display: none !important; }
+  .manual-sidebar-toggle { display: flex !important; margin-right: 15px; }
 }
 
 @media (max-width: 768px) {
-  .hide-on-mobile {
-    display: none !important;
-  }
+  .dashboard-content { padding: 16px 12px !important; }
+  .executive-card { padding: 20px; border-radius: 20px; }
+  .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+  .header-actions { gap: 12px; }
+  .user-info { display: none; }
 }
-
-* {
-  box-sizing: border-box;
-}
-
-/* --- PREMIUM SCROLLBARS --- */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #f8fafc; }
-::-webkit-scrollbar-thumb { 
-  background: #cbd5e1; border-radius: 10px; 
-  border: 2px solid #f8fafc; transition: all 0.2s;
-}
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-/* --- PREMIUM SELECTION --- */
-::selection { background: rgba(0, 135, 102, 0.15); color: #008766; }
-
-/* --- GLOBAL ANIMATIONS --- */
-.slideIn { animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-.pulse { animation: pulse 2s infinite; }
-@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }

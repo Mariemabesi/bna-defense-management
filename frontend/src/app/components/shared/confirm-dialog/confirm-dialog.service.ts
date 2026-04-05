@@ -33,6 +33,9 @@ export class ConfirmDialogService {
     if (config.message) this.componentRef.instance.message = config.message;
     if (config.confirmLabel) this.componentRef.instance.confirmLabel = config.confirmLabel;
     if (config.cancelLabel) this.componentRef.instance.cancelLabel = config.cancelLabel;
+    
+    // 3. Mark as visible
+    this.componentRef.instance.show = true;
 
     // 3. Set up outputs
     this.componentRef.instance.confirmed.subscribe(() => {

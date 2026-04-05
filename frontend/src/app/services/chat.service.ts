@@ -24,7 +24,7 @@ export interface ChatPartner {
     providedIn: 'root'
 })
 export class ChatService {
-    private apiUrl = 'http://localhost:8082/api/chat';
+    private apiUrl = '/api/chat';
 
     constructor(private http: HttpClient) {}
 

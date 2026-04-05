@@ -22,9 +22,9 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
      * - PRE_VALIDATEUR: ONLY see dossiers where assignedCharge.manager = currentUser (their direct Chargés only)
      * - CHARGE_DOSSIER: ONLY see their own dossiers (createdBy = username)
      */
-    @Query("SELECT d FROM Dossier d LEFT JOIN FETCH d.assignedCharge ac " +
+    @Query("SELECT d FROM Dossier d LEFT JOIN d.assignedCharge ac " +
            "WHERE (:isSuper = true) " +
-           "OR (d.createdBy = :username AND :isCharge = true) " +
+           "OR (:isCharge = true AND (d.createdBy = :username OR d.assignedCharge.username = :username)) " +
            "OR (:isPreVal = true AND ac IS NOT NULL AND ac.manager = :user) " +
            "OR (:isValidateur = true AND ac IS NOT NULL AND (ac.manager = :user OR ac.manager.manager = :user))")
     Page<Dossier> findAllWithRBAC(

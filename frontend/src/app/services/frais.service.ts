@@ -26,7 +26,7 @@ export interface Frais {
     providedIn: 'root'
 })
 export class FraisService {
-    private apiUrl = 'http://localhost:8082/api/frais';
+    private apiUrl = '/api/frais';
 
     constructor(private http: HttpClient) { }
 

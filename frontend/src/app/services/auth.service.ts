@@ -9,7 +9,7 @@ import { User, LoginResponse } from '../models/user.model';
 export class AuthService {
     private currentUserSubject: BehaviorSubject<User | null>;
     public currentUser: Observable<User | null>;
-    private apiUrl = 'http://localhost:8082/api/auth';
+    private apiUrl = '/api/auth';
 
     constructor(private http: HttpClient) {
         const savedUser = localStorage.getItem('currentUser');

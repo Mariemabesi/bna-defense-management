@@ -24,7 +24,7 @@ export interface AuditLogDTO {
     providedIn: 'root'
 })
 export class AdminService {
-    private apiUrl = 'http://localhost:8082/api/admin';
+    private apiUrl = '/api/admin';
 
     constructor(private http: HttpClient) { }
 

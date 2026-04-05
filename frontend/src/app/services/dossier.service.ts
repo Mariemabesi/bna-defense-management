@@ -7,7 +7,7 @@ import { Dossier } from '../models/dossier.model';
     providedIn: 'root'
 })
 export class DossierService {
-    private apiUrl = 'http://localhost:8082/api/dossiers';
+    private apiUrl = '/api/dossiers';
 
     constructor(private http: HttpClient) { }
 

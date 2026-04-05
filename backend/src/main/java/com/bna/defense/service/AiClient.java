@@ -11,9 +11,11 @@ import java.time.Duration;
 public class AiClient {
 
     private final WebClient webClient;
+    private final String aiServiceUrl;
 
-    public AiClient(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("http://localhost:8000").build();
+    public AiClient(WebClient.Builder webClientBuilder, @org.springframework.beans.factory.annotation.Value("${ai.service.url}") String aiServiceUrl) {
+        this.aiServiceUrl = aiServiceUrl;
+        this.webClient = webClientBuilder.baseUrl(aiServiceUrl).build();
     }
 
     public Mono<Map<String, Object>> classifyDossier(String description) {

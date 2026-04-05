@@ -151,141 +151,131 @@ import { SidebarService } from '../../services/sidebar.service';
   `,
   styles: [`
     .sidebar {
-      width: 250px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-right: 1px solid rgba(0,0,0,0.04);
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, #0f172a 0%, #064e3b 100%);
+      backdrop-filter: blur(30px) saturate(200%);
+      -webkit-backdrop-filter: blur(30px) saturate(200%);
       display: flex;
       flex-direction: column;
       position: fixed;
       height: 100vh;
-      z-index: 20;
-      box-shadow: 4px 0 24px rgba(0,0,0,0.02);
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 2000;
+      box-shadow: 20px 0 60px rgba(0, 0, 0, 0.2);
+      transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+      overflow-x: hidden;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .sidebar.collapsed { width: 70px; }
-    .sidebar.collapsed .brand-text, 
-    .sidebar.collapsed .nav-section-title,
-    .sidebar.collapsed .help-content,
-    .sidebar.collapsed .nav-item span:not(.icon),
-    .sidebar.collapsed .nav-item::after,
-    .sidebar.collapsed .badge-dot,
-    .sidebar.collapsed .deadline-box,
-    .sidebar.collapsed .fav-list { display: none; }
     
-    /* Ensure icon-only mode works for navigation items */
-    .sidebar.collapsed .nav-item { justify-content: center; padding: 14px 0; }
-    .sidebar.collapsed .nav-item svg { margin: 0; }
-    .sidebar.collapsed .logo-wrapper { padding: 8px; }
-    .sidebar.collapsed .sidebar-logo { height: 32px; }
-    .sidebar-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.3);
-      backdrop-filter: blur(4px);
-      z-index: 15;
-      display: none;
-    }
     @media (max-width: 1024px) {
-      .sidebar {
+      .sidebar { 
+        width: 285px !important; 
         transform: translateX(-100%);
       }
-      .sidebar.mobile-visible {
-        transform: translateX(0);
-      }
-      .sidebar-overlay {
-        display: block;
+      .sidebar.mobile-visible { 
+        transform: translateX(0); 
       }
     }
+
+    .sidebar-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 1500;
+      animation: fadeIn 0.3s ease-out;
+    }
+    
     .sidebar-header {
-      padding: 32px 24px 24px 24px;
+      padding: 48px 24px 30px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      border-bottom: 1px solid rgba(0,0,0,0.04);
+      gap: 18px;
     }
     .logo-wrapper {
       padding: 12px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: 0.4s;
     }
-    .sidebar-logo { height: 60px; width: auto; object-fit: contain; }
+    .sidebar-logo { height: 60px; width: auto; filter: brightness(1.1); }
     .brand-text {
-      font-size: 14px; font-weight: 800; color: #005641;
-      text-transform: uppercase; letter-spacing: 1.5px; text-align: center;
+      font-size: 10px; font-weight: 850; color: #f8fafc;
+      text-transform: uppercase; letter-spacing: 4px; text-align: center;
+      opacity: 0.6;
     }
-    .sidebar-nav { padding: 32px 20px; display: flex; flex-direction: column; flex: 1; overflow-y: auto; }
-    .nav-top-group { display: flex; flex-direction: column; gap: 8px; }
-    .nav-section-title {
-      font-size: 11px; font-weight: 700; color: #94a3b8;
-      text-transform: uppercase; letter-spacing: 1.2px; margin: 24px 0 12px 18px;
-    }
+
+    .sidebar-nav { padding: 0 16px; }
     .nav-item {
-      display: flex; align-items: center; gap: 14px; padding: 14px 18px;
-      border-radius: 14px; color: #64748b; font-size: 15px; font-weight: 600;
-      text-decoration: none; cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative; overflow: hidden;
+      display: flex; align-items: center; gap: 14px; padding: 14px 20px;
+      border-radius: 14px; color: #94a3b8; font-size: 14px; font-weight: 700;
+      text-decoration: none; cursor: pointer; margin-bottom: 4px;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
     }
-    .nav-item::before {
-      content: ''; position: absolute; left: 0; top: 50%; height: 70%; width: 5px;
-      background: #008766; transform: translateY(-50%) scaleY(0);
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      border-radius: 0 4px 4px 0;
+    .nav-item:hover { 
+      background: rgba(255, 255, 255, 0.05); 
+      color: #008766; 
+      transform: translateX(8px);
+      box-shadow: -4px 0 0 -1px #008766;
     }
-    .nav-item:hover { background-color: rgba(0, 135, 102, 0.08); color: #007256; transform: translateX(4px); }
-    .nav-item.active { background: rgba(0, 135, 102, 0.08); color: #008766; font-weight: 700; }
-    .nav-item.active::before { transform: translateY(-50%) scaleY(1); }
-    .nav-item.active svg { stroke: #008766; filter: drop-shadow(0 2px 4px rgba(0,135,102,0.3)); }
-    .sidebar-footer { padding: 0 20px 24px 20px; }
+    .nav-item.active { 
+       background: rgba(0, 135, 102, 0.15); 
+       color: #f8fafc;
+       border: 1px solid rgba(0, 135, 102, 0.3);
+       box-shadow: 0 10px 25px rgba(0, 135, 102, 0.15);
+    }
+    .nav-item.active svg { color: #008766; filter: drop-shadow(0 0 5px rgba(0, 135, 102, 0.5)); }
+    
+    .nav-section-title {
+      font-size: 9px; font-weight: 900; color: #475569;
+      text-transform: uppercase; letter-spacing: 2px; margin: 32px 0 12px 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .nav-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255, 255, 255, 0.05); margin-right: 20px; }
+    
+    .sidebar-footer { margin-top: auto; padding: 32px 16px; }
     .help-box {
-      background: #f8fafc; padding: 20px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.03);
-      display: flex; align-items: center; gap: 16px; transition: all 0.2s;
+      background: rgba(255, 255, 255, 0.03); 
+      padding: 16px; border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex; align-items: center; gap: 12px;
     }
-    .help-box:hover { background: white; transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); border-color: rgba(0, 135, 102, 0.1); }
     .help-icon {
-      background: white; color: #008766; width: 44px; height: 44px; border-radius: 14px;
+      background: #008766; color: white; width: 40px; height: 40px; border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid rgba(0, 135, 102, 0.1);
+      box-shadow: 0 4px 10px rgba(0, 135, 102, 0.3);
     }
-    .help-content h4 { margin: 0 0 4px 0; font-size: 14px; font-weight: 800; color: #1e293b; }
-    .help-content p { margin: 0; font-size: 12px; color: #64748b; }
-    .fav-list { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; }
+    .help-content h4 { margin: 0; font-size: 13px; color: #f8fafc; font-weight: 800; }
+    .help-content p { margin: 0; font-size: 11px; color: #94a3b8; font-weight: 600; }
+
     .fav-item { 
-      display: flex; align-items: center; gap: 12px; padding: 10px 14px; 
-      border-radius: 10px; font-size: 14px; color: #1e293b; font-weight: 500;
-      text-decoration: none; transition: all 0.2s;
+      padding: 8px 16px; margin: 2px 0; border-radius: 10px;
+      font-size: 12px; font-weight: 700; color: #64748b;
+      transition: 0.3s;
     }
-    .fav-item:hover { background: #f1f5f9; color: #008766; }
-    .fav-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .fav-dot.green { background: #10b981; }
-    .fav-dot.grey { background: #94a3b8; }
-    .deadline-box { display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
+    .fav-item:hover { background: rgba(255,255,255,0.03); color: #008766; }
+    
+    .sub-item { padding-left: 45px; font-size: 12.5px; opacity: 0.7; }
+    .menu-category-title {
+      font-size: 9px; font-weight: 800; color: #475569;
+      text-transform: uppercase; letter-spacing: 1px;
+      padding: 12px 24px 4px 45px;
+    }
+    .chevron { margin-left: auto; transition: 0.3s; opacity: 0.4; }
+    .chevron.open { transform: rotate(180deg); color: #008766; opacity: 1; }
+
+    .deadline-box { display: flex; flex-direction: column; gap: 6px; padding: 0 10px; }
     .deadline-item { 
-      display: flex; align-items: center; gap: 12px; padding: 10px; 
-      background: rgba(255,255,255,0.5); border-radius: 12px; border: 1px solid rgba(0,0,0,0.02);
+      background: rgba(255, 255, 255, 0.02); border-radius: 12px; padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.03); display: flex; align-items: center; gap: 10px;
     }
     .deadline-date { 
-      font-size: 11px; font-weight: 800; color: white; background: #008766; 
-      padding: 4px 6px; border-radius: 6px; min-width: 45px; text-align: center;
+      font-size: 10px; font-weight: 800; color: white; background: #008766; 
+      padding: 3px 6px; border-radius: 4px; min-width: 44px; text-align: center;
     }
-    .deadline-text { font-size: 12px; font-weight: 600; color: #1e293b; }
-    .chevron { margin-left: auto; transition: transform 0.3s; }
-    .chevron.open { transform: rotate(180deg); }
-    .sub-item { padding-left: 52px; font-size: 14px; opacity: 0.85; }
-    .menu-category-title {
-      font-size: 10px; font-weight: 800; color: #94a3b8;
-      text-transform: uppercase; letter-spacing: 1px;
-      padding: 12px 24px 6px 44px; margin-top: 8px;
-      border-top: 1px solid rgba(0,0,0,0.02);
-    }
-    .group-header { cursor: pointer; }
+    .deadline-text { font-size: 11px; font-weight: 700; color: #94a3b8; }
     .group-header:hover { background: rgba(0, 135, 102, 0.05); }
   `]
 })
@@ -302,6 +292,14 @@ export class SidebarComponent implements OnInit {
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
       this.loadRecentDossiers();
+    }
+    this.checkCurrentRoute();
+  }
+
+  private checkCurrentRoute() {
+    // If we are currently in a referentiel path, open the sub-menu automatically
+    if (this.router.url.includes('/referentiel/')) {
+      this.isReferentielOpen = true;
     }
   }
 

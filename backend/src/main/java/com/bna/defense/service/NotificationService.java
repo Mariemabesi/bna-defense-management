@@ -85,4 +85,9 @@ public class NotificationService {
         );
         create(charge, msg, "REFUS", dossier);
     }
+
+    @Transactional
+    public Notification save(Notification n) {
+        return notificationRepository.save(n);
+    }
 }

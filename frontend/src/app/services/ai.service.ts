@@ -16,7 +16,7 @@ export interface AIAnalysis {
   providedIn: 'root'
 })
 export class AIService {
-  private apiUrl = 'http://localhost:8082/api/ai';
+  private apiUrl = '/api/ai';
 
   constructor(private http: HttpClient) {}
 

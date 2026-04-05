@@ -50,6 +50,12 @@ public class FraisController {
         return ResponseEntity.ok(fraisService.sendToTreasury(id));
     }
 
+    @PutMapping("/{id}/rejeter")
+    @PreAuthorize("@permissionService.canPreValidateFrais(authentication, #id) or hasRole('VALIDATEUR') or hasRole('ADMIN')")
+    public ResponseEntity<Frais> reject(@PathVariable Long id, @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(fraisService.reject(id, reason));
+    }
+
     @PutMapping("/batch-tresorerie")
     @PreAuthorize("hasRole('VALIDATEUR') or hasRole('ADMIN')")
     public ResponseEntity<java.util.Map<String, Object>> batchSendToTreasury() {

@@ -15,7 +15,7 @@ export interface Affaire {
     providedIn: 'root'
 })
 export class AffaireService {
-    private apiUrl = 'http://localhost:8082/api/affaires';
+    private apiUrl = '/api/affaires';
 
     constructor(private http: HttpClient) { }
 

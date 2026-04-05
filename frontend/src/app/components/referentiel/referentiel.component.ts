@@ -16,323 +16,183 @@ import { NotificationService } from '../../services/notification.service';
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
-
       <main class="main-content">
-        <app-header title="Référentiel Auxiliaires"></app-header>
-
-        <div class="dashboard-content">
-          <div class="page-header-actions">
-            <div>
-              <h2>Gestion des Partenaires Juridiques</h2>
-              <p class="subtitle">Annuaire centralisé des avocats, huissiers et experts mandatés par la BNA.</p>
-            </div>
-            <div class="actions-group" style="display: flex; gap: 12px;">
-              <button class="btn-secondary" (click)="exportAnnuaire()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                Exporter Annuaire
-              </button>
-              <button class="btn-primary" *ngIf="canManageReferentiel()" (click)="showModal = true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="16" y1="11" x2="22" y2="11"></line></svg>
-                Nouvel Auxiliaire
-              </button>
-            </div>
+        <app-header title="Commandement des Tiers"></app-header>
+        
+        <div class="page-container">
+          <!-- SOVEREIGN REGISTRY HEADER -->
+          <div class="banner-registry shadow-premium fade-in">
+             <div class="banner-body-deck">
+                <h1 class="executive-title-deck">REGISTRE DES PARTENAIRES</h1>
+                <p class="executive-subtitle-deck">Gestion souveraine des auxiliaires, experts et juridictions mandatés par la BNA.</p>
+             </div>
+             <div class="banner-actions-deck">
+                <button class="btn-executive secondary" (click)="exportAnnuaire()">EXPORTER CSV</button>
+                <button class="btn-executive primary" *ngIf="canManageReferentiel()" (click)="showModal = true">+ NOUVEAU PARTENAIRE</button>
+             </div>
           </div>
 
-          <div class="filter-tabs">
-            <button class="tab" [class.active]="activeTab === 'ALL'" (click)="activeTab = 'ALL'">Partenaires</button>
-            <button class="tab" [class.active]="activeTab === 'AVOCAT'" (click)="activeTab = 'AVOCAT'">Avocats</button>
-            <button class="tab" [class.active]="activeTab === 'HUISSIER'" (click)="activeTab = 'HUISSIER'">Huissiers</button>
-            <button class="tab" [class.active]="activeTab === 'EXPERT'" (click)="activeTab = 'EXPERT'">Experts</button>
-            <button class="tab" [class.active]="activeTab === 'ACTEURS_JURIDIQUES'" (click)="activeTab = 'ACTEURS_JURIDIQUES'">Acteures Juridiques (Notaires...)</button>
-            <button class="tab" [class.active]="activeTab === 'TRIBUNAL'" (click)="activeTab = 'TRIBUNAL'">Jurisdictions</button>
-            <button class="tab" [class.active]="activeTab === 'PROCEDURES'" (click)="activeTab = 'PROCEDURES'">Procédures</button>
-            <button class="tab" [class.active]="activeTab === 'FINANCE'" (click)="activeTab = 'FINANCE'">Finance & Fiscalité</button>
+          <!-- SOVEREIGN COMMAND TABS -->
+          <div class="tabs-command-deck shadow-premium fade-in">
+             <button class="t-btn" [class.active]="activeTab === 'ALL'" (click)="activeTab = 'ALL'">PARTENAIRES</button>
+             <button class="t-btn" [class.active]="activeTab === 'AVOCAT'" (click)="activeTab = 'AVOCAT'">AVOCATS</button>
+             <button class="t-btn" [class.active]="activeTab === 'HUISSIER'" (click)="activeTab = 'HUISSIER'">HUISSIERS</button>
+             <button class="t-btn" [class.active]="activeTab === 'EXPERT'" (click)="activeTab = 'EXPERT'">EXPERTS</button>
+             <button class="t-btn" [class.active]="activeTab === 'TRIBUNAL'" (click)="activeTab = 'TRIBUNAL'">JURIDICTIONS</button>
+             <button class="t-btn" [class.active]="activeTab === 'PROCEDURES'" (click)="activeTab = 'PROCEDURES'">PROCÉDURES</button>
+             <button class="t-btn" [class.active]="activeTab === 'FINANCE'" (click)="activeTab = 'FINANCE'">FINANCE</button>
           </div>
 
-          <div class="aux-grid" *ngIf="activeTab !== 'TRIBUNAL'">
-            <div class="aux-card" *ngFor="let aux of filteredAuxiliaires()">
-              <div class="aux-type-badge" [ngClass]="aux.type.toLowerCase()">{{ aux.type }}</div>
-              <div class="aux-main">
-                <div class="aux-avatar">{{ getInitials(aux.nom) }}</div>
-                <div class="aux-info">
-                  <h3>{{ aux.nom }}</h3>
-                  <p class="specialite">{{ aux.specialite || 'Généraliste' }}</p>
-                </div>
-              </div>
-              <div class="aux-details">
-                <div class="detail-row">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                  <span>{{ aux.adresse }}</span>
-                </div>
-                <div class="detail-row">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                  <span>{{ aux.telephone }}</span>
-                </div>
-              </div>
-              <div class="aux-footer">
-                <div style="display: flex; gap: 12px; align-items: center;">
-                  <button class="btn-text" [routerLink]="['/avocat-detail', aux.id]">Profil</button>
-                  <button class="btn-text highlight" (click)="contacter(aux)">Contacter</button>
-                </div>
-                <button class="btn-icon-only" (click)="contacter(aux)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                </button>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- TRIBUNAL / JURISDICTION VIEW -->
-          <div class="tribunal-container" *ngIf="activeTab === 'TRIBUNAL'">
-            <div class="card-list">
-              <div class="table-card" *ngFor="let t of filteredTribunaux()">
-                <div class="table-card-header">
-                  <div class="court-icon">{{ getCourtIcon(t.type) }}</div>
-                  <div class="court-info">
-                    <h3>{{ t.nom }}</h3>
-                    <div class="badge-group">
-                      <span class="region-badge">{{ t.region }}</span>
-                      <span class="type-badge" *ngIf="t.type">{{ t.type }}</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="table-card-body">
-                  <div class="info-row" *ngIf="t.chefParquet">
-                    <strong>Chef du Parquet:</strong> <span>{{ t.chefParquet }}</span>
-                  </div>
-                  <div class="info-row" *ngIf="t.arbitreDesigne">
-                    <strong>Arbitre désigné:</strong> <span>{{ t.arbitreDesigne }}</span>
-                  </div>
-                  <div class="info-row">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    <span>{{ t.adresse || 'Adresse non renseignée' }}</span>
-                  </div>
-                  <div class="info-row" *ngIf="t.telephone">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                    <span>{{ t.telephone }}</span>
-                  </div>
-                  
-                  <div class="card-actions-bottom" *ngIf="canManageReferentiel()">
-                     <button class="btn-action-outline" (click)="editTribunal(t)">
-                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                       Modifier
-                     </button>
-                     <button class="btn-action-outline delete" (click)="confirmDeleteTribunal(t)">
-                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                       Supprimer
-                     </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- PROCEDURES & FINANCE LISTS -->
-          <div class="generic-list-container" *ngIf="['PROCEDURES', 'FINANCE'].includes(activeTab)">
-            <div class="referentiel-info-card">
-              <h3>Référentiels {{ activeTab === 'PROCEDURES' ? 'Procéduraux' : 'Financiers' }}</h3>
-              <p>Liste des nomenclatures et grilles tarifaires officielles.</p>
-              
-              <div class="list-grid">
-                <div class="list-item-pro" *ngFor="let item of genericList">
-                   <div class="item-main">
-                     <span class="item-name">{{ item.nom }}</span>
-                     <span class="item-desc" *ngIf="item.description">{{ item.description }}</span>
-                   </div>
-                   <div class="item-value" *ngIf="item.valeur || item.taux">
-                     {{ item.valeur ? (item.valeur | number:'1.2-2') + ' TND' : (item.taux + '%') }}
+          <!-- SOVEREIGN PARTNER GRID -->
+          <div class="registry-grid-deck" *ngIf="activeTab !== 'TRIBUNAL' && !['PROCEDURES', 'FINANCE'].includes(activeTab)">
+             <div class="premium-partner-card shadow-premium fade-in" *ngFor="let aux of filteredAuxiliaires()">
+                <div class="tier-indicator" [ngClass]="aux.type.toLowerCase()"></div>
+                <div class="card-head-deck">
+                   <div class="avatar-aura-deck">{{ getInitials(aux.nom) }}</div>
+                   <div class="info-aura-deck">
+                      <h3>{{ aux.nom }}</h3>
+                      <span class="type-tag">{{ aux.type }}</span>
                    </div>
                 </div>
-              </div>
-            </div>
+                <div class="card-body-deck">
+                   <div class="meta-row-deck"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <span>{{ aux.adresse }}</span></div>
+                   <div class="meta-row-deck"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> <span>{{ aux.telephone || 'N/A' }}</span></div>
+                </div>
+                <div class="card-footer-deck">
+                   <button class="btn-ghost-deck" [routerLink]="['/avocat-detail', aux.id]">CONSULTER PROFIL</button>
+                   <button class="btn-aura-deck" (click)="contacter(aux)">CONTACTER</button>
+                </div>
+             </div>
+          </div>
+
+          <!-- JURISDICTION GRID -->
+          <div class="registry-grid-deck" *ngIf="activeTab === 'TRIBUNAL'">
+             <div class="premium-partner-card shadow-premium fade-in" *ngFor="let t of filteredTribunaux()">
+                <div class="card-head-deck">
+                   <div class="avatar-aura-deck court">{{ getCourtIcon(t.type) }}</div>
+                   <div class="info-aura-deck">
+                      <h3>{{ t.nom }}</h3>
+                      <span class="type-tag">{{ t.region }}</span>
+                   </div>
+                </div>
+                <div class="card-body-deck">
+                   <div class="meta-row-deck"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> <span>{{ t.adresse || 'Tunisie' }}</span></div>
+                </div>
+                <div class="card-footer-deck" *ngIf="canManageReferentiel()">
+                   <button class="btn-ghost-deck" (click)="editTribunal(t)">ÉDITER</button>
+                   <button class="btn-ghost-deck danger" (click)="confirmDeleteTribunal(t)">SUPPRIMER</button>
+                </div>
+             </div>
           </div>
         </div>
 
-        <!-- NEW AUXILIAIRE MODAL -->
-        <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
-          <div class="modal-content" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-              <h2>Ajouter un Auxiliaire</h2>
-              <button class="btn-close" (click)="closeModal()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
-            </div>
-            
-            <form (ngSubmit)="saveAuxiliaire()">
-              <div class="form-group">
-                <label>Nom & Prénom *</label>
-                <input type="text" [(ngModel)]="newAux.nom" name="nom" required class="form-control" placeholder="Ex: Maître Ben Ali">
+        <!-- SOVEREIGN MODALS -->
+        <div class="modal-overlay-sovereign" *ngIf="showModal" (click)="closeModal()">
+           <div class="modal-bento shadow-premium fade-in" (click)="$event.stopPropagation()">
+              <div class="bento-header">
+                 <h2>AJOUTER UN AUXILIAIRE</h2>
+                 <button (click)="closeModal()" class="close-btn-ghost"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
               </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Profession *</label>
-                  <select [(ngModel)]="newAux.type" name="type" required class="form-control">
-                    <option value="AVOCAT">Avocat</option>
-                    <option value="HUISSIER">Huissier</option>
-                    <option value="EXPERT">Expert</option>
-                    <option value="NOTAIRE">Notaire</option>
-                    <option value="MANDATAIRE">Mandataire</option>
-                    <option value="GREFFIER">Greffier</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Spécialité</label>
-                  <input type="text" [(ngModel)]="newAux.specialite" name="specialite" class="form-control" placeholder="Ex: Droit des Affaires">
-                </div>
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Email *</label>
-                  <input type="email" [(ngModel)]="newAux.email" name="email" required class="form-control" placeholder="email@domaine.com">
-                </div>
-                <div class="form-group">
-                  <label>Téléphone *</label>
-                  <input type="text" [(ngModel)]="newAux.telephone" name="telephone" required class="form-control" placeholder="Numéro de contact">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>Adresse du cabinet *</label>
-                <textarea [(ngModel)]="newAux.adresse" name="adresse" required class="form-control" rows="2" placeholder="Adresse complète"></textarea>
-              </div>
-              
-              <div class="modal-footer">
-                <button type="button" class="btn-secondary" (click)="closeModal()">Annuler</button>
-                <button type="submit" class="btn-primary" [disabled]="!isFormValid()">Enregistrer Partenaire</button>
-              </div>
-            </form>
-          </div>
+              <form class="bento-form" (ngSubmit)="saveAuxiliaire()">
+                 <div class="bento-row">
+                    <div class="i-unit"><label>Dénomination / Nom Complet</label><input type="text" [(ngModel)]="newAux.nom" name="n" class="g-field"></div>
+                    <div class="i-unit"><label>Profession</label><select [(ngModel)]="newAux.type" name="t" class="g-select"><option value="AVOCAT">Avocat</option><option value="HUISSIER">Huissier</option><option value="EXPERT">Expert</option></select></div>
+                 </div>
+                 <div class="bento-row">
+                    <div class="i-unit"><label>Email Professionnel</label><input type="email" [(ngModel)]="newAux.email" name="e" class="g-field"></div>
+                    <div class="i-unit"><label>Coordonnées Mobiles</label><input type="text" [(ngModel)]="newAux.telephone" name="p" class="g-field"></div>
+                 </div>
+                 <div class="i-unit"><label>Siège / Bureau</label><textarea [(ngModel)]="newAux.adresse" name="a" class="g-area"></textarea></div>
+                 <div class="bento-footer"><button type="submit" class="btn-executive primary" [disabled]="!isFormValid()">ENREGISTRER PARTENAIRE</button></div>
+              </form>
+           </div>
         </div>
-
-        <!-- NEW TRIBUNAL MODAL -->
-        <div class="modal-overlay" *ngIf="showTribunalModal" (click)="closeTribunalModal()">
-          <div class="modal-content" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-              <h2>{{ currentTribunalId ? 'Modifier' : 'Ajouter' }} un Tribunal</h2>
-              <button class="btn-close" (click)="closeTribunalModal()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
-            </div>
-            
-            <form (ngSubmit)="saveTribunal()">
-              <div class="form-group">
-                <label>Nom du Tribunal *</label>
-                <input type="text" [(ngModel)]="newTribunal.nom" name="nom" required class="form-control" placeholder="Ex: Tribunal de Première Instance de Tunis">
-              </div>
-              <div class="form-group">
-                <label>Région / Gouvernorat *</label>
-                <input type="text" [(ngModel)]="newTribunal.region" name="region" required class="form-control" placeholder="Ex: Tunis">
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Téléphone</label>
-                  <input type="text" [(ngModel)]="newTribunal.telephone" name="telephone" class="form-control" placeholder="71 ...">
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Adresse détaillée</label>
-                <textarea [(ngModel)]="newTribunal.adresse" name="adresse" class="form-control" rows="2" placeholder="Rue, Ville..."></textarea>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn-secondary" (click)="closeTribunalModal()">Annuler</button>
-                <button type="submit" class="btn-primary" [disabled]="!isTribunalFormValid()">
-                  {{ currentTribunalId ? 'Mettre à jour' : 'Enregistrer Tribunal' }}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
       </main>
     </div>
   `,
   styles: [`
-    :host {
-      --bg-color: #f8fafc;
-      --sidebar-width: 280px;
-      --bna-green: #008766;
-      --bna-green-light: rgba(0, 135, 102, 0.08);
-      --bna-green-dark: #00684d;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-      --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-    }
+    .app-layout { display: flex; min-height: 100vh; background: transparent; }
+    .main-content { flex: 1; margin-left: var(--sidebar-width); }
+    .page-container { padding: 48px; max-width: 1300px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; animation: fadeUp 0.6s ease-out; }
 
-    .app-layout { display: flex; min-height: 100vh; background-color: var(--bg-color); font-family: 'Outfit', sans-serif; }
-    .main-content { flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column; }
-    .dashboard-content { padding: 40px; max-width: 1400px; width: 100%; margin: 0 auto; }
-    
-    .page-header-actions { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-    .page-header-actions h2 { font-size: 32px; font-weight: 800; color: var(--text-main); margin: 0 0 8px 0; letter-spacing: -0.5px; }
-    .subtitle { color: var(--text-muted); font-size: 16px; margin: 0; font-weight: 500; }
-    
-    .filter-tabs { display: flex; gap: 8px; margin-bottom: 32px; background: #e2e8f0; padding: 6px; border-radius: 16px; width: fit-content; }
-    .tab { padding: 10px 24px; border-radius: 12px; border: none; background: transparent; color: var(--text-muted); font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 14px; }
-    .tab.active { background: white; color: var(--bna-green); box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
-    .tab:hover:not(.active) { color: var(--text-main); background: rgba(255,255,255,0.5); }
-    
-    .aux-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 32px; }
-    .aux-card { 
-      background: white; border-radius: 28px; padding: 32px; border: 1px solid rgba(0,0,0,0.04); 
-      box-shadow: var(--card-shadow); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;
-      overflow: hidden;
+    /* HEADER BANNER */
+    .banner-registry { 
+      background: white; border-radius: 32px; padding: 40px; display: flex; justify-content: space-between; align-items: center;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-left: 6px solid var(--bna-emerald);
     }
-    .aux-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: transparent; transition: 0.3s; }
-    .aux-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); }
-    .aux-card:hover::before { background: var(--bna-green); }
-    
-    .aux-type-badge { position: absolute; top: 32px; right: 32px; padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-    .aux-type-badge.avocat { background: #eff6ff; color: #2563eb; }
-    .aux-type-badge.huissier { background: #fffbeb; color: #d97706; }
-    .aux-type-badge.expert { background: #f0fdf4; color: #166534; }
-    
-    .aux-main { display: flex; align-items: center; gap: 20px; margin-bottom: 28px; }
-    .aux-avatar { width: 64px; height: 64px; border-radius: 20px; background: var(--bna-green-light); color: var(--bna-green); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
-    .aux-info h3 { margin: 0; font-size: 20px; font-weight: 800; color: var(--text-main); }
-    .specialite { margin: 4px 0 0 0; font-size: 15px; color: var(--text-muted); font-weight: 600; }
-    
-    .aux-details { display: flex; flex-direction: column; gap: 16px; padding: 24px 0; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; margin-bottom: 24px; }
-    .detail-row { display: flex; align-items: flex-start; gap: 14px; color: #475569; font-size: 14px; line-height: 1.5; }
-    .detail-row svg { color: var(--text-muted); margin-top: 2px; flex-shrink: 0; }
-    
-    .aux-footer { display: flex; justify-content: space-between; align-items: center; }
-    .btn-text { background: none; border: none; color: var(--bna-green); font-weight: 700; font-size: 14px; cursor: pointer; padding: 0; transition: 0.2s; border-bottom: 2px solid transparent; }
-    .btn-text:hover { color: var(--bna-green-dark); border-bottom-color: var(--bna-green-dark); }
-    .btn-text.highlight { color: #2563eb; }
-    .btn-text.highlight:hover { border-bottom-color: #2563eb; }
-    
-    .btn-icon-only { width: 44px; height: 44px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: white; color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; }
-    .btn-icon-only:hover { background: var(--bna-green-light); color: var(--bna-green); border-color: var(--bna-green); transform: rotate(15deg); }
-    
-    /* MODAL PROFESSIONAL DESIGN */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px);
-      z-index: 2000; display: flex; align-items: center; justify-content: center;
-      animation: fadeIn 0.3s ease-out;
+    .executive-title-deck { font-size: 32px; font-weight: 900; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -1.5px; }
+    .executive-subtitle-deck { font-size: 15px; color: #64748b; font-weight: 600; margin: 0; }
+    .banner-actions-deck { display: flex; gap: 16px; }
+
+    /* TABS COMMAND */
+    .tabs-command-deck { 
+      background: #0f172a; border-radius: 20px; padding: 8px; display: flex; gap: 8px; width: fit-content;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-top: -20px; z-index: 10;
     }
-    .modal-content {
-      background: white; border-radius: 32px; width: 100%; max-width: 700px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden;
-      animation: zoomIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); margin: 24px;
-      border: 1px solid rgba(255,255,255,0.2);
+    .t-btn { 
+      background: transparent; border: none; padding: 10px 20px; color: #94a3b8; font-weight: 850; font-size: 11px;
+      letter-spacing: 1.5px; cursor: pointer; transition: 0.3s; border-radius: 14px;
     }
-    .modal-header {
-      padding: 32px 40px; border-bottom: 1px solid #f1f5f9;
-      display: flex; justify-content: space-between; align-items: center;
-      background: #fafafa;
+    .t-btn.active { background: var(--bna-emerald); color: white; box-shadow: 0 4px 15px rgba(0, 135, 102, 0.4); transform: translateY(-2px); }
+    .t-btn:hover:not(.active) { color: white; background: rgba(255,255,255,0.1); }
+
+    /* REGISTRY GRID */
+    .registry-grid-deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 32px; }
+    .premium-partner-card { 
+      background: white; border-radius: 32px; padding: 32px; position: relative; overflow: hidden; 
+      transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; gap: 24px;
     }
-    .modal-header h2 { margin: 0; font-size: 24px; font-weight: 800; color: var(--text-main); }
-    .btn-close {
-      background: #f1f5f9; border: none; cursor: pointer; color: var(--text-muted);
-      width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
+    .premium-partner-card:hover { transform: translateY(-10px); box-shadow: 0 25px 50px rgba(0, 135, 102, 0.08); }
+    .tier-indicator { position: absolute; top: 0; left: 0; right: 0; height: 6px; }
+    .tier-indicator.avocat { background: #2563eb; }
+    .tier-indicator.huissier { background: #ea580c; }
+    .tier-indicator.expert { background: var(--bna-emerald); }
+
+    .card-head-deck { display: flex; align-items: center; gap: 20px; }
+    .avatar-aura-deck { 
+      width: 60px; height: 60px; border-radius: 18px; background: #f1f5f9; 
+      display: flex; align-items: center; justify-content: center; font-weight: 850; font-size: 22px; color: #0f172a;
     }
-    .btn-close:hover { background: #fee2e2; color: #ef4444; transform: rotate(90deg); }
-    
-    form { padding: 40px; display: flex; flex-direction: column; gap: 28px; }
+    .avatar-aura-deck.court { background: #0f172a; font-size: 28px; }
+    .info-aura-deck h3 { font-size: 19px; font-weight: 850; color: #1e293b; margin: 0; }
+    .type-tag { font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+    .card-body-deck { display: flex; flex-direction: column; gap: 14px; padding: 20px 0; border-top: 2px solid #f8fafc; border-bottom: 2px solid #f8fafc; }
+    .meta-row-deck { display: flex; align-items: flex-start; gap: 12px; color: #64748b; font-size: 13px; font-weight: 600; line-height: 1.4; }
+    .meta-row-deck svg { color: #94a3b8; flex-shrink: 0; }
+
+    .card-footer-deck { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; }
+    .btn-ghost-deck { background: none; border: none; color: #94a3b8; font-weight: 850; font-size: 10px; letter-spacing: 1px; cursor: pointer; transition: 0.2s; }
+    .btn-ghost-deck:hover { color: #0f172a; }
+    .btn-ghost-deck.danger:hover { color: #ef4444; }
+    .btn-aura-deck { background: #eff6ff; color: #2563eb; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 850; font-size: 10px; letter-spacing: 1px; cursor: pointer; }
+    .btn-aura-deck:hover { background: #2563eb; color: white; transform: rotate(-3deg); }
+
+    /* MODAL OVERHAUL */
+    .modal-overlay-sovereign { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn 0.4s; }
+    .modal-bento { background: white; border-radius: 32px; width: 100%; max-width: 650px; padding: 48px; border: 1px solid rgba(255,255,255,0.4); }
+    .bento-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .bento-header h2 { font-size: 24px; font-weight: 950; color: #0f172a; letter-spacing: -1px; margin: 0; }
+    .close-btn-ghost { background: none; border: none; color: #94a3b8; cursor: pointer; transition: 0.3s; }
+    .close-btn-ghost:hover { transform: rotate(90deg); color: #ef4444; }
+
+    .bento-form { display: flex; flex-direction: column; gap: 28px; }
+    .bento-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .i-unit { display: flex; flex-direction: column; gap: 10px; }
+    .i-unit label { font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
+    .g-field, .g-select, .g-area { padding: 14px 18px; border-radius: 14px; border: 2.5px solid #f1f5f9; background: #f8fafc; font-family: inherit; font-size: 14px; font-weight: 700; color: #1e293b; transition: 0.3s; width: 100%; box-sizing: border-box; }
+    .g-field:focus, .g-select:focus { border-color: var(--bna-emerald); outline: none; background: white; box-shadow: 0 10px 20px rgba(0, 135, 102, 0.05); }
+
+    .bento-footer { margin-top: 20px; display: flex; justify-content: flex-end; }
+    .btn-executive { padding: 16px 32px; border-radius: 16px; border: none; font-weight: 850; letter-spacing: 1px; font-size: 11px; cursor: pointer; transition: 0.3s; }
+    .btn-executive.primary { background: var(--bna-emerald); color: white; box-shadow: 0 10px 20px rgba(0, 135, 102, 0.2); }
+    .btn-executive.secondary { background: #f8fafc; color: #64748b; }
+    .btn-executive:hover:not(:disabled) { transform: translateY(-3px); }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  `],
+x; }
     .form-group { display: flex; flex-direction: column; gap: 10px; }
     .form-group label { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }

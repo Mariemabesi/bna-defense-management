@@ -67,8 +67,12 @@ public class DossierController {
     }
 
     @GetMapping("/search")
-    public List<Dossier> searchDossiers(@RequestParam String query) {
-        return dossierService.searchDossiers(query);
+    public List<Dossier> searchDossiers(
+            @RequestParam(name = "q", required = false) String q,
+            @RequestParam(name = "query", required = false) String query) {
+        String searchQuery = (q != null) ? q : query;
+        if (searchQuery == null) return List.of();
+        return dossierService.searchDossiers(searchQuery);
     }
 
     @PutMapping("/{id}/statut")

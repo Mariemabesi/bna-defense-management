@@ -20,7 +20,7 @@ export interface DashboardStats {
     providedIn: 'root'
 })
 export class ReportingService {
-    private apiUrl = 'http://localhost:8082/api/reports';
+    private apiUrl = '/api/reports';
 
     constructor(private http: HttpClient) { }
 

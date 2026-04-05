@@ -88,7 +88,7 @@ import { Subscription, interval } from 'rxjs';
                   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#008766" stroke-width="1"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                </div>
                <h3>BNA Messagerie Support</h3>
-               <p>Sélectionnez une conversation pour assister un utilisateur en temps réel.</p>
+               <p>Sélectionnez un utilisateur dans le panneau de gauche pour débuter l'assistance en temps réel.</p>
             </div>
           </div>
         </div>
@@ -96,10 +96,15 @@ import { Subscription, interval } from 'rxjs';
     </div>
   `,
   styles: [`
-    .dashboard-content { height: calc(100vh - 100px); padding: 24px 40px !important; }
+    .dashboard-content { 
+      height: calc(100vh - 90px); 
+      display: flex; 
+      flex-direction: column;
+      padding: 32px 48px;
+    }
     .chat-main-wrapper { 
-      display: flex; height: 100%; background: white; border-radius: 30px; 
-      box-shadow: 0 15px 35px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #f1f5f9;
+      display: flex; flex: 1; min-height: 0; background: white; border-radius: 24px; 
+      box-shadow: 0 10px 40px rgba(0,0,0,0.03); overflow: hidden; border: 1px solid #f1f5f9;
     }
     
     /* SIDEBAR */

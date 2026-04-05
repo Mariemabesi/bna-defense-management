@@ -74,6 +74,7 @@ public class FraisService {
         dossierService.recalculateFrais(dossierId, total != null ? total : java.math.BigDecimal.ZERO);
     }
 
+    @Transactional
     public Frais preValidate(Long id) {
         Frais frais = fraisRepository.findById(id).orElseThrow();
         if (frais.getStatut() != Frais.StatutFrais.ATTENTE) {
@@ -95,6 +96,7 @@ public class FraisService {
         return saved;
     }
 
+    @Transactional
     public Frais sendToTreasury(Long id) {
         Frais frais = fraisRepository.findById(id).orElseThrow();
         if (frais.getStatut() != Frais.StatutFrais.VALIDE) {
@@ -115,5 +117,13 @@ public class FraisService {
         }
         fraisRepository.saveAll(valideFrais);
         return valideFrais.size();
+    }
+
+    @Transactional
+    public Frais reject(Long id, String reason) {
+        Frais frais = fraisRepository.findById(id).orElseThrow();
+        frais.setStatut(Frais.StatutFrais.REJETE);
+        frais.setObservation(reason != null ? "[REFUS] " + reason : "[REFUS] Aucun motif spécifié");
+        return fraisRepository.save(frais);
     }
 }

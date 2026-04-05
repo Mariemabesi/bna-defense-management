@@ -7,9 +7,9 @@ services:
     container_name: bna-postgres
     restart: always
     environment:
-      POSTGRES_DB: bna_defense
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -21,12 +21,45 @@ services:
     container_name: bna-pgadmin
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@bna.com
-      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5050:80"
     depends_on:
       - db
+
+  fastapi:
+    build: ./fastapi
+    container_name: bna-fastapi
+    restart: always
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    ports:
+      - "8000:8000"
+
+  backend:
+    build: ./backend
+    container_name: bna-backend
+    restart: always
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - AI_SERVICE_URL=${AI_SERVICE_URL}
+    ports:
+      - "8082:8082"
+    depends_on:
+      - db
+      - fastapi
+
+  frontend:
+    build: ./frontend
+    container_name: bna-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

@@ -96,8 +96,9 @@ interface RefConfig {
           </div>
 
           <!-- DATA LIST / GRID -->
-          <div class="table-card shadow-premium">
-             <table class="data-table">
+          <div class="table-card shadow-premium" [class.grid-view]="isAuxiliaireView()">
+             <!-- Standard Table for Jurisdictions / Procedures -->
+             <table class="data-table" *ngIf="!isAuxiliaireView()">
                 <thead>
                    <tr>
                       <th *ngFor="let col of config.columns">{{ col.label }}</th>
@@ -141,6 +142,49 @@ interface RefConfig {
                    </tr>
                 </tbody>
              </table>
+
+             <!-- Premium Cards for Avocats / Huissiers -->
+             <div class="grid-container" *ngIf="isAuxiliaireView()">
+                <div class="aux-card fade-in" *ngFor="let item of sortedItems()">
+                   <div class="card-status-dot active"></div>
+                   <div class="card-prio-ribbon" *ngIf="item.dossiersCount > 5">TOP TIER</div>
+                   
+                   <div class="card-head">
+                      <div class="avatar">{{ item.nom[0] }}</div>
+                      <div class="head-info">
+                         <h3>{{ item.nom }}</h3>
+                         <span class="specialty">{{ item.specialite || (type === 'huissiers' ? 'Huissier de Justice' : 'Généraliste') }}</span>
+                      </div>
+                   </div>
+
+                   <div class="card-metrics">
+                      <div class="metric">
+                         <span class="m-val">{{ item.rating || '4.8' }} ⭐</span>
+                         <span class="m-label">Score BNA</span>
+                      </div>
+                      <div class="metric">
+                         <span class="m-val">{{ item.dossiersCount || 0 }}</span>
+                         <span class="m-label">Affaires</span>
+                      </div>
+                   </div>
+
+                   <div class="card-contacts">
+                      <div class="contact-row">
+                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.32-2.32a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                         <span>{{ item.telephone || '—' }}</span>
+                      </div>
+                      <div class="contact-row">
+                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                         <span>{{ item.email || '—' }}</span>
+                      </div>
+                   </div>
+
+                   <div class="card-footer" *ngIf="isAdmin()">
+                      <button (click)="onEdit(item)" class="btn-card second">Modifier</button>
+                      <button (click)="onDelete(item)" class="btn-card danger">Supprimer</button>
+                   </div>
+                </div>
+             </div>
 
              <!-- PAGING -->
              <div class="pagination-footer" *ngIf="totalPages > 1">
@@ -206,81 +250,64 @@ interface RefConfig {
     </div>
   `,
   styles: [`
-    .app-layout { display: flex; min-height: 100vh; background: #f0f4f8; }
-    .main-content { flex: 1; margin-left: 250px; }
-    .page-container { padding: 40px; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
+    .app-layout { display: flex; min-height: 100vh; background: transparent; }
+    .main-content { flex: 1; margin-left: var(--sidebar-width); }
+    .page-container { padding: 48px; max-width: 1500px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; animation: fadeUp 0.6s ease-out; }
     
-    .shadow-premium { box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02); }
+    .shadow-premium { box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1.5px solid rgba(0,0,0,0.015); }
     
     /* HEADER BANNER */
-    .header-banner { background: white; border-radius: 24px; padding: 40px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); }
-    .banner-info h1 { font-size: 32px; font-weight: 800; color: #1e293b; margin: 0 0 8px 0; letter-spacing: -1px; }
-    .banner-info p { font-size: 16px; color: #64748b; margin: 0; font-weight: 500; }
-    .banner-actions { display: flex; gap: 12px; }
+    .header-banner { 
+      background: white; border-radius: 32px; padding: 48px; 
+      display: flex; justify-content: space-between; align-items: center; 
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-left: 5px solid var(--bna-emerald);
+    }
+    .banner-info h1 { font-size: 36px; font-weight: 850; color: #0f172a; margin: 0 0 10px 0; letter-spacing: -1.2px; }
+    .banner-info p { font-size: 17px; color: #64748b; margin: 0; font-weight: 600; }
     
-    /* BUTTONS */
-    .btn-export, .btn-add { display: flex; align-items: center; gap: 10px; padding: 12px 24px; border-radius: 14px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid transparent; }
-    .btn-export.secondary { background: white; border-color: #e2e8f0; color: #475569; }
-    .btn-export:hover { transform: translateY(-2px); border-color: #008766; color: #008766; box-shadow: 0 8px 15px rgba(0, 135, 102, 0.1); }
-    .btn-add.primary { background: #008766; color: white; border-color: #008766; box-shadow: 0 10px 20px rgba(0, 135, 102, 0.2); }
-    .btn-add:hover { transform: translateY(-3px); background: #00684d; box-shadow: 0 12px 24px rgba(0, 135, 102, 0.3); }
-
     /* FILTER BAR */
-    .filter-bar { background: white; border-radius: 20px; padding: 20px 32px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
-    .search-input { position: relative; flex: 1; min-width: 300px; }
-    .search-input svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
-    .search-input input { width: 100%; padding: 12px 16px 12px 48px; border-radius: 12px; border: 2px solid #f1f5f9; background: #f8fafc; font-size: 14px; transition: 0.2s; font-weight: 600; }
-    .search-input input:focus { outline: none; border-color: #008766; background: white; box-shadow: 0 0 0 4px rgba(0, 135, 102, 0.1); }
-    .filter-select { padding: 12px 16px; border-radius: 12px; border: 2px solid #f1f5f9; background: #f8fafc; color: #475569; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; }
-    .filter-select:hover { border-color: #cbd5e1; }
-    .results-info { margin-left: auto; color: #94a3b8; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-
-    /* TABLE */
-    .table-card { background: white; border-radius: 24px; overflow: hidden; position: relative; min-height: 400px; }
-    .data-table { width: 100%; border-collapse: collapse; }
-    .data-table th { text-align: left; padding: 20px 32px; background: #f8fafc; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 800; border-bottom: 1px solid #f1f5f9; }
-    .data-table td { padding: 18px 32px; border-bottom: 1px solid #f8fafc; color: #1e293b; font-size: 15px; font-weight: 600; }
-    .data-table tr:hover { background: #fcfdfe; }
-    .val-amount { color: #008766; font-weight: 800; }
-    .val-pct { color: #2563eb; font-weight: 800; }
-    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #e2e8f0; margin-right: 8px; }
-    .dot.active { background: #10b981; }
-
-    .actions-cell { display: flex; gap: 8px; justify-content: flex-end; }
-    .btn-micro { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #f1f5f9; background: white; color: #64748b; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-    .btn-micro:hover { color: #008766; border-color: #008766; background: #f0fdf4; }
-    .btn-micro.delete:hover { color: #ef4444; border-color: #fee2e2; background: #fef2f2; }
-
-    /* PAGINATION */
-    .pagination-footer { padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-top: 1px solid #f1f5f9; }
-    .pagination-footer button { padding: 8px 16px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; color: #475569; font-weight: 700; cursor: pointer; transition: 0.2s; }
-    .pagination-footer button:hover:not(:disabled) { border-color: #008766; color: #008766; }
-    .pagination-footer button:disabled { opacity: 0.5; cursor: default; }
-
-    /* MODAL */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 3000; }
-    .modal-card { background: white; border-radius: 32px; width: 100%; max-width: 800px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); overflow: hidden; animation: bounceIn 0.4s; }
-    .modal-top { padding: 32px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
-    .modal-top h2 { margin: 0; font-size: 24px; font-weight: 800; color: #1e293b; }
-    .close-icon { background: #f1f5f9; border: none; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
+    .filter-bar { background: white; border-radius: 24px; padding: 24px 36px; display: flex; align-items: center; gap: 32px; }
+    .search-input input { 
+      width: 100%; padding: 14px 20px 14px 52px; border-radius: 16px; 
+      border: 1.5px solid #f1f5f9; background: #f8fafc; font-size: 15px; 
+      transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-weight: 700; 
+    }
+    .search-input input:focus { border-color: var(--bna-emerald); background: white; box-shadow: 0 0 30px rgba(0, 135, 102, 0.1); }
     
-    .modal-body { padding: 40px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .f-group { display: flex; flex-direction: column; gap: 8px; }
-    .f-group label { font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
-    .f-control { padding: 12px 16px; border-radius: 12px; border: 2px solid #f1f5f9; background: #f8fafc; font-size: 15px; font-weight: 600; font-family: inherit; }
-    .f-control:focus { outline: none; border-color: #008766; background: white; }
-    .modal-footer { margin-top: 40px; display: flex; justify-content: flex-end; gap: 16px; }
-    .btn-cancel { padding: 12px 24px; border-radius: 12px; border: none; background: #f1f5f9; color: #64748b; font-weight: 700; cursor: pointer; }
-    .btn-save { padding: 12px 32px; border-radius: 12px; border: none; background: #008766; color: white; font-weight: 800; cursor: pointer; }
-
-    /* SWITCH CUSTOM */
-    .switch { display: flex; align-items: center; gap: 12px; cursor: pointer; margin-top: 10px; }
-    .slider { position: relative; display: inline-block; width: 44px; height: 24px; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
-    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-    input:checked + .slider { background-color: #10b981; }
-    input:checked + .slider:before { transform: translateX(20px); }
-    .sw-label { font-size: 14px; font-weight: 700; color: #475569; }
+    /* TABLE */
+    .table-card { 
+      background: white; border-radius: 32px; overflow-x: auto; position: relative; min-height: 400px; 
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    @media (max-width: 768px) {
+      .table-card { border-radius: 20px; }
+      .data-table th, .data-table td { padding: 14px 16px !important; font-size: 13px !important; }
+      .header-banner { padding: 24px; border-radius: 20px; flex-direction: column; gap: 20px; text-align: center; }
+      .banner-actions { width: 100%; flex-direction: column; }
+      .filter-bar { padding: 16px; border-radius: 16px; gap: 16px; }
+      .search-input { min-width: 100% !important; }
+    }
+    .data-table th { padding: 24px 32px; background: #f8fafc; color: #475569; font-size: 11px; font-weight: 900; letter-spacing: 2px; }
+    .data-table td { padding: 24px 32px; border-bottom: 1px solid #f1f5f9; font-size: 15px; font-weight: 650; }
+    .data-table tr:hover { background: #fcfdfe; }
+    
+    /* CARDS */
+    .aux-card { 
+      background: white; border-radius: 32px; padding: 32px; 
+      border: 1.8px solid #f1f5f9; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .aux-card:hover { transform: translateY(-12px); border-color: var(--bna-emerald); box-shadow: 0 30px 60px rgba(0, 135, 102, 0.08); }
+    .card-prio-ribbon { background: var(--bna-emerald); font-size: 9px; letter-spacing: 2px; }
+    .avatar { border-radius: 20px; background: #f1f5f9; color: var(--bna-emerald); }
+    
+    .btn-micro { border-radius: 10px; background: #f8fafc; transition: 0.2s; }
+    .btn-micro:hover { transform: scale(1.1); color: var(--bna-emerald); }
+    
+    .status-badge { padding: 6px 14px; border-radius: 12px; font-size: 11px; font-weight: 850; letter-spacing: 0.8px; }
+    
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes bounceIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
@@ -317,14 +344,17 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
         columns: [
           { key: 'nom', label: 'Nom' },
           { key: 'specialite', label: 'Spécialité' },
-          { key: 'telephone', label: 'Téléphone' },
-          { key: 'email', label: 'Email' }
+          { key: 'dossiersCount', label: 'Affaires', type: 'number' },
+          { key: 'rating', label: 'Score', type: 'number' },
+          { key: 'telephone', label: 'Téléphone' }
         ],
         filters: [],
         formFields: [
           { key: 'nom', label: 'Nom & Prénom', type: 'text', required: true },
           { key: 'type', label: 'Type', type: 'select', options: [{value: 'AVOCAT', label: 'Avocat'}], required: true },
           { key: 'specialite', label: 'Spécialité', type: 'text' },
+          { key: 'dossiersCount', label: 'Volume d\'affaires (Dossiers)', type: 'number' },
+          { key: 'rating', label: 'Rating BNA (0-5)', type: 'number' },
           { key: 'email', label: 'Email', type: 'text', required: true },
           { key: 'telephone', label: 'Téléphone', type: 'text', required: true },
           { key: 'adresse', label: 'Adresse Cabinet', type: 'textarea' }
@@ -354,6 +384,7 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
         path: 'auxiliaires',
         columns: [
           { key: 'nom', label: 'Nom' },
+          { key: 'dossiersCount', label: 'Exécutions', type: 'number' },
           { key: 'telephone', label: 'Téléphone' },
           { key: 'region', label: 'Région' }
         ],
@@ -361,6 +392,7 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
         formFields: [
           { key: 'nom', label: 'Nom', type: 'text', required: true },
           { key: 'type', label: 'Type', type: 'select', options: [{value: 'HUISSIER', label: 'Huissier'}], required: true },
+          { key: 'dossiersCount', label: 'Volume d\'exécutions', type: 'number' },
           { key: 'telephone', label: 'Téléphone', type: 'text' },
           { key: 'region', label: 'Région', type: 'text' }
         ]
@@ -792,5 +824,14 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
 
   exportToPDF() {
     window.print();
+  }
+
+  isAuxiliaireView() {
+    return ['avocats', 'huissiers', 'experts', 'experts-judiciaires'].includes(this.type);
+  }
+
+  sortedItems() {
+    // Sort by dossiersCount (popularity) descending by default for cards
+    return [...this.items].sort((a, b) => (b.dossiersCount || 0) - (a.dossiersCount || 0));
   }
 }

@@ -36,7 +36,7 @@ export interface Tribunal {
     providedIn: 'root'
 })
 export class ReferentielService {
-    private apiUrl = 'http://localhost:8082/api/referentiel';
+    private apiUrl = '/api/referentiel';
 
     constructor(private http: HttpClient) { }
 

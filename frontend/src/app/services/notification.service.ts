@@ -21,7 +21,7 @@ export class NotificationService {
     private unreadCountSubject = new BehaviorSubject<number>(0);
     public unreadCount$ = this.unreadCountSubject.asObservable();
 
-    private apiUrl = 'http://localhost:8082/api/notifications';
+    private apiUrl = '/api/notifications';
 
     constructor(private http: HttpClient) {
         this.refreshNotifications();
@@ -67,7 +67,7 @@ export class NotificationService {
     public chatUnreadCount$ = this.chatUnreadCountSubject.asObservable();
 
     updateChatUnreadCount() {
-        this.http.get<{count: number}>('http://localhost:8082/api/chat/unread-count')
+        this.http.get<{count: number}>('/api/chat/unread-count')
             .subscribe({
                 next: (res: {count: number}) => this.chatUnreadCountSubject.next(res.count),
                 error: () => {}
