@@ -77,6 +77,80 @@ async def calculate_risk_score(request: dict):
     except:
         return {"riskScore": "MOYEN"}
 
+@app.post("/api/ai/summarize-dossier")
+async def summarize_dossier(request: dict):
+    dossier_id = request.get("dossierId")
+    # Simulate summarization with Claude
+    try:
+        user_prompt = f"Résume le dossier juridique BNA #{dossier_id}. Concentre-toi sur les faits marquants, les parties et l'enjeu financier."
+        message = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=300,
+            messages=[{"role": "user", "content": user_prompt}]
+        )
+        return {"summary": message.content[0].text}
+    except:
+        return {"summary": "Résumé automatique non disponible pour le moment."}
+
+@app.post("/api/ai/detect-anomaly")
+async def detect_anomaly(request: dict):
+    frais_id = request.get("fraisId")
+    # Simulation: return anomaly based on ID/Logic
+    return {"fraisId": frais_id, "isAnomalous": False, "reason": "Consistent with market rates."}
+
+@app.post("/api/ai/predict-budget")
+async def predict_budget(request: dict):
+    dossier_id = request.get("dossierId")
+    # Simulation: Predict budget based on historical data
+    return {"dossierId": dossier_id, "predictedBudget": 15000.0, "confidence": 0.82}
+
+@app.get("/api/ai/avocat-score/{id}")
+async def get_avocat_score(id: int):
+    # Simulation: Lawyer performance score (0-100)
+    return {"id": id, "score": 85.5, "winRate": 0.75, "efficiency": "High"}
+
+@app.post("/api/ai/recommend-strategy")
+async def recommend_strategy(request: dict):
+    dossier_id = request.get("dossierId")
+    # Use Claude for RAG / Strategy
+    try:
+        user_prompt = f"Suggère une stratégie juridique pour le dossier #{dossier_id} de la BNA (Banque Nationale Agricole) selon le droit tunisien."
+        message = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=500,
+            messages=[{"role": "user", "content": user_prompt}]
+        )
+        return {"strategy": message.content[0].text}
+    except:
+        return {"strategy": "Poursuivre la procédure standard en première instance."}
+
+@app.get("/api/ai/predictive-kpis")
+async def get_predictive_kpis():
+    return {
+        "expectedWinRate": 0.72,
+        "estimatedTreasuryStrain": "Low",
+        "nextQuarterVolumeProjection": "+15%"
+    }
+
+@app.post("/api/ai/nl-search")
+async def nl_search(request: dict):
+    query = request.get("query")
+    # Simulation: Natural Language to SQL
+    return [{"id": 1, "reference": "DEF-2026-1234", "titre": "Litige foncier BNA", "matchPercentage": 0.98}]
+
+@app.get("/api/ai/smart-notifications")
+async def get_smart_notifications():
+    return [{"id": 1, "message": "Alerte de délai : Le dossier DEF-2026-6789 expire dans 3 jours.", "priority": "High"}]
+
+@app.post("/api/ai/analyze-document")
+async def analyze_document(request: dict):
+    doc_id = request.get("documentId")
+    return {"id": doc_id, "analysis": "Document conforme aux standards BNA.", "risks": []}
+
+@app.get("/api/ai/detect-fraud/{id}")
+async def detect_fraud(id: int):
+    return {"userId": id, "status": "CLEAN", "flags": 0}
+
 @app.get("/")
 def read_root():
     return {"message": "BNA AI Service is Up"}

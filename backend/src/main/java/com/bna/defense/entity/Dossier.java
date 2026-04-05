@@ -41,6 +41,10 @@ public class Dossier extends BaseEntity {
     @JoinColumn(name = "group_validateur_id")
     private User groupValidateur;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_charge_id")
+    private User assignedCharge;
+
     // Point 10: Partie Litige details
     private String clientName;
     private BigDecimal montantLitige;
@@ -55,12 +59,15 @@ public class Dossier extends BaseEntity {
     @Column(nullable = false)
     private BigDecimal fraisReel = BigDecimal.ZERO;
 
-    @Column(insertable = false, updatable = false)
+    @org.hibernate.annotations.Formula("(frais_reel - frais_initial)")
     private BigDecimal depassement;
 
     private String verdict;
-    
+
     private String riskScore; // FAIBLE, MOYEN, ÉLEVÉ (Feature 2)
+
+    @Column(columnDefinition = "TEXT")
+    private String motifRefus; // Motif de refus (Point 9)
 
     @OneToMany(mappedBy = "dossier", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -70,7 +77,6 @@ public class Dossier extends BaseEntity {
     @PrePersist
     public void generateReference() {
         if (this.reference == null || this.reference.isEmpty()) {
-            // Ideally handled by sequence in Service, but as fallback:
             this.reference = "TEMP-" + System.currentTimeMillis();
         }
     }
@@ -90,12 +96,16 @@ public class Dossier extends BaseEntity {
     public void setStatut(StatutDossier statut) { this.statut = statut; }
     public User getGroupValidateur() { return groupValidateur; }
     public void setGroupValidateur(User groupValidateur) { this.groupValidateur = groupValidateur; }
+    public User getAssignedCharge() { return assignedCharge; }
+    public void setAssignedCharge(User user) { this.assignedCharge = user; }
     public List<Affaire> getAffaires() { return affaires; }
     public void setAffaires(List<Affaire> affaires) { this.affaires = affaires; }
     public String getVerdict() { return verdict; }
     public void setVerdict(String verdict) { this.verdict = verdict; }
     public String getRiskScore() { return riskScore; }
     public void setRiskScore(String riskScore) { this.riskScore = riskScore; }
+    public String getMotifRefus() { return motifRefus; }
+    public void setMotifRefus(String motifRefus) { this.motifRefus = motifRefus; }
     public String getClientName() { return clientName; }
     public void setClientName(String clientName) { this.clientName = clientName; }
     public BigDecimal getMontantLitige() { return montantLitige; }
@@ -109,12 +119,30 @@ public class Dossier extends BaseEntity {
     public BigDecimal getFraisReel() { return fraisReel; }
     public void setFraisReel(BigDecimal fraisReel) { this.fraisReel = fraisReel; }
     public BigDecimal getDepassement() { return depassement; }
-    
+
     public com.bna.defense.entity.referentiel.NatureAffaire getNatureAffaire() { return natureAffaire; }
     public void setNatureAffaire(com.bna.defense.entity.referentiel.NatureAffaire n) { this.natureAffaire = n; }
     public com.bna.defense.entity.referentiel.PhaseProcedure getCurrentPhase() { return currentPhase; }
     public void setCurrentPhase(com.bna.defense.entity.referentiel.PhaseProcedure p) { this.currentPhase = p; }
 
     public enum Priorite { HAUTE, MOYENNE, BASSE }
-    public enum StatutDossier { OUVERT, EN_COURS, CLOTURE, A_PRE_VALIDER, A_VALIDER }
+
+    /**
+     * Full status workflow:
+     * OUVERT → EN_ATTENTE_PREVALIDATION (Chargé submits) →
+     * EN_ATTENTE_VALIDATION (Pré-val approves) →
+     * CLOTURE (Validateur validates) | REFUSE (rejected at any stage)
+     */
+    public enum StatutDossier {
+        OUVERT,
+        EN_COURS,
+        EN_ATTENTE_PREVALIDATION,
+        EN_ATTENTE_VALIDATION,
+        VALIDE,
+        CLOTURE,
+        REFUSE,
+        // Legacy aliases kept for backward-compat
+        A_PRE_VALIDER,
+        A_VALIDER
+    }
 }

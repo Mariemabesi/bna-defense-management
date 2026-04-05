@@ -37,8 +37,7 @@ Chart.register(...registerables);
           </div>
       <!-- ============================================== -->
       <!-- DASHBOARD CHARGE DE DOSSIER -->
-      <!-- ============================================== -->
-      <ng-container *ngIf="isChargeDossier() && !isAdmin()">
+      <!-- ============================================== -->      <ng-container *ngIf="isChargeDossier() && !isAdmin()">
         <div class="stats-grid">
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon green">
@@ -78,6 +77,16 @@ Chart.register(...registerables);
               <div class="label">Budget Provisionné</div>
               <div class="value">{{ stats ? (stats.totalBudgetProvisionne | number:'1.0-0') : '—' }} TND</div>
               <div class="status-indicator">Consolidation globale</div>
+            </div>
+          </div>
+          <div class="stat-card" [class.loading-shimmer]="statsLoading">
+            <div class="stat-icon danger">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <div class="stat-content">
+              <div class="label">Dossiers Urgents</div>
+              <div class="value">3</div>
+              <div class="status-indicator" style="color: #ef4444;">Délais critiques</div>
             </div>
           </div>
         </div>
@@ -259,8 +268,8 @@ Chart.register(...registerables);
         </div>
       </ng-container>
 
-      <ng-container *ngIf="isAdmin()">
-        <section class="recent-section" *ngIf="isAdmin() || isSuperValidateur()">
+      <ng-container *ngIf="isAdmin() || isSuperValidateur() || isChargeDossier()">
+        <section class="recent-section">
           <div class="section-header">
             <div class="title-with-badge">
               <h2>Analyse Statistique Globale</h2>
@@ -291,7 +300,9 @@ Chart.register(...registerables);
             </div>
           </div>
         </section>
+      </ng-container>
 
+      <ng-container *ngIf="isAdmin()">
         <section class="recent-section">
           <div class="monitor-grid">
             <!-- USER & GROUP MANAGEMENT -->
@@ -1062,7 +1073,7 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.stats = data;
         this.statsLoading = false;
-        if (this.isAdmin()) {
+        if (this.isAdmin() || this.isSuperValidateur() || this.isChargeDossier()) {
           setTimeout(() => this.initCharts(), 100);
         }
       },
@@ -1175,11 +1186,11 @@ export class DashboardComponent implements OnInit {
 
     switch (type) {
       case 'CHARGE':
-        return this.dossiers.filter(d => d.statut === 'OUVERT' || d.statut === 'EN_COURS' || d.statut === 'A_PRE_VALIDER');
+        return this.dossiers.filter(d => d.statut === 'OUVERT' || d.statut === 'EN_COURS' || d.statut === 'EN_ATTENTE_PREVALIDATION');
       case 'PRE_VALIDATOR':
-        return this.dossiers.filter(d => d.statut === 'A_PRE_VALIDER');
+        return this.dossiers.filter(d => d.statut === 'EN_ATTENTE_PREVALIDATION');
       case 'VALIDATOR':
-        return this.dossiers.filter(d => d.statut === 'A_VALIDER');
+        return this.dossiers.filter(d => d.statut === 'EN_ATTENTE_VALIDATION');
       default:
         return this.dossiers;
     }
@@ -1270,9 +1281,9 @@ export class DashboardComponent implements OnInit {
     const dossier = this.dossiers.find(d => d.reference === ref);
 
     if ((type === 'Approuver' || type === 'Valider') && dossier && dossier.id) {
-      const nextStatus = type === 'Approuver' ? 'A_VALIDER' : 'CLOTURE';
+      const nextStatus = type === 'Approuver' ? 'EN_ATTENTE_VALIDATION' : 'CLOTURE';
 
-      this.dossierService.updateStatus(dossier.id, nextStatus).subscribe({
+      this.dossierService.updateStatus(dossier.id, nextStatus as any).subscribe({
         next: (updated) => {
           dossier.statut = updated.statut;
           this.loadStats(); // Refresh stats
@@ -1297,7 +1308,7 @@ export class DashboardComponent implements OnInit {
         }
       });
     } else if (type === 'Soumettre' && dossier && dossier.id) {
-      this.dossierService.updateStatus(dossier.id, 'A_PRE_VALIDER').subscribe({
+      this.dossierService.updateStatus(dossier.id, 'EN_ATTENTE_PREVALIDATION' as any).subscribe({
         next: (updated) => {
           dossier.statut = updated.statut;
           this.notificationService.addNotification(`Dossier ${ref} soumis pour pré-validation.`, 'ROLE_CHARGE_DOSSIER', 'INFO');

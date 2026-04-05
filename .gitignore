@@ -1,0 +1,7 @@
+backend_run.log
+ai_run.log
+frontend_run.log
+backend/target/
+frontend/dist/
+frontend/.angular/
+.DS_Store

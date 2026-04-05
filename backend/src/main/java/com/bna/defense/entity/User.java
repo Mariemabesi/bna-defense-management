@@ -37,6 +37,10 @@ public class User extends BaseEntity {
     private LocalDateTime tokenExpiry;
     private String avatarUrl;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id")
+    private User manager;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "auxiliaire_id")
     private Auxiliaire linkedAuxiliaire;
@@ -71,4 +75,7 @@ public class User extends BaseEntity {
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     public Auxiliaire getLinkedAuxiliaire() { return linkedAuxiliaire; }
     public void setLinkedAuxiliaire(Auxiliaire linkedAuxiliaire) { this.linkedAuxiliaire = linkedAuxiliaire; }
+
+    public User getManager() { return manager; }
+    public void setManager(User manager) { this.manager = manager; }
 }

@@ -8,6 +8,7 @@ import com.bna.defense.repository.*;
 import com.bna.defense.dto.DashboardStatsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.bna.defense.entity.User;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -29,9 +30,9 @@ public class ReportingService {
         @Autowired
         private AffaireRepository affaireRepository;
 
-    public byte[] exportDashboardStatsToPdf() {
+    public byte[] exportDashboardStatsToPdf(User currentUser) {
         try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
-            DashboardStatsDTO stats = getDashboardStats();
+            DashboardStatsDTO stats = getDashboardStats(currentUser);
             com.lowagie.text.Document document = new com.lowagie.text.Document(com.lowagie.text.PageSize.A4);
             com.lowagie.text.pdf.PdfWriter.getInstance(document, out);
             document.open();
@@ -174,12 +175,38 @@ public class ReportingService {
             .collect(java.util.stream.Collectors.toList());
     }
 
-    public DashboardStatsDTO getDashboardStats() {
+    public DashboardStatsDTO getDashboardStats(User currentUser) {
+                boolean isSuper = currentUser != null && (currentUser.isSuperValidateur() || currentUser.getRoles().stream()
+                        .anyMatch(r -> r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_ADMIN || 
+                                       r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_SUPER_VALIDATEUR));
 
-                List<Dossier> dossiers = dossierRepository.findAll();
-                List<Frais> frais = fraisRepository.findAll();
+                List<Dossier> dossiers;
+                if (isSuper) {
+                        dossiers = dossierRepository.findAll();
+                } else if (currentUser != null) {
+                        boolean isCharge    = currentUser.getRoles().stream().anyMatch(r -> r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_CHARGE_DOSSIER);
+                        boolean isPreVal    = currentUser.getRoles().stream().anyMatch(r -> r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_PRE_VALIDATEUR);
+                        boolean isValidateur = currentUser.getRoles().stream().anyMatch(r -> r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_VALIDATEUR);
+                        dossiers = dossierRepository.findAllWithRBAC(
+                            currentUser, currentUser.getUsername(),
+                            false, isCharge, isPreVal, isValidateur,
+                            org.springframework.data.domain.Pageable.unpaged()
+                        ).getContent();
+                } else {
+                        dossiers = java.util.Collections.emptyList();
+                }
+
+                List<Frais> allFrais = fraisRepository.findAll();
+                List<Frais> filteredFrais = allFrais.stream()
+                        .filter(f -> isSuper || dossiers.stream().anyMatch(d -> d.getId().equals(f.getAffaire().getDossier().getId())))
+                        .collect(java.util.stream.Collectors.toList());
+
                 List<Auxiliaire> auxiliaires = auxiliaireRepository.findAll();
-                List<Affaire> affaires = affaireRepository.findAll();
+                
+                List<Affaire> allAffaires = affaireRepository.findAll();
+                List<Affaire> filteredAffaires = allAffaires.stream()
+                        .filter(a -> isSuper || dossiers.stream().anyMatch(d -> d.getId().equals(a.getDossier().getId())))
+                        .collect(java.util.stream.Collectors.toList());
 
                 long totalDossiers = dossiers.size();
                 long openDossiers = dossiers.stream().filter(
@@ -189,12 +216,12 @@ public class ReportingService {
                 long closedDossiers = dossiers.stream().filter(d -> d.getStatut() == Dossier.StatutDossier.CLOTURE)
                                 .count();
 
-                long totalFraisPending = frais.stream()
+                long totalFraisPending = filteredFrais.stream()
                                 .filter(f -> f.getStatut() == Frais.StatutFrais.ATTENTE
                                                 || f.getStatut() == Frais.StatutFrais.PRE_VALIDE)
                                 .count();
 
-                BigDecimal totalFraisAmountPending = frais.stream()
+                BigDecimal totalFraisAmountPending = filteredFrais.stream()
                                 .filter(f -> f.getStatut() == Frais.StatutFrais.ATTENTE
                                                 || f.getStatut() == Frais.StatutFrais.PRE_VALIDE)
                                 .map(Frais::getMontant)
@@ -205,19 +232,16 @@ public class ReportingService {
                 long totalHuissiers = auxiliaires.stream()
                                 .filter(a -> a.getType() == Auxiliaire.TypeAuxiliaire.HUISSIER).count();
 
-                // Dynamic "Procedures" count - using distinct types in DB or just all affaires?
-                // Let's use total unique types of current affaires or just size of affaires
-                // table
-                long totalProcedures = affaires.stream().map(Affaire::getType).distinct().count();
+                long totalProcedures = filteredAffaires.stream().map(Affaire::getType).distinct().count();
                 if (totalProcedures == 0)
                         totalProcedures = Affaire.TypeAffaire.values().length; // fallback to enum size
 
                 long totalAdversaires = partieLitigeRepository.count();
 
                 // Success rate calculation
-                long finishedAffaires = affaires.stream().filter(a -> a.getStatut() == Affaire.StatutAffaire.GAGNE
+                long finishedAffaires = filteredAffaires.stream().filter(a -> a.getStatut() == Affaire.StatutAffaire.GAGNE
                                 || a.getStatut() == Affaire.StatutAffaire.PERDU).count();
-                long wonAffaires = affaires.stream().filter(a -> a.getStatut() == Affaire.StatutAffaire.GAGNE).count();
+                long wonAffaires = filteredAffaires.stream().filter(a -> a.getStatut() == Affaire.StatutAffaire.GAGNE).count();
                 double successRate = finishedAffaires > 0 ? (double) wonAffaires / finishedAffaires : 0.0;
 
                 // Total budget

@@ -26,10 +26,20 @@ import { SearchService } from '../../services/search.service';
         <div class="dashboard-content">
           <div class="page-header-actions">
             <h2>Liste de vos dossiers</h2>
-            <button class="btn-primary" routerLink="/nouveau-dossier" *ngIf="isChargeDossier() || isAdmin()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              Créer un Nouveau Dossier
-            </button>
+            <div class="header-btns">
+              <button class="btn-export pdf" (click)="exportDossiers('pdf')" title="Exporter en PDF">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                PDF
+              </button>
+              <button class="btn-export excel" (click)="exportDossiers('excel')" title="Exporter en Excel">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                Excel
+              </button>
+              <button class="btn-primary" routerLink="/nouveau-dossier" *ngIf="isChargeDossier() || isAdmin()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Nouveau Dossier
+              </button>
+            </div>
           </div>
 
           <!-- LOADING STATE -->
@@ -53,11 +63,11 @@ import { SearchService } from '../../services/search.service';
             <table>
               <thead>
                 <tr>
-                  <th>Référence</th>
+                   <th>Référence</th>
                   <th>Titre</th>
                   <th>Priorité</th>
                   <th>Statut</th>
-                  <th>Budget</th>
+                  <th>Finance</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -75,20 +85,37 @@ import { SearchService } from '../../services/search.service';
                       {{ d.statut }}
                     </span>
                   </td>
-                   <td><strong>{{ d.budgetProvisionne != null ? (d.budgetProvisionne | number:'1.2-2') + ' TND' : '—' }}</strong></td>
+                   <td>
+                    <div class="finance-cell">
+                      <div class="budget-row"><span class="label">P:</span> {{ d.budgetProvisionne != null ? (d.budgetProvisionne | number:'1.2-2') : '—' }}</div>
+                      <div class="reel-row" *ngIf="d.fraisReel" [class.danger-text]="d.depassement && d.depassement > 0">
+                        <span class="label">R:</span> {{ d.fraisReel | number:'1.2-2' }}
+                        <span class="depassement-badge" *ngIf="d.depassement && d.depassement > 0" title="Dépassement de budget!">
+                           +{{ d.depassement | number:'1.2-2' }}
+                        </span>
+                      </div>
+                    </div>
                   <td>
                     <div class="actions-cell">
-                      <button class="btn-action" title="Consulter Détails" (click)="$event.stopPropagation(); onViewDossier(d)">
+                      <button class="btn-action" title="Détails" (click)="$event.stopPropagation(); onViewDossier(d)">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                       </button>
-                      <button class="btn-action" title="Modifier" *ngIf="isChargeDossier() || isAdmin()" [routerLink]="['/modifier-dossier', d.reference]">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      
+                      <!-- FLOW ACTIONS -->
+                      <button class="btn-action success-bg" title="Soumettre" *ngIf="isChargeDossier() && d.statut === 'OUVERT'" (click)="$event.stopPropagation(); executeWorkflow('soumettre', d.id!)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
                       </button>
-                      <button class="btn-action warning-bg" title="Approuver" *ngIf="isPreValidateur()" (click)="$event.stopPropagation(); onAction('Approuver', d.reference)">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+
+                      <button class="btn-action success-bg" title="Pré-valider" *ngIf="isPreValidateur() && d.statut === 'EN_ATTENTE_PREVALIDATION'" (click)="$event.stopPropagation(); executeWorkflow('prevalider', d.id!)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                       </button>
-                      <button class="btn-action danger-bg" title="Valider" *ngIf="isValidateur()" (click)="$event.stopPropagation(); onAction('Valider', d.reference)">
+
+                      <button class="btn-action success-bg" title="Valider Final" *ngIf="isValidateur() && d.statut === 'EN_ATTENTE_VALIDATION'" (click)="$event.stopPropagation(); executeWorkflow('validerFinal', d.id!)">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                      </button>
+
+                      <button class="btn-action danger-bg" title="Refuser" *ngIf="(isPreValidateur() && d.statut === 'EN_ATTENTE_PREVALIDATION') || (isValidateur() && d.statut === 'EN_ATTENTE_VALIDATION')" (click)="$event.stopPropagation(); executeWorkflow('refuser', d.id!)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                       </button>
                     </div>
                   </td>
@@ -127,7 +154,7 @@ import { SearchService } from '../../services/search.service';
               Créer le premier dossier
             </button>
           </div>
-          </div>
+        </div>
 
           <!-- DOSSIER DETAILS MODAL -->
           <div class="modal-overlay" *ngIf="selectedDossier" (click)="closeDossierModal()">
@@ -139,6 +166,15 @@ import { SearchService } from '../../services/search.service';
                 </button>
               </div>
               <div class="modal-body">
+                <!-- DEPASSEMENT ALERT BANNER -->
+                <div class="depassement-alert-banner alert-danger" *ngIf="selectedDossier.depassement && selectedDossier.depassement > 0">
+                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                   <div class="alert-text">
+                      <strong>Alerte Dépassement Budget:</strong> Ce dossier a dépassé son budget initial de 
+                      <span class="highlight">{{ selectedDossier.depassement | number:'1.2-2' }} TND</span>.
+                   </div>
+                </div>
+
                 <div class="detail-group">
                   <span class="detail-label">Titre / Objet</span>
                   <span class="detail-value">{{ selectedDossier.titre }}</span>
@@ -185,34 +221,50 @@ import { SearchService } from '../../services/search.service';
                   </div>
                 </div>
 
-                <!-- AI ANALYSIS SECTION -->
-                <div class="ai-section" *ngIf="aiAnalysis || aiLoading">
-                  <div class="ai-header">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                    <span>ANALYSE IA DEFENSE</span>
-                  </div>
-                  
-                  <div *ngIf="aiLoading" class="ai-loader">
-                    <div class="pulse-ring"></div>
-                    <span>Intelligence Artificielle en cours de réflexion...</span>
-                  </div>
-
-                  <div *ngIf="aiAnalysis" class="ai-result slideIn">
-                    <div class="ai-summary">{{ aiAnalysis.summary }}</div>
-                    <div class="ai-meta">
-                      <span class="ai-risk" [ngClass]="aiAnalysis.riskLevel.toLowerCase()">
-                        Risque: {{ aiAnalysis.riskLevel }}
-                      </span>
-                      <span class="ai-conf">Confiance: {{ aiAnalysis.confidence * 100 }}%</span>
+                  <!-- AI ANALYSIS SECTION -->
+                  <div class="ai-section" *ngIf="aiAnalysis || aiLoading">
+                    <div class="ai-premium-card">
+                      <div class="ai-header">
+                        <div class="ai-sparkle-icon">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
+                        </div>
+                        <div class="ai-title-wrap">
+                          <span class="ai-label">INTELLIGENCE BNA</span>
+                          <h4 class="ai-title">Résumé IA Decision-Ready</h4>
+                        </div>
+                      </div>
+                      
+                      <div *ngIf="aiLoading" class="ai-loader-premium">
+                        <div class="ai-pulse-bar"></div>
+                        <span class="pulse-text">Génération de l'analyse en cours...</span>
+                      </div>
+    
+                      <div *ngIf="aiAnalysis" class="ai-body-premium slideIn">
+                        <div class="ai-meta-pills">
+                          <span class="ai-pill risk" [ngClass]="aiAnalysis.riskLevel.toLowerCase()">
+                            RISQUE: {{ aiAnalysis.riskLevel }}
+                          </span>
+                          <span class="ai-pill conf">
+                            FIABILITÉ: {{ aiAnalysis.confidence * 100 }}%
+                          </span>
+                        </div>
+    
+                        <div class="ai-summary-text">
+                          {{ aiAnalysis.summary }}
+                        </div>
+    
+                        <div class="ai-reco-box">
+                          <div class="reco-header">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            RECO. STRATÉGIQUES
+                          </div>
+                          <ul>
+                            <li *ngFor="let s of aiAnalysis.suggestions">{{ s }}</li>
+                          </ul>
+                        </div>
+                      </div>
                     </div>
-                    <div class="ai-suggestions">
-                      <strong>Recommandations:</strong>
-                      <ul>
-                        <li *ngFor="let s of aiAnalysis.suggestions">{{ s }}</li>
-                      </ul>
-                    </div>
                   </div>
-                </div>
               </div>
               <div class="modal-footer">
                 <button class="btn-ai" (click)="analyzeWithAI()" [disabled]="aiLoading">
@@ -478,32 +530,55 @@ import { SearchService } from '../../services/search.service';
       padding: 24px 32px; background: #f8fafc; border-top: 1px solid #e2e8f0;
       display: flex; justify-content: flex-end; gap: 16px;
     }
-    .btn-secondary { background: white; border: 1px solid #cbd5e1; color: #475569; padding: 12px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .btn-secondary:hover { background: #f1f5f9; }
-
-    /* AI STYLES */
-    .ai-section { 
-      margin-top: 8px; padding: 24px; border-radius: 20px; 
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-      border: 1.5px solid #bae6fd;
+    /* AI PREMIUM STYLES */
+    .ai-section { margin-top: 8px; }
+    .ai-premium-card {
+      background: #ffffff; border-radius: 20px; border: 1.5px solid #e2e8f0;
+      padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      position: relative; overflow: hidden;
     }
-    .ai-header { display: flex; align-items: center; gap: 10px; color: #0369a1; font-weight: 800; font-size: 12px; letter-spacing: 1px; margin-bottom: 16px; }
-    .ai-loader { display: flex; align-items: center; gap: 12px; color: #0369a1; font-weight: 600; font-size: 14px; }
-    .pulse-ring { width: 12px; height: 12px; background: #0ea5e9; border-radius: 50%; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(14, 165, 233, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); } }
+    .ai-premium-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, #0ea5e9, #2563eb);
+    }
+    .ai-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .ai-sparkle-icon {
+      background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+      width: 44px; height: 44px; border-radius: 12px; display: flex;
+      align-items: center; justify-content: center; color: white;
+      box-shadow: 0 6px 12px rgba(37, 99, 235, 0.2);
+    }
+    .ai-label { font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 1.5px; }
+    .ai-title { margin: 2px 0 0 0; font-size: 18px; font-weight: 800; color: #1e293b; }
     
-    .ai-result { display: flex; flex-direction: column; gap: 16px; }
-    .ai-summary { font-size: 15px; line-height: 1.6; color: #1e293b; font-weight: 500; }
-    .ai-meta { display: flex; gap: 16px; align-items: center; }
-    .ai-risk { padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-    .ai-risk.low { background: #dcfce7; color: #166534; }
-    .ai-risk.medium { background: #fef9c3; color: #854d0e; }
-    .ai-risk.high { background: #fee2e2; color: #991b1b; }
-    .ai-conf { font-size: 12px; color: #64748b; font-weight: 600; }
-    .ai-suggestions { background: white; padding: 16px; border-radius: 12px; border: 1px solid #e0f2fe; }
-    .ai-suggestions strong { display: block; margin-bottom: 8px; font-size: 13px; color: #0369a1; }
-    .ai-suggestions ul { margin: 0; padding-left: 20px; font-size: 14px; color: #475569; }
-    .ai-suggestions li { margin-bottom: 4px; }
+    .ai-loader-premium { display: flex; flex-direction: column; gap: 12px; align-items: center; padding: 20px 0; }
+    .ai-pulse-bar { 
+      width: 100%; height: 6px; background: #f1f5f9; border-radius: 10px; 
+      position: relative; overflow: hidden;
+    }
+    .ai-pulse-bar::after {
+      content: ''; position: absolute; left: -50%; width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, #0ea5e9, transparent);
+      animation: pulseMove 1.5s infinite;
+    }
+    @keyframes pulseMove { from { left: -50%; } to { left: 100%; } }
+    .pulse-text { font-size: 14px; font-weight: 600; color: #64748b; }
+
+    .ai-meta-pills { display: flex; gap: 10px; margin-bottom: 16px; }
+    .ai-pill { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .ai-pill.risk.low { background: #dcfce7; color: #166534; }
+    .ai-pill.risk.medium { background: #fef9c3; color: #854d0e; }
+    .ai-pill.risk.high { background: #fee2e2; color: #991b1b; }
+    .ai-pill.conf { background: #f1f5f9; color: #475569; }
+
+    .ai-summary-text { font-size: 15px; color: #334155; line-height: 1.7; font-weight: 500; margin-bottom: 20px; }
+    .ai-reco-box { background: #f8fafc; border-radius: 16px; padding: 16px; border: 1px solid #f1f5f9; }
+    .reco-header { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; color: #0ea5e9; margin-bottom: 12px; letter-spacing: 1px; }
+    .ai-reco-box ul { margin: 0; padding-left: 20px; list-style-type: none; }
+    .ai-reco-box li { position: relative; font-size: 14px; color: #475569; margin-bottom: 8px; padding-left: 4px; font-weight: 500; }
+    .ai-reco-box li::before { content: '•'; position: absolute; left: -14px; color: #0ea5e9; font-weight: 900; }
+
+
     
     .btn-ai {
       background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
@@ -555,6 +630,40 @@ import { SearchService } from '../../services/search.service';
     .btn-page.active { background: var(--bna-green); color: white; border-color: var(--bna-green); }
     .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    .header-btns { display: flex; gap: 12px; }
+    .btn-export {
+      background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 8px 16px; font-weight: 700; cursor: pointer; display: flex;
+      align-items: center; gap: 8px; font-size: 13px; color: #475569;
+      transition: all 0.2s;
+    }
+    .btn-export:hover { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-1px); }
+    .btn-export.pdf { border-left: 4px solid #ef4444; }
+    .btn-export.excel { border-left: 4px solid #10b981; }
+
+    .finance-cell { display: flex; flex-direction: column; gap: 4px; min-width: 140px; }
+    .budget-row, .reel-row { font-size: 13px; font-weight: 600; font-family: 'JetBrains Mono', 'Courier New', monospace; }
+    .label { color: #94a3b8; margin-right: 4px; font-weight: 800; font-family: 'Outfit'; }
+    .danger-text { color: #dc2626; }
+    
+    .depassement-badge {
+      background: #fee2e2; color: #dc2626; padding: 2px 6px; border-radius: 4px;
+      font-size: 10px; font-weight: 800; margin-left: 4px; vertical-align: middle;
+      border: 1px solid #fecaca;
+    }
+
+    .success-bg { background: #f0fdf4 !important; }
+    .danger-bg { background: #fef2f2 !important; }
+    
+    .depassement-alert-banner {
+      display: flex; align-items: center; gap: 16px; 
+      padding: 16px 24px; border-radius: 12px; margin-bottom: 8px;
+    }
+    .depassement-alert-banner.alert-danger {
+      background: #fee2e2; border: 1.5px solid #ef4444; color: #991b1b;
+    }
+    .depassement-alert-banner .highlight { font-weight: 800; text-decoration: underline; }
+    
     @media (max-width: 1024px) {
       .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
       .main-content { margin-left: 0; }
@@ -726,67 +835,42 @@ export class MesDossiersComponent implements OnInit {
     });
   }
 
-  onAction(type: string, ref: string): void {
-    this.confirmService.open({
-        title: 'Confirmation',
-        message: 'Êtes-vous sûr de vouloir effectuer cette action ?'
-    }).subscribe(ok => {
-        if (ok) {
-            this.handleActionExecution(type, ref);
-        }
-    });
-  }
-
-  private handleActionExecution(type: string, ref: string): void {
-    const dossier = this.dossiers.find(d => d.reference === ref);
-
-    if ((type === 'Approuver' || type === 'Valider') && dossier && dossier.id) {
-      const nextStatus = type === 'Approuver' ? 'A_VALIDER' : 'CLOTURE';
-
-      this.dossierService.updateStatus(dossier.id, nextStatus).subscribe({
-        next: (updated) => {
-          dossier.statut = updated.statut;
-
-          if (type === 'Approuver') {
-            this.notificationService.addNotification(
-              `Dossier ${ref} pré-validé avec succès. Transmis au validateur.`,
-              'ROLE_PRE_VALIDATEUR', 'SUCCESS'
-            );
-          } else {
-            this.notificationService.addNotification(
-              `Dossier ${ref} validé et clôturé avec succès.`,
-              'ROLE_VALIDATEUR', 'SUCCESS'
-            );
-          }
+   executeWorkflow(action: 'soumettre' | 'prevalider' | 'validerFinal' | 'refuser', id: number): void {
+    if (action === 'refuser') {
+      const motif = prompt("Veuillez saisir le motif du refus (Min. 20 car.) :");
+      if (!motif || motif.length < 20) {
+        alert("Le motif doit contenir au moins 20 caractères.");
+        return;
+      }
+      this.dossierService.refuser(id, motif).subscribe({
+        next: () => {
+          this.notificationService.addNotification("Dossier refusé.", "ROLE_ADMIN", "SUCCESS");
+          this.loadDossiers();
         },
-        error: () => {
-          this.notificationService.addNotification(
-            `Erreur lors de la mise à jour du dossier ${ref}.`,
-            'ROLE_ADMIN', 'WARNING'
-          );
-        }
-      });
-    } else if (type === 'Soumettre' && dossier && dossier.id) {
-      this.dossierService.updateStatus(dossier.id, 'A_PRE_VALIDER').subscribe({
-        next: (updated) => {
-          dossier.statut = updated.statut;
-          this.notificationService.addNotification(`Dossier ${ref} soumis pour pré-validation.`, 'ROLE_CHARGE_DOSSIER', 'INFO');
-        }
+        error: (err) => alert(err.error?.message || "Erreur lors du refus")
       });
     } else {
-      this.notificationService.addNotification(
-        `${type} pour ${ref} : Module en maintenance.`,
-        'ROLE_ADMIN', 'WARNING'
-      );
+      this.dossierService[action](id).subscribe({
+        next: () => {
+          this.notificationService.addNotification(`Action ${action} effectuée.`, "ROLE_ADMIN", "SUCCESS");
+          this.loadDossiers();
+        },
+        error: (err) => alert(err.error?.message || `Erreur lors de l'action ${action}`)
+      });
     }
+  }
+
+  exportDossiers(format: 'pdf' | 'excel'): void {
+    window.open(`http://localhost:8082/api/reports/dossiers/export/${format}`, '_blank');
   }
 
   getBadgeClass(statut: string): string {
     switch (statut) {
       case 'OUVERT': return 'info';
       case 'EN_COURS': return 'warning';
-      case 'A_PRE_VALIDER': return 'info';
-      case 'A_VALIDER': return 'warning';
+      case 'EN_ATTENTE_PREVALIDATION': return 'warning';
+      case 'EN_ATTENTE_VALIDATION': return 'danger';
+      case 'REFUSE': return 'danger';
       case 'CLOTURE': return 'success';
       default: return 'info';
     }

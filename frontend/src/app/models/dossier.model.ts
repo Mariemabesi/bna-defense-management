@@ -4,8 +4,12 @@ export interface Dossier {
     titre: string;
     priorite?: 'HAUTE' | 'MOYENNE' | 'BASSE';
     budgetProvisionne?: number;
+    fraisInitial?: number;
+    fraisReel?: number;
+    depassement?: number;
     description?: string;
-    statut: 'OUVERT' | 'EN_COURS' | 'CLOTURE' | 'A_PRE_VALIDER' | 'A_VALIDER';
+    motifRefus?: string;
+    statut: 'OUVERT' | 'EN_COURS' | 'EN_ATTENTE_PREVALIDATION' | 'EN_ATTENTE_VALIDATION' | 'REFUSE' | 'CLOTURE';
     riskScore?: 'FAIBLE' | 'MOYEN' | 'ÉLEVÉ';
     createdAt?: string;
     updatedAt?: string;

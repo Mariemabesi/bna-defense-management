@@ -10,6 +10,7 @@
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/repository/referentiel/DeviseRepository.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/controller/AuxiliaireController.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/config/DatabaseMigrationRunner.java
+/Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/service/ExportService.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/config/JpaConfig.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/repository/referentiel/ModeReglementRepository.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/controller/StatsController.java
@@ -36,6 +37,7 @@
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/RecentDossier.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/repository/TribunalRepository.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/repository/UserRepository.java
+/Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/service/NotificationService.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/referentiel/TvaTimbre.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/controller/referentiel/TribunalController.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/controller/referentiel/TvaTimbreController.java
@@ -71,13 +73,16 @@
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/repository/referentiel/NotaireRepository.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/repository/referentiel/CourAppelRepository.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/referentiel/PhaseProcedure.java
+/Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/Notification.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/BaseEntity.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/security/AuthEntryPointJwt.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/referentiel/TypeProcedure.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/service/DossierHistoryService.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/controller/DossierController.java
+/Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/config/HierarchicalRbacDemoRunner.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/referentiel/NatureAffaire.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/referentiel/Parquet.java
+/Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/repository/NotificationRepository.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/Tribunal.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/repository/referentiel/NatureAffaireRepository.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/repository/AffaireRepository.java
@@ -88,6 +93,7 @@
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/repository/referentiel/PhaseProcedureRepository.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/Dossier.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/controller/ChatController.java
+/Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/controller/NotificationController.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/entity/referentiel/CourAppel.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/controller/referentiel/BaremeFraisController.java
 /Users/yossr/Desktop/BNA/backend/src/main/java/com/bna/defense/controller/AffaireController.java

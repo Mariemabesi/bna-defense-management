@@ -25,6 +25,22 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    public void updateUserRoles(User user, Set<Role.RoleType> roleTypes) {
+        Set<Role> roles = new HashSet<>();
+        if (roleTypes == null || roleTypes.isEmpty()) {
+            Role userRole = roleRepository.findByName(Role.RoleType.ROLE_CHARGE_DOSSIER)
+                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+            roles.add(userRole);
+        } else {
+            roleTypes.forEach(roleType -> {
+                Role role = roleRepository.findByName(roleType)
+                        .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                roles.add(role);
+            });
+        }
+        user.setRoles(roles);
+    }
+
     public User createUser(User user, Set<Role.RoleType> roleTypes) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         Set<Role> roles = new HashSet<>();

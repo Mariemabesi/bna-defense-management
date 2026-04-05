@@ -25,8 +25,12 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
         </button>
         <div class="header-search">
            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-           <input type="text" placeholder="Rechercher par référence, titre ou nom d'avocat..." 
-                  [(ngModel)]="searchQuery" (input)="onSearch($event)" (keyup.enter)="goToDossiers()">
+            <input type="text" placeholder="Rechercher par référence, titre..." 
+                   [(ngModel)]="searchQuery" (input)="onSearch($event)" (keyup.enter)="goToDossiers()">
+            <button class="btn-ai-search" (click)="onAiSearch()" title="Recherche Intelligente (IA)">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
+               IA
+            </button>
            
            <!-- SEARCH RESULTS DROPDOWN -->
            <div class="search-results-dropdown" *ngIf="searchResults.length > 0 && searchQuery">
@@ -64,7 +68,7 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
                </div>
             </div>
             
-            <div class="notif-item" *ngFor="let n of roleNotifications" [class.unread]="!n.isRead" (click)="markRead(n)">
+            <div class="notif-item" *ngFor="let n of roleNotifications" [class.unread]="!n.read" (click)="markRead(n)">
               <div class="notif-body">
                 <p class="notif-msg">{{ n.message }}</p>
                 <span class="notif-time">{{ n.timestamp | date:'shortTime' }}</span>
@@ -160,7 +164,9 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
     .header-search { display: flex; align-items: center; gap: 12px; background: white; padding: 10px 18px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.05); width: 400px; margin-left: 24px; transition: all 0.3s; position: relative; }
     .header-search:focus-within { width: 480px; border-color: #008766; box-shadow: 0 4px 12px rgba(0,135,102,0.05); }
     .header-search svg { color: #94a3b8; }
-    .header-search input { border: none; outline: none; font-size: 14px; font-weight: 500; color: #1e293b; width: 100%; }
+    .header-search input { border: none; outline: none; font-size: 14px; font-weight: 500; color: #1e293b; width: 100%; background: transparent; }
+    .btn-ai-search { background: linear-gradient(135deg, #0ea5e9, #2563eb); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.2s; white-space: nowrap; }
+    .btn-ai-search:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
 
     .search-results-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 16px; margin-top: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); z-index: 1000; max-height: 400px; overflow-y: auto; padding: 8px; }
 
@@ -262,18 +268,15 @@ export class HeaderComponent implements OnInit {
     });
 
     this.notificationService.notifications$.subscribe(all => {
-      if (this.currentUser && this.currentUser.roles) {
-        this.roleNotifications = all.filter(n =>
-          n.role === 'ROLE_ADMIN' ||
-          this.currentUser.roles.includes(n.role)
-        );
-        this.updateTotalUnread();
-      }
+      this.roleNotifications = all;
+    });
+
+    this.notificationService.unreadCount$.subscribe(count => {
+      this.unreadCount = count;
     });
 
     this.notificationService.chatUnreadCount$.subscribe(count => {
       this.chatUnreadCount = count;
-      this.updateTotalUnread();
     });
 
     this.searchSubject.pipe(
@@ -297,9 +300,16 @@ export class HeaderComponent implements OnInit {
     this.searchSubject.next(query);
   }
 
-  updateTotalUnread() {
-    const systemUnread = this.roleNotifications.filter(n => !n.isRead).length;
-    this.unreadCount = systemUnread + (this.chatUnreadCount || 0);
+  onAiSearch() {
+    if (!this.searchQuery.trim()) return;
+    this.notificationService.addNotification("Lancement d'une recherche sémantique IA...", "ROLE_ADMIN", "INFO");
+    this.dossierService.searchDossiersSimple(this.searchQuery).subscribe({
+      next: (results) => {
+        // AI search normally returns a specialized list or highlights. 
+        // For now, let's just use the shared search layout.
+        this.searchResults = results.slice(0, 5);
+      }
+    });
   }
 
   viewDossier(dossier: Dossier) {
@@ -326,11 +336,11 @@ export class HeaderComponent implements OnInit {
   }
 
   markRead(n: Notification) {
-    this.notificationService.markAsRead(n.id);
+    this.notificationService.markAsRead(n.id).subscribe();
   }
 
   clearAll() {
-    this.notificationService.clearAll();
+    this.notificationService.markAllAsRead().subscribe();
   }
 
   getInitials(): string {

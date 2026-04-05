@@ -5,7 +5,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     if (currentUser) {
         const user = JSON.parse(currentUser);
         if (user && user.token) {
-            console.log('Sending request with token:', user.token.substring(0, 10) + '...');
             const cloned = req.clone({
                 setHeaders: {
                     Authorization: `Bearer ${user.token}`

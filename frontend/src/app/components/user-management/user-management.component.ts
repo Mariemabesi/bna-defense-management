@@ -12,6 +12,8 @@ interface UserDTO {
   email: string;
   enabled: boolean;
   roles: string[];
+  managerUsername?: string;
+  managerId?: number;
 }
 
 @Component({
@@ -41,6 +43,7 @@ interface UserDTO {
                 <tr>
                   <th>Utilisateur</th>
                   <th>Roles & Responsabilités</th>
+                  <th>Responsable (Hiérarchie)</th>
                   <th>Statut</th>
                   <th>Actions</th>
                 </tr>
@@ -62,14 +65,26 @@ interface UserDTO {
                     </div>
                   </td>
                   <td>
+                    <div class="user-info" *ngIf="u.managerUsername">
+                        <span class="manager-tag">👤 {{ u.managerUsername }}</span>
+                    </div>
+                    <span class="subtitle" *ngIf="!u.managerUsername" style="font-size: 11px;">Aucun responsable</span>
+                  </td>
+                  <td>
                     <span class="badge" [ngClass]="u.enabled ? 'active' : 'suspended'">
                       {{ u.enabled ? 'ACTIF' : 'SUSPENDU' }}
                     </span>
                   </td>
                   <td>
-                    <button class="btn-toggle" [ngClass]="u.enabled ? 'suspend' : 'restore'" (click)="toggleUserStatus(u)">
-                      {{ u.enabled ? "Suspendre l'accès" : "Réactiver l'accès" }}
-                    </button>
+                    <div style="display: flex; gap: 8px;">
+                      <button class="btn-toggle" [ngClass]="u.enabled ? 'suspend' : 'restore'" (click)="toggleUserStatus(u)">
+                        {{ u.enabled ? "S." : "R." }}
+                      </button>
+                      <button class="btn-edit" (click)="openEditModal(u)">
+                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                         Modifier
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -98,15 +113,27 @@ interface UserDTO {
                         <input type="password" [(ngModel)]="newAccount.password" name="password" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label>Rôles</label>
-                        <select multiple [(ngModel)]="newAccount.role" name="role" class="form-control" required>
-                            <option value="ROLE_CHARGE_DOSSIER">Chargé de Dossier</option>
-                            <option value="ROLE_PRE_VALIDATEUR">Pré-validateur</option>
-                            <option value="ROLE_VALIDATEUR">Validateur</option>
-                            <option value="ROLE_SUPER_VALIDATEUR">Super Validateur</option>
-                            <option value="ROLE_AVOCAT">Avocat</option>
+                        <label>Rôle & Profil</label>
+                        <select [(ngModel)]="newAccount.role[0]" name="role" class="form-control" required>
                             <option value="ROLE_ADMIN">Administrateur</option>
+                            <option value="ROLE_VALIDATEUR">Validateur (N2)</option>
+                            <option value="ROLE_PRE_VALIDATEUR">Pré-validateur (N1)</option>
+                            <option value="ROLE_CHARGE_DOSSIER">Chargé de Dossier (N0)</option>
+                            <option value="ROLE_AVOCAT">Avocat / Auxiliaire</option>
                         </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Responsable Hiérarchique</label>
+                        <select [(ngModel)]="newAccount.managerId" name="managerId" class="form-control">
+                            <option [ngValue]="null">Aucun responsable (Top level)</option>
+                            <option *ngFor="let user of users" [ngValue]="user.id">
+                                {{ user.username }} ({{ user.roles[0].replace('ROLE_', '') }})
+                            </option>
+                        </select>
+                        <p class="subtitle" style="font-size: 11px; margin-top: 4px;">
+                           Validateur (N2) -> Pré-validateur (N1) -> Chargé (N0)
+                        </p>
                     </div>
 
                     <!-- Lawyer selection if ROLE_AVOCAT is selected -->
@@ -122,8 +149,45 @@ interface UserDTO {
                         <button type="submit" class="btn-primary">Créer le compte</button>
                     </div>
                 </form>
-              </div>
+            </div>
          </div>
+ 
+         <!-- EDIT MODAL -->
+         <div class="modal-overlay" *ngIf="showEditModal" (click)="showEditModal = false">
+              <div class="modal-content" (click)="$event.stopPropagation()">
+                 <div class="modal-header">
+                     <h2>Modifier Permissions: {{ editingUser?.username }}</h2>
+                     <button class="btn-close" (click)="showEditModal = false">×</button>
+                 </div>
+                 <form (ngSubmit)="onUpdateUser()">
+                     <div class="form-group">
+                         <label>Nouveau Rôle</label>
+                         <select [(ngModel)]="newRoles[0]" name="role" class="form-control" required>
+                             <option value="ROLE_ADMIN">Administrateur</option>
+                             <option value="ROLE_VALIDATEUR">Validateur (N2)</option>
+                             <option value="ROLE_PRE_VALIDATEUR">Pré-validateur (N1)</option>
+                             <option value="ROLE_CHARGE_DOSSIER">Chargé de Dossier (N0)</option>
+                             <option value="ROLE_AVOCAT">Avocat / Auxiliaire</option>
+                         </select>
+                     </div>
+ 
+                     <div class="form-group">
+                         <label>Responsable Hiérarchique</label>
+                         <select [(ngModel)]="updatedManagerId" name="managerId" class="form-control">
+                             <option [ngValue]="null">Aucun responsable</option>
+                             <option *ngFor="let user of users" [ngValue]="user.id">
+                                 {{ user.username }} ({{ user.roles[0]?.replace('ROLE_', '') }})
+                             </option>
+                         </select>
+                     </div>
+ 
+                     <div class="modal-footer">
+                         <button type="button" class="btn-secondary" (click)="showEditModal = false">Annuler</button>
+                         <button type="submit" class="btn-primary">Enregistrer les modifications</button>
+                     </div>
+                 </form>
+               </div>
+          </div>
        </main>
      </div>
   `,
@@ -168,6 +232,12 @@ interface UserDTO {
     .badge.suspended { background: #fef2f2; color: #dc2626; }
     .badge.suspended::before { background: #dc2626; }
 
+    .manager-tag { 
+      background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 8px; 
+      font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;
+      border: 1px solid #e2e8f0;
+    }
+
     .btn-toggle { 
       padding: 10px 20px; border-radius: 12px; border: none; font-weight: 700; 
       cursor: pointer; transition: all 0.2s; font-size: 14px;
@@ -175,6 +245,12 @@ interface UserDTO {
     .btn-toggle.suspend { background: #fef2f2; color: #dc2626; }
     .btn-toggle.restore { background: #f0fdf4; color: #16a34a; }
     .btn-toggle:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    
+    .btn-edit {
+      background: white; border: 2px solid #e2e8f0; color: #475569; padding: 10px 18px; border-radius: 12px;
+      font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; font-size: 14px;
+    }
+    .btn-edit:hover { background: #f8fafc; border-color: var(--bna-green); color: var(--bna-green); transform: translateY(-2px); }
 
     .btn-primary { 
       background: linear-gradient(135deg, var(--bna-green) 0%, #10b981 100%); 
@@ -198,7 +274,7 @@ interface UserDTO {
 
     form { padding: 32px; display: flex; flex-direction: column; gap: 24px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
-    .form-group label { font-size: 13px; font-weight: 700; color: var(--role-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group label { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .form-control { padding: 14px; border-radius: 12px; border: 2px solid #e2e8f0; font-family: inherit; font-size: 15px; }
     .form-control:focus { outline: none; border-color: var(--bna-green); box-shadow: 0 0 0 4px var(--bna-green-light); }
     
@@ -214,7 +290,12 @@ export class UserManagementComponent implements OnInit {
   users: UserDTO[] = [];
   auxiliaires: any[] = [];
   showSignupModal = false;
-  newAccount = { username: '', email: '', password: '', role: ['ROLE_CHARGE_DOSSIER'], auxiliaireId: null as number | null };
+  newAccount = { username: '', email: '', password: '', role: ['ROLE_CHARGE_DOSSIER'], auxiliaireId: null as number | null, managerId: null as number | null };
+  
+  showEditModal = false;
+  editingUser: UserDTO | null = null;
+  newRoles: string[] = [];
+  updatedManagerId: number | null = null;
   
   constructor(private http: HttpClient, private confirmService: ConfirmDialogService) {}
 
@@ -258,6 +339,28 @@ export class UserManagementComponent implements OnInit {
         this.loadUsers();
       },
       error: (err) => alert(err.error?.message || 'Erreur lors de la création')
+    });
+  }
+
+  openEditModal(u: UserDTO) {
+    this.editingUser = u;
+    this.newRoles = [...u.roles];
+    this.updatedManagerId = u.managerId || null;
+    this.showEditModal = true;
+  }
+
+  onUpdateUser() {
+    if (!this.editingUser) return;
+    this.http.put(`http://localhost:8082/api/admin/users/${this.editingUser.id}`, {
+      role: this.newRoles,
+      managerId: this.updatedManagerId
+    }).subscribe({
+      next: () => {
+        alert('Utilisateur mis à jour avec succès');
+        this.showEditModal = false;
+        this.loadUsers();
+      },
+      error: (err) => alert(err.error?.message || 'Erreur lors de la mise à jour')
     });
   }
 }

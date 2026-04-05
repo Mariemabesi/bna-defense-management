@@ -134,6 +134,23 @@ import { HeaderComponent } from '../header/header.component';
     </div>
   `,
   styles: [`
+    :host {
+      --sidebar-width: 280px;
+    }
+
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
     .form-page { padding: 40px; max-width: 900px; margin: 0 auto; }
     
     .page-header { margin-bottom: 32px; }
@@ -155,7 +172,7 @@ import { HeaderComponent } from '../header/header.component';
     .form-group { display: flex; flex-direction: column; gap: 8px; }
     label { font-size: 14px; font-weight: 500; color: var(--text-primary); }
     
-    .form-control { padding: 12px 16px; border: 1.5px solid var(--bna-border); border-radius: 10px; font-size: 15px; transition: all 0.2s; font-family: inherit; background-color: #f8fafc; }
+    .form-control { width: 100%; box-sizing: border-box; padding: 12px 16px; border: 1.5px solid var(--bna-border); border-radius: 10px; font-size: 15px; transition: all 0.2s; font-family: inherit; background-color: #f8fafc; }
     .form-control:focus { outline: none; border-color: var(--bna-green); box-shadow: 0 0 0 3px rgba(0, 135, 102, 0.1); background-color: var(--white); }
     .form-control.is-invalid { border-color: #ef4444; }
     
@@ -227,8 +244,8 @@ export class FraisFormComponent implements OnInit {
   }
 
   loadDossiers() {
-    this.dossierService.getDossiers().subscribe({
-      next: (data) => this.dossiers = data,
+    this.dossierService.getDossiers(0, 100).subscribe({
+      next: (data) => this.dossiers = data.content ? data.content : (Array.isArray(data) ? data : []),
       error: (err) => console.error("Could not load dossiers", err)
     });
   }

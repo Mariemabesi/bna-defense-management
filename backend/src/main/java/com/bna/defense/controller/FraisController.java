@@ -33,19 +33,19 @@ public class FraisController {
     }
 
     @PutMapping("/{id}/pre-valider")
-    @PreAuthorize("hasRole('PRE_VALIDATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("@permissionService.canPreValidateFrais(authentication, #id) or hasRole('ADMIN')")
     public ResponseEntity<Frais> preValidate(@PathVariable Long id) {
         return ResponseEntity.ok(fraisService.preValidate(id));
     }
 
     @PutMapping("/{id}/valider")
-    @PreAuthorize("hasRole('VALIDATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("@permissionService.canValidateFrais(authentication, #id) or hasRole('ADMIN')")
     public ResponseEntity<Frais> validate(@PathVariable Long id) {
         return ResponseEntity.ok(fraisService.validate(id));
     }
 
     @PutMapping("/{id}/envoyer-tresorerie")
-    @PreAuthorize("hasRole('VALIDATEUR') or hasRole('ADMIN')")
+    @PreAuthorize("@permissionService.canValidateFrais(authentication, #id) or hasRole('ADMIN')")
     public ResponseEntity<Frais> sendToTreasury(@PathVariable Long id) {
         return ResponseEntity.ok(fraisService.sendToTreasury(id));
     }

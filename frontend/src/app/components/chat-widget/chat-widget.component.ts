@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService, ChatMessage, ChatPartner } from '../../services/chat.service';
@@ -58,7 +58,7 @@ import { Subscription, interval } from 'rxjs';
           </div>
 
           <!-- Messages History if partner selected -->
-          <div class="messages-view" *ngIf="selectedPartner" #scrollMe [scrollTop]="scrollMe.scrollHeight">
+          <div class="messages-view" *ngIf="selectedPartner" #scrollMe>
             <button class="btn-back" (click)="selectedPartner = null">
                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
                Retour aux contacts
@@ -172,6 +172,7 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
   history: ChatMessage[] = [];
   newMessage = '';
   currentUserId: number | null = null;
+  @ViewChild('scrollMe') private myScrollContainer!: ElementRef;
   
   private pollingSub?: Subscription;
 
@@ -235,6 +236,11 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
   loadHistory(partnerId: number) {
     this.chatService.getHistory(partnerId).subscribe(data => {
         this.history = data;
+        setTimeout(() => {
+          if (this.myScrollContainer) {
+            this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
+          }
+        }, 50);
     });
   }
 

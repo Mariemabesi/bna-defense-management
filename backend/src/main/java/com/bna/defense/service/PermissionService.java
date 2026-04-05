@@ -17,35 +17,88 @@ public class PermissionService {
     @Autowired
     private UserRepository userRepository;
 
-    public boolean canAccessDossier(Authentication authentication, Long dossierId) {
-        String username = authentication.getName();
-        User currentUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    @Autowired
+    private com.bna.defense.repository.FraisRepository fraisRepository;
 
-        if (currentUser.isSuperValidateur()) {
-            return true;
-        }
+    public boolean canAccessDossier(Authentication authentication, Long dossierId) {
+        User currentUser = getCurrentUser(authentication);
+        if (isSuper(currentUser)) return true;
 
         Dossier dossier = dossierRepository.findById(dossierId)
                 .orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
 
-        // Rule 1: Creator can access
-        if (dossier.getCreatedBy() != null && dossier.getCreatedBy().equals(username)) {
+        return isOwnerOrManager(currentUser, dossier.getAssignedCharge());
+    }
+
+    public boolean canPreValidateFrais(Authentication authentication, Long fraisId) {
+        User currentUser = getCurrentUser(authentication);
+        if (isSuper(currentUser)) return true;
+
+        // Must be at least a PRE_VALIDATEUR
+        if (currentUser.getRoles().stream().noneMatch(r -> 
+            r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_PRE_VALIDATEUR ||
+            r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_VALIDATEUR)) {
+            return false;
+        }
+
+        com.bna.defense.entity.Frais frais = fraisRepository.findById(fraisId)
+                .orElseThrow(() -> new RuntimeException("Frais non trouvé"));
+        
+        User assignedCharge = frais.getAffaire().getDossier().getAssignedCharge();
+        
+        // A Pré-validateur can only pre-validate for their assigned Chargés
+        // A Validateur can also pre-validate if they want (they oversee the whole branch)
+        return isOwnerOrManager(currentUser, assignedCharge);
+    }
+
+    public boolean canValidateFrais(Authentication authentication, Long fraisId) {
+        User currentUser = getCurrentUser(authentication);
+        if (isSuper(currentUser)) return true;
+
+        // Must be a VALIDATEUR
+        if (currentUser.getRoles().stream().noneMatch(r -> 
+            r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_VALIDATEUR)) {
+            return false;
+        }
+
+        com.bna.defense.entity.Frais frais = fraisRepository.findById(fraisId)
+                .orElseThrow(() -> new RuntimeException("Frais non trouvé"));
+        
+        User assignedCharge = frais.getAffaire().getDossier().getAssignedCharge();
+        
+        // A Validateur can validate for anyone in their hierarchy branch
+        return isOwnerOrManager(currentUser, assignedCharge);
+    }
+
+    private User getCurrentUser(Authentication authentication) {
+        return userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    }
+
+    private boolean isSuper(User user) {
+        return user.isSuperValidateur() || user.getRoles().stream().anyMatch(r -> 
+            r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_ADMIN ||
+            r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_SUPER_VALIDATEUR);
+    }
+
+    /**
+     * Checks if the currentUser is the subordinate, or the manager, or the manager's manager.
+     */
+    private boolean isOwnerOrManager(User currentUser, User subordinate) {
+        if (subordinate == null) return false;
+        
+        // Level 0: Same user
+        if (subordinate.getId().equals(currentUser.getId())) return true;
+        
+        // Level 1: Manager
+        User manager = subordinate.getManager();
+        if (manager != null && manager.getId().equals(currentUser.getId())) return true;
+        
+        // Level 2: Manager of manager (Validateur oversees Pré-validateur who oversees Chargé)
+        if (manager != null && manager.getManager() != null && manager.getManager().getId().equals(currentUser.getId())) {
             return true;
         }
-
-        // Rule 2: Validateur of the group can access
-        if (dossier.getGroupValidateur() != null && dossier.getGroupValidateur().getId().equals(currentUser.getId())) {
-            return true;
-        }
-
-        // Rule 3: Members of the same group can access (if they are assigned to it)
-        if (currentUser.getGroupe() != null && dossier.getGroupValidateur() != null) {
-            if (currentUser.getGroupe().getValidateur().getId().equals(dossier.getGroupValidateur().getId())) {
-                return true;
-            }
-        }
-
+        
         return false;
     }
 }

@@ -25,11 +25,7 @@ public class UserController {
     @Autowired
     private com.bna.defense.repository.UserRepository userRepository;
 
-    @Autowired
-    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private com.bna.defense.repository.RoleRepository roleRepository;
 
     @GetMapping("/users")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
@@ -39,9 +35,38 @@ public class UserController {
                 user.getUsername(),
                 user.getEmail(),
                 user.isEnabled(),
-                user.getRoles().stream().map(r -> r.getName().name()).collect(Collectors.toList())))
+                user.getRoles().stream().map(r -> r.getName().name()).collect(Collectors.toList()),
+                user.getManager() != null ? user.getManager().getUsername() : null,
+                user.getManager() != null ? user.getManager().getId() : null))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
+    }
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody java.util.Map<String, Object> updates) {
+        User user = userRepository.findById(id).orElseThrow();
+        
+        if (updates.containsKey("role")) {
+            List<String> strRoles = (List<String>) updates.get("role");
+            java.util.Set<com.bna.defense.entity.Role.RoleType> roleTypes = strRoles.stream()
+                .map(com.bna.defense.entity.Role.RoleType::valueOf)
+                .collect(Collectors.toSet());
+            userService.updateUserRoles(user, roleTypes);
+        }
+
+        if (updates.containsKey("managerId")) {
+            Object managerIdObj = updates.get("managerId");
+            if (managerIdObj == null) {
+                user.setManager(null);
+            } else {
+                Long managerId = Long.valueOf(managerIdObj.toString());
+                User manager = userRepository.findById(managerId).orElse(null);
+                user.setManager(manager);
+            }
+        }
+
+        userRepository.save(user);
+        return ResponseEntity.ok(new AuthController.MessageResponse("Utilisateur mis à jour avec succès !"));
     }
 
     @PutMapping("/users/{id}/toggle-status")
@@ -85,10 +110,15 @@ public class UserController {
              user.setLinkedAuxiliaire(aux);
         }
 
+        if (signUpRequest.getManagerId() != null) {
+            User manager = userRepository.findById(signUpRequest.getManagerId()).orElse(null);
+            user.setManager(manager);
+        }
+
         userService.createUser(user, strRoles);
         return ResponseEntity.ok(new com.bna.defense.controller.AuthController.MessageResponse("Utilisateur enregistré avec succès !"));
     }
 
-    public static record UserDTO(Long id, String username, String email, boolean enabled, List<String> roles) {
+    public static record UserDTO(Long id, String username, String email, boolean enabled, List<String> roles, String managerUsername, Long managerId) {
     }
 }

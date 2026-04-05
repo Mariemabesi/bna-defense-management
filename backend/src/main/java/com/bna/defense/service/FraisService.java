@@ -21,6 +21,9 @@ public class FraisService {
     @Autowired
     private DossierRepository dossierRepository;
 
+    @Autowired
+    private DossierService dossierService;
+
     public List<Frais> getAllFrais() {
         return fraisRepository.findAllWithAffaire();
     }
@@ -44,9 +47,6 @@ public class FraisService {
         }
 
         if (affaire == null) {
-            // Log warning or handle gracefully. 
-            // For now, let's keep the throw but with a better message, 
-            // though DossierService auto-creation should fix this.
             throw new RuntimeException("L'association à une affaire est obligatoire pour les frais de règlement.");
         }
 
@@ -58,7 +58,20 @@ public class FraisService {
         frais.setStatut(Frais.StatutFrais.ATTENTE);
         frais.setObservation(dto.getObservation());
 
-        return fraisRepository.save(frais);
+        // AI Anomaly Detection Simulation
+        if (frais.getMontant() != null && frais.getMontant().compareTo(new java.math.BigDecimal("10000")) > 0) {
+            String warning = "[NOTE IA] Alerte Anomale : Montant élevé détecté (" + frais.getMontant() + " TND). ";
+            frais.setObservation(frais.getObservation() != null ? warning + frais.getObservation() : warning);
+        }
+
+        Frais saved = fraisRepository.save(frais);
+        triggerRecalculate(saved.getAffaire().getDossier().getId());
+        return saved;
+    }
+
+    private void triggerRecalculate(Long dossierId) {
+        java.math.BigDecimal total = fraisRepository.sumMontantTtcByDossierId(dossierId);
+        dossierService.recalculateFrais(dossierId, total != null ? total : java.math.BigDecimal.ZERO);
     }
 
     public Frais preValidate(Long id) {
@@ -70,13 +83,16 @@ public class FraisService {
         return fraisRepository.save(frais);
     }
 
+    @Transactional
     public Frais validate(Long id) {
         Frais frais = fraisRepository.findById(id).orElseThrow();
         if (frais.getStatut() != Frais.StatutFrais.PRE_VALIDE) {
             throw new RuntimeException("Statut invalide pour validation finale");
         }
         frais.setStatut(Frais.StatutFrais.VALIDE);
-        return fraisRepository.save(frais);
+        Frais saved = fraisRepository.save(frais);
+        triggerRecalculate(saved.getAffaire().getDossier().getId());
+        return saved;
     }
 
     public Frais sendToTreasury(Long id) {

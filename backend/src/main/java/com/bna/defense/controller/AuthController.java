@@ -126,6 +126,11 @@ public class AuthController {
                 user.setSuperValidateur(signUpRequest.getIsSuperValidateur());
             }
         
+            Long managerId = signUpRequest.getManagerId();
+            if (managerId != null) {
+                user.setManager(userRepository.findById(managerId).orElse(null));
+            }
+
             Long groupeId = signUpRequest.getGroupeId();
             if (groupeId != null) {
                 user.setGroupe(groupeRepository.findById(groupeId).orElseThrow(() -> new RuntimeException("Groupe non trouvé")));
@@ -286,6 +291,9 @@ public class AuthController {
         public void setIsSuperValidateur(Boolean s) { this.isSuperValidateur = s; }
         public Long getAuxiliaireId() { return auxiliaireId; }
         public void setAuxiliaireId(Long a) { this.auxiliaireId = a; }
+        private Long managerId;
+        public Long getManagerId() { return managerId; }
+        public void setManagerId(Long m) { this.managerId = m; }
     }
 
     public static class TokenResponse {
