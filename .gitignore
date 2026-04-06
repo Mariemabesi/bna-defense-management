@@ -5,8 +5,3 @@ backend/target/
 frontend/dist/
 frontend/.angular/
 .DS_Store
-.env
-*.log
-node_modules/
-frontend/node_modules/
-backend/node_modules/

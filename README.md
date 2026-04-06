@@ -3,6 +3,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.2-green.svg)
 ![Angular](https://img.shields.io/badge/Angular-17-red.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688.svg?logo=fastapi)
 ![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)
 
 Ce projet est une solution d'entreprise pour la **BNA Bank** visant à centraliser et automatiser la gestion des dossiers juridiques et des actions en défense. Il offre un workflow complet allant de la création du dossier jusqu'au règlement des frais, avec une validation multi-niveaux.
@@ -16,7 +17,7 @@ Le système repose sur une architecture moderne en couches, garantissant scalabi
 ```mermaid
 graph TD
     subgraph Frontend_Layer [Angular Frontend]
-        UI[User Interface]
+        UI[Obsidian-Glass UI]
         Interceptors[Auth & Error Interceptors]
         Store[State Management]
     end
@@ -31,6 +32,10 @@ graph TD
         Service[Business Service Layer]
         Repository[JPA Repository Layer]
     end
+    
+    subgraph AI_Layer [RedCell AI Engine]
+        FastAPI[FastAPI Service]
+    end
 
     subgraph Data_Layer [Infrastructure]
         DB[(PostgreSQL)]
@@ -44,11 +49,13 @@ graph TD
     Controller --> Service
     Service --> Repository
     Repository --> DB
+    Service <-->|Analysis Request| FastAPI
 ```
 
 ### Stack Technique
-- **Frontend** : Angular 17+ (Projets standalone), RxJS, Vanilla CSS (Premium Design).
-- **Backend** : Java 17, Spring Boot 3.2, Spring Security (JWT).
+- **Frontend** : Angular 17+ (Projets standalone), RxJS, Premium **Obsidian-Glass** Corporate Design System.
+- **Backend Core** : Java 17, Spring Boot 3.2, Spring Security (JWT).
+- **Backend AI** : Python, FastAPI, Intégration LLM (Ollama / OpenRouter).
 - **Persistance** : Spring Data JPA, Hibernate, PostgreSQL.
 - **DevOps** : Docker, Docker Compose, Jenkins (CI/CD Pipeline).
 
@@ -56,10 +63,10 @@ graph TD
 
 ## 🚀 Fonctionnalités Clés
 
-### 1. Gestion des Dossiers
-- Création et suivi du cycle de vie des dossiers juridiques.
+### 1. Gestion des Dossiers & Intelligence Artificielle
+- **Référentiel Souverain** : Interface de type "Command-Center" (Obsidian-Glass) pour créer et suivre le cycle de vie des dossiers juridiques.
+- **Moteur d'Analyse RedCell** : Triage et analyse des dossiers en temps réel via une API FastAPI propulsée par l'IA (LLM).
 - Attribution des auxiliaires de justice (Avocats, Huissiers, Experts).
-- Moteur d'analyse de dossiers propulsé par l'IA.
 
 ### 2. Workflow de Paiement
 Validation multi-niveaux pour les frais de justice :

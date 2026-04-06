@@ -1,0 +1,795 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.bna:defense-management >---------------------
+[INFO] Building defense-management 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.2.2:run (default-cli) > test-compile @ defense-management >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ defense-management ---
+[INFO] Copying 2 resources from src/main/resources to target/classes
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ defense-management ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ defense-management ---
+[INFO] skip non existing resourceDirectory /Users/yossr/Desktop/BNA/backend/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ defense-management ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] <<< spring-boot:3.2.2:run (default-cli) < test-compile @ defense-management <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.2.2:run (default-cli) @ defense-management ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+[32m :: Spring Boot :: [39m              [2m (v3.2.2)[0;39m
+
+[2m2026-04-05T19:04:45.533+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mc.b.d.DefenseManagementApplication      [0;39m [2m:[0;39m Starting DefenseManagementApplication using Java 23.0.2 with PID 51950 (/Users/yossr/Desktop/BNA/backend/target/classes started by yossr in /Users/yossr/Desktop/BNA/backend)
+[2m2026-04-05T19:04:45.536+01:00[0;39m [32mDEBUG[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mc.b.d.DefenseManagementApplication      [0;39m [2m:[0;39m Running with Spring Boot v3.2.2, Spring v6.1.3
+[2m2026-04-05T19:04:45.538+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mc.b.d.DefenseManagementApplication      [0;39m [2m:[0;39m No active profile set, falling back to 1 default profile: "default"
+[2m2026-04-05T19:04:47.260+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+[2m2026-04-05T19:04:47.491+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36m.s.d.r.c.RepositoryConfigurationDelegate[0;39m [2m:[0;39m Finished Spring Data repository scanning in 222 ms. Found 28 JPA repository interfaces.
+[2m2026-04-05T19:04:48.414+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.s.b.w.embedded.tomcat.TomcatWebServer [0;39m [2m:[0;39m Tomcat initialized with port 8082 (http)
+[2m2026-04-05T19:04:48.429+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.apache.catalina.core.StandardService  [0;39m [2m:[0;39m Starting service [Tomcat]
+[2m2026-04-05T19:04:48.429+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.apache.catalina.core.StandardEngine   [0;39m [2m:[0;39m Starting Servlet engine: [Apache Tomcat/10.1.18]
+[2m2026-04-05T19:04:48.501+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.a.c.c.C.[Tomcat].[localhost].[/]      [0;39m [2m:[0;39m Initializing Spring embedded WebApplicationContext
+[2m2026-04-05T19:04:48.502+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mw.s.c.ServletWebServerApplicationContext[0;39m [2m:[0;39m Root WebApplicationContext: initialization completed in 2849 ms
+[2m2026-04-05T19:04:48.605+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mcom.zaxxer.hikari.HikariDataSource      [0;39m [2m:[0;39m HikariPool-1 - Starting...
+[2m2026-04-05T19:04:49.018+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mcom.zaxxer.hikari.pool.HikariPool       [0;39m [2m:[0;39m HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@7f4e5a39
+[2m2026-04-05T19:04:49.022+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mcom.zaxxer.hikari.HikariDataSource      [0;39m [2m:[0;39m HikariPool-1 - Start completed.
+[2m2026-04-05T19:04:49.197+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.hibernate.jpa.internal.util.LogHelper [0;39m [2m:[0;39m HHH000204: Processing PersistenceUnitInfo [name: default]
+[2m2026-04-05T19:04:49.274+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36morg.hibernate.Version                   [0;39m [2m:[0;39m HHH000412: Hibernate ORM core version 6.4.1.Final
+[2m2026-04-05T19:04:49.316+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.h.c.internal.RegionFactoryInitiator   [0;39m [2m:[0;39m HHH000026: Second-level cache disabled
+[2m2026-04-05T19:04:49.700+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.s.o.j.p.SpringPersistenceUnitInfo     [0;39m [2m:[0;39m No LoadTimeWeaver setup: ignoring JPA class transformer
+[2m2026-04-05T19:04:52.679+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.h.e.t.j.p.i.JtaPlatformInitiator      [0;39m [2m:[0;39m HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+[2m2026-04-05T19:04:53.484+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mj.LocalContainerEntityManagerFactoryBean[0;39m [2m:[0;39m Initialized JPA EntityManagerFactory for persistence unit 'default'
+[2m2026-04-05T19:04:53.988+01:00[0;39m [32mDEBUG[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mc.bna.defense.security.AuthTokenFilter  [0;39m [2m:[0;39m Filter 'authenticationJwtTokenFilter' configured for use
+[2m2026-04-05T19:04:54.073+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.s.d.j.r.query.QueryEnhancerFactory    [0;39m [2m:[0;39m Hibernate is in classpath; If applicable, HQL parser will be used.
+[2m2026-04-05T19:04:55.520+01:00[0;39m [31mERROR[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mi.n.r.d.DnsServerAddressStreamProviders [0;39m [2m:[0;39m Unable to load io.netty.resolver.dns.macos.MacOSDnsServerAddressStreamProvider, fallback to system defaults. This may result in incorrect DNS resolutions on MacOS. Check whether you have a dependency on 'io.netty:netty-resolver-dns-native-macos'. Use DEBUG level to see the full stack: java.lang.UnsatisfiedLinkError: failed to load the required native library
+[2m2026-04-05T19:04:58.445+01:00[0;39m [33m WARN[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mJpaBaseConfiguration$JpaWebConfiguration[0;39m [2m:[0;39m spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+[2m2026-04-05T19:04:58.734+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.s.s.web.DefaultSecurityFilterChain    [0;39m [2m:[0;39m Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@2bc1cc4, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@65b30c49, org.springframework.security.web.context.SecurityContextHolderFilter@5ad6760c, org.springframework.security.web.header.HeaderWriterFilter@f2d9eb, org.springframework.web.filter.CorsFilter@2ab0ee54, org.springframework.security.web.authentication.logout.LogoutFilter@1c57062c, com.bna.defense.security.AuthTokenFilter@7fb70e94, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@6c4adb44, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@7995399, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@19b3800e, org.springframework.security.web.session.SessionManagementFilter@93a5c6c, org.springframework.security.web.access.ExceptionTranslationFilter@5b01f226, org.springframework.security.web.access.intercept.AuthorizationFilter@c986a89]
+[2m2026-04-05T19:04:59.114+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mo.s.b.w.embedded.tomcat.TomcatWebServer [0;39m [2m:[0;39m Tomcat started on port 8082 (http) with context path ''
+[2m2026-04-05T19:04:59.126+01:00[0;39m [32m INFO[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mc.b.d.DefenseManagementApplication      [0;39m [2m:[0;39m Started DefenseManagementApplication in 14.672 seconds (process running for 15.59)
+Hibernate: 
+    select
+        u1_0.id 
+    from
+        users u1_0 
+    where
+        u1_0.username=? 
+    fetch
+        first ? rows only
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+Hibernate: 
+    select
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name 
+    from
+        user_roles r1_0 
+    join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        r1_0.user_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    left join
+        user_roles r1_0 
+            on u1_0.id=r1_0.user_id 
+    left join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        u1_0.id=?
+Hibernate: 
+    update
+        users 
+    set
+        avatar_url=?,
+        email=?,
+        enabled=?,
+        first_name=?,
+        full_name=?,
+        groupe_id=?,
+        is_super_validateur=?,
+        last_modified_by=?,
+        last_name=?,
+        auxiliaire_id=?,
+        manager_id=?,
+        password=?,
+        reset_token=?,
+        token_expiry=?,
+        updated_at=?,
+        username=? 
+    where
+        id=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+Hibernate: 
+    select
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name 
+    from
+        user_roles r1_0 
+    join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        r1_0.user_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    left join
+        user_roles r1_0 
+            on u1_0.id=r1_0.user_id 
+    left join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        u1_0.id=?
+Hibernate: 
+    update
+        users 
+    set
+        avatar_url=?,
+        email=?,
+        enabled=?,
+        first_name=?,
+        full_name=?,
+        groupe_id=?,
+        is_super_validateur=?,
+        last_modified_by=?,
+        last_name=?,
+        auxiliaire_id=?,
+        manager_id=?,
+        password=?,
+        reset_token=?,
+        token_expiry=?,
+        updated_at=?,
+        username=? 
+    where
+        id=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+Hibernate: 
+    select
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name 
+    from
+        user_roles r1_0 
+    join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        r1_0.user_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    left join
+        user_roles r1_0 
+            on u1_0.id=r1_0.user_id 
+    left join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        u1_0.id=?
+Hibernate: 
+    update
+        users 
+    set
+        avatar_url=?,
+        email=?,
+        enabled=?,
+        first_name=?,
+        full_name=?,
+        groupe_id=?,
+        is_super_validateur=?,
+        last_modified_by=?,
+        last_name=?,
+        auxiliaire_id=?,
+        manager_id=?,
+        password=?,
+        reset_token=?,
+        token_expiry=?,
+        updated_at=?,
+        username=? 
+    where
+        id=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+Hibernate: 
+    select
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name 
+    from
+        user_roles r1_0 
+    join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        r1_0.user_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    left join
+        user_roles r1_0 
+            on u1_0.id=r1_0.user_id 
+    left join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        u1_0.id=?
+Hibernate: 
+    update
+        users 
+    set
+        avatar_url=?,
+        email=?,
+        enabled=?,
+        first_name=?,
+        full_name=?,
+        groupe_id=?,
+        is_super_validateur=?,
+        last_modified_by=?,
+        last_name=?,
+        auxiliaire_id=?,
+        manager_id=?,
+        password=?,
+        reset_token=?,
+        token_expiry=?,
+        updated_at=?,
+        username=? 
+    where
+        id=?
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.name 
+    from
+        roles r1_0 
+    where
+        r1_0.name=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+Hibernate: 
+    select
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name 
+    from
+        user_roles r1_0 
+    join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        r1_0.user_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    left join
+        user_roles r1_0 
+            on u1_0.id=r1_0.user_id 
+    left join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        u1_0.id=?
+Hibernate: 
+    update
+        users 
+    set
+        avatar_url=?,
+        email=?,
+        enabled=?,
+        first_name=?,
+        full_name=?,
+        groupe_id=?,
+        is_super_validateur=?,
+        last_modified_by=?,
+        last_name=?,
+        auxiliaire_id=?,
+        manager_id=?,
+        password=?,
+        reset_token=?,
+        token_expiry=?,
+        updated_at=?,
+        username=? 
+    where
+        id=?
+Hibernate: 
+    select
+        u1_0.id,
+        u1_0.avatar_url,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.email,
+        u1_0.enabled,
+        u1_0.first_name,
+        u1_0.full_name,
+        u1_0.groupe_id,
+        u1_0.is_super_validateur,
+        u1_0.last_modified_by,
+        u1_0.last_name,
+        u1_0.auxiliaire_id,
+        u1_0.manager_id,
+        u1_0.password,
+        u1_0.reset_token,
+        u1_0.token_expiry,
+        u1_0.updated_at,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+Hibernate: 
+    select
+        r1_0.user_id,
+        r1_1.id,
+        r1_1.name 
+    from
+        user_roles r1_0 
+    join
+        roles r1_1 
+            on r1_1.id=r1_0.role_id 
+    where
+        r1_0.user_id=?
+Hibernate: 
+    select
+        g1_0.id,
+        g1_0.created_at,
+        g1_0.created_by,
+        g1_0.last_modified_by,
+        g1_0.nom,
+        g1_0.updated_at,
+        g1_0.validateur_id 
+    from
+        groupes g1_0 
+    where
+        g1_0.nom=?
+Hibernate: 
+    select
+        g1_0.id,
+        g1_0.created_at,
+        g1_0.created_by,
+        g1_0.last_modified_by,
+        g1_0.nom,
+        g1_0.updated_at,
+        g1_0.validateur_id 
+    from
+        groupes g1_0 
+    where
+        g1_0.id=?
+Hibernate: 
+    select
+        g1_0.id,
+        g1_0.created_at,
+        g1_0.created_by,
+        g1_0.last_modified_by,
+        g1_0.nom,
+        g1_0.updated_at,
+        g1_0.validateur_id 
+    from
+        groupes g1_0 
+    where
+        g1_0.nom=?
+Hibernate: 
+    select
+        g1_0.id,
+        g1_0.created_at,
+        g1_0.created_by,
+        g1_0.last_modified_by,
+        g1_0.nom,
+        g1_0.updated_at,
+        g1_0.validateur_id 
+    from
+        groupes g1_0 
+    where
+        g1_0.id=?
+Hibernate: 
+    select
+        count(*) 
+    from
+        auxiliaires a1_0
+Hibernate: 
+    select
+        count(*) 
+    from
+        parties_litige pl1_0
+Hibernate: 
+    select
+        count(*) 
+    from
+        dossiers d1_0
+--- Starting Database Fix: Remove roles_name_check ---
+--- Database Fix: Successfully dropped roles_name_check ---
+--- AI Migration: Adding risk_score and embedding ---
+[2m2026-04-05T19:05:00.552+01:00[0;39m [33m WARN[0;39m [35m51950[0;39m [2m---[0;39m [2m[defense-management] [           main][0;39m [2m[0;39m[36mcom.zaxxer.hikari.pool.ProxyConnection  [0;39m [2m:[0;39m HikariPool-1 - Connection org.postgresql.jdbc.PgConnection@7f4e5a39 marked as broken because of SQLSTATE(0A000), ErrorCode(0)
+
+org.postgresql.util.PSQLException: ERROR: extension "vector" is not available
+  Détail : Could not open extension control file "/usr/share/postgresql/15/extension/vector.control": No such file or directory.
+  Indice : The extension must first be installed on the system where PostgreSQL is running.
+	at org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2713) ~[postgresql-42.6.0.jar:42.6.0]
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:2401) ~[postgresql-42.6.0.jar:42.6.0]
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:368) ~[postgresql-42.6.0.jar:42.6.0]
+	at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:498) ~[postgresql-42.6.0.jar:42.6.0]
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:415) ~[postgresql-42.6.0.jar:42.6.0]
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:335) ~[postgresql-42.6.0.jar:42.6.0]
+	at org.postgresql.jdbc.PgStatement.executeCachedSql(PgStatement.java:321) ~[postgresql-42.6.0.jar:42.6.0]
+	at org.postgresql.jdbc.PgStatement.executeWithFlags(PgStatement.java:297) ~[postgresql-42.6.0.jar:42.6.0]
+	at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:292) ~[postgresql-42.6.0.jar:42.6.0]
+	at com.zaxxer.hikari.pool.ProxyStatement.execute(ProxyStatement.java:94) ~[HikariCP-5.0.1.jar:na]
+	at com.zaxxer.hikari.pool.HikariProxyStatement.execute(HikariProxyStatement.java) ~[HikariCP-5.0.1.jar:na]
+	at org.springframework.jdbc.core.JdbcTemplate$1ExecuteStatementCallback.doInStatement(JdbcTemplate.java:435) ~[spring-jdbc-6.1.3.jar:6.1.3]
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:393) ~[spring-jdbc-6.1.3.jar:6.1.3]
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:444) ~[spring-jdbc-6.1.3.jar:6.1.3]
+	at com.bna.defense.config.DatabaseMigrationRunner.run(DatabaseMigrationRunner.java:27) ~[classes/:na]
+	at org.springframework.boot.SpringApplication.lambda$callRunner$5(SpringApplication.java:790) ~[spring-boot-3.2.2.jar:3.2.2]
+	at org.springframework.util.function.ThrowingConsumer$1.acceptWithException(ThrowingConsumer.java:83) ~[spring-core-6.1.3.jar:6.1.3]
+	at org.springframework.util.function.ThrowingConsumer.accept(ThrowingConsumer.java:60) ~[spring-core-6.1.3.jar:6.1.3]
+	at org.springframework.util.function.ThrowingConsumer$1.accept(ThrowingConsumer.java:88) ~[spring-core-6.1.3.jar:6.1.3]
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:798) ~[spring-boot-3.2.2.jar:3.2.2]
+	at org.springframework.boot.SpringApplication.callRunner(SpringApplication.java:789) ~[spring-boot-3.2.2.jar:3.2.2]
+	at org.springframework.boot.SpringApplication.lambda$callRunners$3(SpringApplication.java:774) ~[spring-boot-3.2.2.jar:3.2.2]
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.accept(ForEachOps.java:184) ~[na:na]
+	at java.base/java.util.stream.SortedOps$SizedRefSortingSink.end(SortedOps.java:357) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:571) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:560) ~[na:na]
+	at java.base/java.util.stream.ForEachOps$ForEachOp.evaluateSequential(ForEachOps.java:151) ~[na:na]
+	at java.base/java.util.stream.ForEachOps$ForEachOp$OfRef.evaluateSequential(ForEachOps.java:174) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:265) ~[na:na]
+	at java.base/java.util.stream.ReferencePipeline.forEach(ReferencePipeline.java:636) ~[na:na]
+	at org.springframework.boot.SpringApplication.callRunners(SpringApplication.java:774) ~[spring-boot-3.2.2.jar:3.2.2]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:341) ~[spring-boot-3.2.2.jar:3.2.2]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354) ~[spring-boot-3.2.2.jar:3.2.2]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1343) ~[spring-boot-3.2.2.jar:3.2.2]
+	at com.bna.defense.DefenseManagementApplication.main(DefenseManagementApplication.java:13) ~[classes/:na]
+
+--- pgvector could not be enabled: Skipping embedding column ---
+--- AI Migration: Successfully updated schema ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  02:06 min
+[INFO] Finished at: 2026-04-05T19:06:46+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.2.2:run (default-cli) on project defense-management: Process terminated with exit code: 137 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
