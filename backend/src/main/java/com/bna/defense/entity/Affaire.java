@@ -10,14 +10,14 @@ public class Affaire extends BaseEntity {
     public Affaire() {}
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dossier_id", nullable = true)
+    @JoinColumn(name = "dossier_id", nullable = false)
     @JsonBackReference
     private Dossier dossier;
 
     @Transient // Only for JSON mapping
     private Long dossierId;
 
-    @Column(nullable = true)
+    @Column(unique = true, nullable = false)
     private String referenceJudiciaire;
 
     @Column(nullable = true)

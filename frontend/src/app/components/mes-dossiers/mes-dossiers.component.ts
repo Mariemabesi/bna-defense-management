@@ -58,6 +58,9 @@ import { FormsModule } from '@angular/forms';
               <button class="pill" [class.active]="activeTab === 'VALIDE'" (click)="setTab('VALIDE')">
                 <span class="pill-icon">✅</span> Validés
               </button>
+              <button class="pill" [class.active]="activeTab === 'REFUSE'" (click)="setTab('REFUSE')">
+                <span class="pill-icon">🚫</span> Refusés
+              </button>
             </div>
           </div>
 
@@ -870,7 +873,7 @@ export class MesDossiersComponent implements OnInit {
   confirmMessage = '';
   pendingAction: (() => void) | null = null;
 
-  activeTab: 'ALL' | 'SOUMIS' | 'PRE_VALIDE' | 'VALIDE' = 'ALL';
+  activeTab: 'ALL' | 'SOUMIS' | 'PRE_VALIDE' | 'VALIDE' | 'REFUSE' = 'ALL';
 
   constructor(
     private authService: AuthService,
@@ -908,7 +911,7 @@ export class MesDossiersComponent implements OnInit {
 
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
-        this.activeTab = params['tab'];
+        this.activeTab = params['tab'] as any;
       }
       if (params['highlight']) {
         const ref = params['highlight'];
@@ -1188,6 +1191,7 @@ export class MesDossiersComponent implements OnInit {
         case 'SOUMIS': return d.statut === 'EN_ATTENTE_PREVALIDATION';
         case 'PRE_VALIDE': return d.statut === 'EN_ATTENTE_VALIDATION';
         case 'VALIDE': return d.statut === 'VALIDE' || d.statut === 'CLOTURE';
+        case 'REFUSE': return d.statut === 'REFUSE';
         default: return true;
       }
     });
