@@ -175,6 +175,95 @@ public class ReportingService {
             .collect(java.util.stream.Collectors.toList());
     }
 
+    public byte[] exportAffaireListToPdf(User currentUser) {
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            com.lowagie.text.Document document = new com.lowagie.text.Document(com.lowagie.text.PageSize.A4.rotate());
+            com.lowagie.text.pdf.PdfWriter.getInstance(document, out);
+            document.open();
+
+            com.lowagie.text.Font fontTitle = com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.HELVETICA_BOLD, 18);
+            com.lowagie.text.Paragraph title = new com.lowagie.text.Paragraph("Registre des Affaires Judiciaires - BNA", fontTitle);
+            title.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            document.add(title);
+            document.add(new com.lowagie.text.Paragraph("Date d'édition : " + java.time.LocalDateTime.now().toString()));
+            document.add(new com.lowagie.text.Chunk("\n"));
+
+            com.lowagie.text.pdf.PdfPTable table = new com.lowagie.text.pdf.PdfPTable(6);
+            table.setWidthPercentage(100);
+            String[] headers = {"Référence", "Titre", "Type", "Statut", "Dossier Libellé", "Date Ouverture"};
+            for(String h : headers) {
+                com.lowagie.text.pdf.PdfPCell cell = new com.lowagie.text.pdf.PdfPCell(new com.lowagie.text.Phrase(h));
+                cell.setBackgroundColor(java.awt.Color.LIGHT_GRAY);
+                table.addCell(cell);
+            }
+
+            boolean isSuper = currentUser != null && (currentUser.isSuperValidateur() || currentUser.getRoles().stream()
+                .anyMatch(r -> r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_ADMIN || 
+                               r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_SUPER_VALIDATEUR));
+
+            List<Affaire> list = affaireRepository.findAll().stream()
+                .filter(a -> isSuper || (a.getDossier() != null && (
+                    (a.getDossier().getAssignedCharge() != null && a.getDossier().getAssignedCharge().getUsername().equalsIgnoreCase(currentUser.getUsername())) ||
+                    (a.getDossier().getCreatedBy() != null && a.getDossier().getCreatedBy().equalsIgnoreCase(currentUser.getUsername())) ||
+                    (a.getDossier().getCreatedBy() != null && a.getDossier().getCreatedBy().equalsIgnoreCase(currentUser.getEmail()))
+                )))
+                .collect(java.util.stream.Collectors.toList());
+
+            for (Affaire a : list) {
+                table.addCell(a.getReferenceJudiciaire());
+                table.addCell(a.getTitre());
+                table.addCell(a.getType() != null ? a.getType().toString() : "-");
+                table.addCell(a.getStatut() != null ? a.getStatut().toString() : "-");
+                table.addCell(a.getDossier() != null ? a.getDossier().getTitre() : "-");
+                table.addCell(a.getDateOuverture() != null ? a.getDateOuverture().toString() : "-");
+            }
+            document.add(table);
+            document.close();
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur export PDF liste affaires: " + e.getMessage());
+        }
+    }
+
+    public byte[] exportSingleAffaireToPdf(Long id) {
+        Affaire a = affaireRepository.findById(id).orElseThrow();
+        try (java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            com.lowagie.text.Document document = new com.lowagie.text.Document(com.lowagie.text.PageSize.A4);
+            com.lowagie.text.pdf.PdfWriter.getInstance(document, out);
+            document.open();
+
+            com.lowagie.text.Font fontTitle = com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.HELVETICA_BOLD, 22);
+            com.lowagie.text.Paragraph title = new com.lowagie.text.Paragraph("Fiche Individuelle d'Affaire", fontTitle);
+            title.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            document.add(title);
+            document.add(new com.lowagie.text.Chunk("\n"));
+
+            com.lowagie.text.pdf.PdfPTable table = new com.lowagie.text.pdf.PdfPTable(2);
+            table.setWidthPercentage(100);
+            table.addCell("Référence Judiciaire"); table.addCell(a.getReferenceJudiciaire());
+            table.addCell("Titre / Objet"); table.addCell(a.getTitre());
+            table.addCell("Description"); table.addCell(a.getDescription() != null ? a.getDescription() : "Aucune");
+            table.addCell("Type"); table.addCell(String.valueOf(a.getType()));
+            table.addCell("Statut Actuel"); table.addCell(String.valueOf(a.getStatut()));
+            table.addCell("Date d'Ouverture"); table.addCell(String.valueOf(a.getDateOuverture()));
+            table.addCell("Dossier Parent"); table.addCell(a.getDossier() != null ? a.getDossier().getReference() : "N/A");
+            
+            document.add(table);
+
+            if (!a.getProcedures().isEmpty()) {
+                document.add(new com.lowagie.text.Paragraph("\nHistorique des Procédures :", com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.HELVETICA_BOLD, 14)));
+                for (var p : a.getProcedures()) {
+                    document.add(new com.lowagie.text.Paragraph("- " + p.getTitre() + " [" + p.getType() + "] (" + p.getStatut() + ")"));
+                }
+            }
+
+            document.close();
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur export PDF affaire: " + e.getMessage());
+        }
+    }
+
     public DashboardStatsDTO getDashboardStats(User currentUser) {
                 boolean isSuper = currentUser != null && (currentUser.isSuperValidateur() || currentUser.getRoles().stream()
                         .anyMatch(r -> r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_ADMIN || 

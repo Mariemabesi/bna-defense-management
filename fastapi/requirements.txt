@@ -1,7 +1,6 @@
 fastapi
 uvicorn
-openai
-httpx
+anthropic
 pydantic
 sqlalchemy
 psycopg2-binary

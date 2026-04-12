@@ -1,25 +1,15 @@
 from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
-import openai
+import anthropic
 import os
 import json
-import httpx
 from typing import List, Optional
 
-app = FastAPI(title="BNA AI Microservice (OpenRouter FREE)", description="Intelligence BNA - Model: GPT-OSS-120B:FREE")
+app = FastAPI(title="BNA AI Microservice", description="Servives Claude pour Action en Défense BNA")
 
-# Configuration OpenRouter (Point 14: No more Claude Pay)
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "YOUR_OPENROUTER_KEY_HERE")
-client = openai.AsyncOpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY,
-    default_headers={
-        "HTTP-Referer": "http://localhost:4200", # Optional for OpenRouter
-        "X-Title": "BNA Defense Management",
-    }
-)
-
-MODEL_NAME = "openai/gpt-oss-120b:free"
+# Configuration Claude (Assume API Key is in env)
+CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY", "YOUR_KEY_HERE")
+client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
 
 class ClassificationRequest(BaseModel):
     description: str
@@ -27,14 +17,15 @@ class ClassificationRequest(BaseModel):
 @app.post("/api/ai/classify-dossier")
 async def classify_dossier(request: ClassificationRequest):
     try:
-        system_content = "Vous êtes un expert juridique tunisien pour la BNA. Réponds avec rigueur bancaire."
+        system_prompt = "Vous êtes un expert juridique tunisien. Votre rôle est de classifier les dossiers juridiques de la BNA (Banque Nationale Agricole) en utilisant le contexte légal de la Tunisie."
         user_prompt = f"""Analyse cette description de dossier BNA et suggère :
-        1. Type de Procédure (CIVIL, PENAL, COMMERCIALE)
-        2. Nature d'Affaire
-        3. Phase initiale
-        
+        1. Type de Procédure (ex: CIVIL, PENAL, COMMERCIALE)
+        2. Nature d'Affaire (ex: Non-paiement, Litige foncier, Chèque sans provision)
+        3. Phase initiale (ex: PREMIERE_INSTANCE, APPEL)
+
         Description: "{request.description}"
-        Réponds uniquement au format JSON:
+
+        Réponds uniquement au format JSON structuré comme ceci:
         {{
             "typeProcedure": "...",
             "natureAffaire": "...",
@@ -43,62 +34,68 @@ async def classify_dossier(request: ClassificationRequest):
         }}
         """
 
-        response = await client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": system_content},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={ "type": "json_object" }
+        message = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=1000,
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_prompt}]
         )
         
-        # OpenRouter Reasoning Usage Logs (Point 14)
-        usage = getattr(response, 'usage', None)
-        if usage:
-            print(f"[AI REPORT] Total Tokens: {usage.total_tokens} | Cost: $0.00")
-
-        return json.loads(response.choices[0].message.content)
+        # Parse JSON from text blocks
+        content = message.content[0].text
+        # Safety: extracting JSON
+        start = content.find('{')
+        end = content.rfind('}') + 1
+        return json.loads(content[start:end])
     except Exception as e:
-        print(f"[RECOVER] AI Error: {e}")
         return {
-            "typeProcedure": "CIVIL", "natureAffaire": "Droit commun",
-            "phaseInitiale": "PREMIERE_INSTANCE", "confidence": 0.5
+            "typeProcedure": "CIVIL",
+            "natureAffaire": "Droit commun",
+            "phaseInitiale": "PREMIERE_INSTANCE",
+            "confidence": 0.5
         }
+
+@app.post("/api/ai/risk-score")
+async def calculate_risk_score(request: dict):
+    try:
+        montant = request.get("montant", 0)
+        delay = request.get("daysSinceCreation", 0)
+        score = "FAIBLE"
+        if montant > 100000 or delay > 365:
+            score = "ÉLEVÉ"
+        elif montant > 50000 or delay > 180:
+            score = "MOYEN"
+        return {"riskScore": score}
+    except:
+        return {"riskScore": "MOYEN"}
 
 @app.post("/api/ai/summarize-dossier")
 async def summarize_dossier(request: dict):
     dossier_id = request.get("dossierId")
     try:
-        user_prompt = f"Résume le dossier juridique BNA #{dossier_id}. Points clés, enjeu financier."
-        response = await client.chat.completions.create(
-            model=MODEL_NAME,
+        user_prompt = f"Résume le dossier juridique BNA #{dossier_id}. Concentre-toi sur les faits marquants."
+        message = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=300,
             messages=[{"role": "user", "content": user_prompt}]
         )
-        return {"summary": response.choices[0].message.content}
+        return {"summary": message.content[0].text}
     except:
-        return {"summary": "Résumé automatique (OpenRouter) non disponible."}
+        return {"summary": "Résumé automatique non disponible."}
 
 @app.post("/api/ai/recommend-strategy")
 async def recommend_strategy(request: dict):
     dossier_id = request.get("dossierId")
     try:
         user_prompt = f"Suggère une stratégie juridique pour le dossier #{dossier_id} de la BNA (Banque Nationale Agricole) selon le droit tunisien."
-        response = await client.chat.completions.create(
-            model=MODEL_NAME,
+        message = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=500,
             messages=[{"role": "user", "content": user_prompt}]
         )
-        return {"strategy": response.choices[0].message.content}
+        return {"strategy": message.content[0].text}
     except:
-        return {"strategy": "Poursuivre la procédure standard en première instance."}
-
-# Remaining simulation endpoints (keeping them simple/fast)
-@app.post("/api/ai/risk-score")
-async def calculate_risk_score(request: dict):
-    return {"riskScore": "MOYEN"}
-
-@app.get("/api/ai/avocat-score/{id}")
-async def get_avocat_score(id: int):
-    return {"id": id, "score": 85.5, "winRate": 0.75, "efficiency": "High"}
+        return {"strategy": "Poursuivre la procédure standard."}
 
 @app.get("/api/ai/predictive-kpis")
 async def get_predictive_kpis():
@@ -109,7 +106,8 @@ async def nl_search(request: dict):
     return [{"id": 1, "reference": "DEF-2026", "matchPercentage": 0.98}]
 
 @app.get("/")
-def read_root(): return {"message": "BNA AI Service (OpenRouter) is Up"}
+def read_root():
+    return {"message": "BNA AI Service (Legacy) is Up"}
 
 if __name__ == "__main__":
     import uvicorn

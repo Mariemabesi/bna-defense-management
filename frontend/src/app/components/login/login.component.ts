@@ -5,10 +5,10 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
-    selector: 'app-login',
-    standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
-    template: `
+  selector: 'app-login',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
+  template: `
     <div class="split-screen">
       <div class="left-pane">
         <div class="login-content">
@@ -64,7 +64,7 @@ import { AuthService } from '../../services/auth.service';
       
       <div class="right-pane">
         <div class="welcome-text">
-          <h1>Défense BNA <br> pour <br> Réclamation</h1>
+          <h1> Action en <br> Défense BNA</h1>
         </div>
         
         <div class="footer-links">
@@ -76,235 +76,102 @@ import { AuthService } from '../../services/auth.service';
       </div>
     </div>
   `,
-    styles: [`
-    .split-screen {
-      height: 100vh;
-      display: flex;
-      font-family: 'Outfit', 'Inter', sans-serif;
-      background: #fff;
-    }
+  styles: [`
+    .split-screen { height: 100vh; display: flex; background: #fff; overflow-y: auto; }
+    .left-pane { flex: 5; display: flex; align-items: center; justify-content: center; padding: 40px; background: #fff; min-height: 100vh; }
+    .login-content { width: 100%; max-width: 400px; animation: fadeIn 0.8s ease-out; }
+    .logo-container { margin-bottom: 40px; text-align: center; }
+    .bna-main-logo { height: 75px; object-fit: contain; }
+    .auth-title { font-size: 28px; font-weight: 900; color: #004d3d; margin-bottom: 32px; text-align: center; letter-spacing: 1.5px; }
     
-    .left-pane {
-      flex: 5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-      background: white;
-    }
+    .form-group { margin-bottom: 24px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px; }
     
-    .login-content {
-      width: 100%;
-      max-width: 380px;
+    .input-container { position: relative; display: flex; align-items: center; }
+    .input-container input { 
+      width: 100%; padding: 16px 48px 16px 16px; border: 1.8px solid #e2e8f0; border-radius: 12px; font-size: 15px; outline: none; transition: all 0.3s; 
+      color: #1e293b; background: #f8fafc;
     }
-    
-    .logo-container {
-      margin-bottom: 50px;
-      display: flex;
-      justify-content: center;
-    }
-    
-    .bna-main-logo {
-      height: 80px;
-      width: auto;
-      object-fit: contain;
-    }
-    
-    .auth-title {
-      font-size: 28px;
-      font-weight: 800;
-      color: #004d3d;
-      margin-bottom: 40px;
-      letter-spacing: 1px;
-    }
-    
-    .form-group {
-      margin-bottom: 24px;
-    }
-    
-    .form-group label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 10px;
-    }
-    
-    .input-container {
-      position: relative;
-    }
-    
-    .input-container input {
-      width: 100%;
-      padding: 14px 45px 14px 16px;
-      border: 1px solid #e0e0e0;
-      border-radius: 12px;
-      font-size: 15px;
-      background: #fff;
-      transition: all 0.2s;
-    }
-    
-    .input-container input:focus {
-      outline: none;
-      border-color: #008766;
-      box-shadow: 0 0 0 4px rgba(0, 135, 102, 0.05);
-    }
-    
-    .input-container .icon {
-      position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #999;
-    }
-    
-    .form-extras {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 16px;
-      margin-bottom: 32px;
-    }
-    
-    .checkbox-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      font-size: 13px;
-      color: #ff8c00; /* Warm orange from screenshot */
-      font-weight: 600;
-    }
-    
-    .forgot-link {
-      color: #777;
-      font-size: 13px;
-      text-decoration: underline;
-      font-weight: 500;
-    }
-    
-    .btn-submit {
-      width: 100%;
-      padding: 16px;
-      background: #008766;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: 24px;
-    }
-    
-    .btn-submit:hover {
-      background: #00684d;
-      transform: translateY(-2px);
-    }
-    
-    .signup-prompt {
-      text-align: center;
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 60px;
-    }
-    
-    .signup-prompt a {
-      color: #004d3d;
-      font-weight: 700;
-      text-decoration: none;
-    }
-    
-    .copyright {
-      text-align: center;
-      font-size: 12px;
-      color: #999;
-      font-weight: 600;
-    }
-    
-    .right-pane {
-      flex: 6;
-      background: linear-gradient(135deg, #2d5a4c 0%, #1a3a31 100%);
-      border-top-left-radius: 80px;
-      border-bottom-left-radius: 80px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 100px;
-      color: white;
-      position: relative;
-    }
-    
-    .welcome-text h1 {
-      font-size: 64px;
-      font-weight: 800;
-      line-height: 1.1;
-      margin: 0;
-    }
-    
-    .footer-links {
-      position: absolute;
-      bottom: 40px;
-      right: 60px;
-      display: flex;
-      gap: 24px;
-    }
-    
-    .footer-links a {
-      color: white;
-      text-decoration: underline;
-      font-size: 13px;
-      font-weight: 500;
-    }
+    .input-container input::placeholder { color: #94a3b8; font-weight: 500; }
+    .input-container input:focus { border-color: #008766; background: white; box-shadow: 0 0 0 4px rgba(0,135,102,0.1); }
+    .icon { position: absolute; right: 16px; color: #64748b; transition: color 0.3s; pointer-events: none; }
+    .input-container input:focus + .icon { color: #008766; }
 
-    .loader {
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s linear infinite;
+    .form-extras { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 32px; }
+    .checkbox-container { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: #475569; font-weight: 600; }
+    .checkbox-container input { width: 18px; height: 18px; accent-color: #008766; cursor: pointer; }
+    .forgot-link { color: #64748b; font-size: 14px; text-decoration: none; font-weight: 700; transition: 0.2s; }
+    .forgot-link:hover { color: #008766; text-decoration: underline; }
+
+    .btn-submit { 
+      width: 100%; padding: 16px; background: linear-gradient(135deg, #008766 0%, #005a44 100%); color: white; border: none; border-radius: 12px; 
+      font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 20px rgba(0, 135, 102, 0.2);
+    }
+    .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 25px rgba(0, 135, 102, 0.3); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .signup-prompt { margin-top: 32px; text-align: center; font-size: 15px; color: #64748b; font-weight: 600; }
+    .signup-prompt a { color: #008766; text-decoration: none; font-weight: 800; border-bottom: 2px solid transparent; transition: 0.2s; }
+    .signup-prompt a:hover { border-bottom-color: #008766; }
+    
+    .copyright { margin-top: 48px; text-align: center; font-size: 12px; color: #94a3b8; font-weight: 700; letter-spacing: 1px; }
+
+    .right-pane { 
+      flex: 6; background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%); 
+      border-top-left-radius: 60px; border-bottom-left-radius: 60px; padding: 80px; 
+      display: flex; flex-direction: column; justify-content: center; color: white; position: relative;
+      overflow: hidden;
+    }
+    .right-pane::before {
+      content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(0,135,102,0.15) 0%, transparent 70%); border-radius: 50%;
     }
     
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    .welcome-text h1 { font-size: 64px; font-weight: 900; line-height: 1.05; margin: 0; letter-spacing: -2px; }
     
-    /* Responsive Styles */
+    .footer-links { display: flex; gap: 32px; position: absolute; bottom: 60px; left: 80px; }
+    .footer-links a { color: rgba(255,255,255,0.5); font-size: 14px; text-decoration: none; font-weight: 700; transition: 0.3s; }
+    .footer-links a:hover { color: #008766; transform: translateY(-2px); }
+
+    .error-msg { color: #ef4444; font-size: 14px; font-weight: 700; margin-bottom: 20px; text-align: center; background: #fef2f2; padding: 14px; border-radius: 12px; border-left: 4px solid #ef4444; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
     @media (max-width: 1024px) {
-      .right-pane { padding: 40px; }
-      .welcome-text h1 { font-size: 40px; }
-    }
-    
-    @media (max-width: 768px) {
-      .split-screen { flex-direction: column; }
       .right-pane { display: none; }
       .left-pane { flex: 1; padding: 24px; }
       .login-content { max-width: 100%; }
-      .auth-title { font-size: 24px; margin-bottom: 30px; }
+      .welcome-text h1 { font-size: 44px; }
+    }
+    
+    @media (max-width: 480px) {
+      .auth-title { font-size: 24px; }
+      .form-extras { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .forgot-link { font-size: 13px; }
     }
   `]
 })
 export class LoginComponent {
-    username = '';
-    password = '';
-    loading = false;
-    error = '';
+  username = '';
+  password = '';
+  loading = false;
+  error = '';
 
-    constructor(private authService: AuthService, private router: Router) { }
+  constructor(private authService: AuthService, private router: Router) { }
 
-    onSubmit() {
-        this.loading = true;
-        this.error = '';
+  onSubmit() {
+    this.loading = true;
+    this.error = '';
 
-        this.authService.login(this.username, this.password).subscribe({
-            next: () => {
-                this.router.navigate(['/dashboard']);
-            },
-            error: err => {
-                this.error = 'Identifiant ou mot de passe incorrect';
-                this.loading = false;
-            }
-        });
-    }
+    this.authService.login(this.username, this.password).subscribe({
+      next: () => {
+        this.router.navigate(['/dashboard']);
+      },
+      error: err => {
+        this.error = 'Identifiant ou mot de passe incorrect';
+        this.loading = false;
+      }
+    });
+  }
 }

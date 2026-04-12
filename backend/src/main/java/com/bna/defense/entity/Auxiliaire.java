@@ -22,10 +22,6 @@ public class Auxiliaire extends BaseEntity {
     private java.math.BigDecimal tarifTimbre = java.math.BigDecimal.ZERO;
     private java.math.BigDecimal tarifDependances = java.math.BigDecimal.ZERO;
     private java.math.BigDecimal tauxTva = new java.math.BigDecimal("19.00");
-    
-    // Performance & Popularity (Point 14)
-    private Integer dossiersCount = 0;
-    private Double rating = 4.5;
 
     public Auxiliaire() {}
     public String getNom() { return nom; }
@@ -52,11 +48,6 @@ public class Auxiliaire extends BaseEntity {
     public void setTarifDependances(java.math.BigDecimal t) { this.tarifDependances = t; }
     public java.math.BigDecimal getTauxTva() { return tauxTva; }
     public void setTauxTva(java.math.BigDecimal t) { this.tauxTva = t; }
-
-    public Integer getDossiersCount() { return dossiersCount; }
-    public void setDossiersCount(Integer dc) { this.dossiersCount = dc; }
-    public Double getRating() { return rating; }
-    public void setRating(Double r) { this.rating = r; }
 
 
     public enum TypeAuxiliaire {

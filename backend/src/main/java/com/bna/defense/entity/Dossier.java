@@ -45,7 +45,23 @@ public class Dossier extends BaseEntity {
     @JoinColumn(name = "assigned_charge_id")
     private User assignedCharge;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "avocat_id")
+    private Auxiliaire avocat;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "huissier_id")
+    private Auxiliaire huissier;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "expert_id")
+    private Auxiliaire expert;
+
     // Point 10: Partie Litige details
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "partie_litige_id")
+    private PartieLitige partieLitige;
+
     private String clientName;
     private BigDecimal montantLitige;
     private String clientType; // BNE, Physique, CJN (Point 10)
@@ -108,6 +124,9 @@ public class Dossier extends BaseEntity {
     public void setMotifRefus(String motifRefus) { this.motifRefus = motifRefus; }
     public String getClientName() { return clientName; }
     public void setClientName(String clientName) { this.clientName = clientName; }
+
+    public PartieLitige getPartieLitige() { return partieLitige; }
+    public void setPartieLitige(PartieLitige p) { this.partieLitige = p; }
     public BigDecimal getMontantLitige() { return montantLitige; }
     public void setMontantLitige(BigDecimal montantLitige) { this.montantLitige = montantLitige; }
     public String getClientType() { return clientType; }
@@ -124,6 +143,13 @@ public class Dossier extends BaseEntity {
     public void setNatureAffaire(com.bna.defense.entity.referentiel.NatureAffaire n) { this.natureAffaire = n; }
     public com.bna.defense.entity.referentiel.PhaseProcedure getCurrentPhase() { return currentPhase; }
     public void setCurrentPhase(com.bna.defense.entity.referentiel.PhaseProcedure p) { this.currentPhase = p; }
+
+    public Auxiliaire getAvocat() { return avocat; }
+    public void setAvocat(Auxiliaire a) { this.avocat = a; }
+    public Auxiliaire getHuissier() { return huissier; }
+    public void setHuissier(Auxiliaire h) { this.huissier = h; }
+    public Auxiliaire getExpert() { return expert; }
+    public void setExpert(Auxiliaire e) { this.expert = e; }
 
     public enum Priorite { HAUTE, MOYENNE, BASSE }
 
@@ -145,4 +171,12 @@ public class Dossier extends BaseEntity {
         A_PRE_VALIDER,
         A_VALIDER
     }
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean archived = false;
+
+    public boolean isArchived() { return archived; }
+    public void setArchived(boolean archived) { this.archived = archived; }
 }
+
+

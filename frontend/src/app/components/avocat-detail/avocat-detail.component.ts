@@ -134,49 +134,77 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
     </div>
   `,
   styles: [`
-    .app-layout { display: flex; min-height: 100vh; background-color: #f8fafc; font-family: 'Outfit', sans-serif; }
-    .main-content { flex: 1; padding-left: 250px; display: flex; flex-direction: column; overflow-y: auto; }
-    
-    .detail-page { padding: 40px; animation: fadeIn 0.4s ease-out; max-width: 1400px; width: 100%; margin: 0 auto; }
-    .breadcrumb { margin-bottom: 24px; }
-    .breadcrumb a { color: #64748b; font-weight: 700; text-decoration: none; font-size: 14px; }
-    .breadcrumb a:hover { color: #008766; }
+    .app-layout { display: flex; min-height: 100vh; }
+    .main-content { flex: 1; margin-left: var(--sidebar-width); transition: margin-left 0.5s ease; background: #f8fafc; }
 
-    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px; }
-    .section { background: white; border-radius: 24px; padding: 32px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02); }
-    
-    .profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 32px; }
-    .avocat-avatar { width: 70px; height: 70px; background: linear-gradient(135deg, #008766 0%, #10b981 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 28px; }
-    h1 { font-size: 24px; margin: 0 0 4px 0; color: #1e293b; }
-    .badge-ordre { padding: 4px 10px; background: #f1f5f9; border-radius: 8px; font-size: 11px; font-weight: 700; color: #64748b; }
+    .detail-page { 
+      padding: 40px; max-width: 1400px; margin: 0 auto; 
+      display: flex; flex-direction: column; gap: 32px; 
+      animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); 
+    }
 
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .info-item label { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 4px; }
-    .info-item p { font-size: 15px; color: #1e293b; font-weight: 700; margin: 0; }
+    .breadcrumb { margin-bottom: 8px; }
+    .breadcrumb a { color: #64748b; font-weight: 800; text-decoration: none; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .breadcrumb a:hover { color: var(--bna-emerald); }
+
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .section { background: white; border-radius: 28px; padding: 32px; border: 1.5px solid #f1f5f9; }
+    
+    .profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; }
+    .avocat-avatar { 
+      width: 64px; height: 64px; border-radius: 18px; 
+      background: linear-gradient(135deg, var(--bna-emerald) 0%, #064e3b 100%); 
+      display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 24px;
+    }
+    .avocat-main h1 { font-size: 24px; font-weight: 950; color: #0f172a; margin: 0 0 4px 0; }
+    .badge-ordre { padding: 4px 10px; background: #f1f5f9; border-radius: 8px; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .info-item label { font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 850; margin-bottom: 4px; display: block; }
+    .info-item p { font-size: 15px; color: #1e293b; font-weight: 750; margin: 0; word-break: break-all; }
     .info-item.full { grid-column: span 2; }
 
-    .chart-wrapper { height: 200px; position: relative; margin-top: 20px; }
-    
-    .stats-ribbon { display: flex; justify-content: space-between; background: #1e293b; padding: 24px 48px; border-radius: 24px; margin-bottom: 32px; color: white; box-shadow: 0 20px 40px rgba(15,23,42,0.15); }
-    .ribbon-item { display: flex; flex-direction: column; gap: 4px; }
-    .ribbon-item .lab { font-size: 11px; text-transform: uppercase; opacity: 0.6; font-weight: 700; letter-spacing: 1px; }
-    .ribbon-item .val { font-size: 24px; font-weight: 800; }
-    .val.highlight { color: #10b981; }
+    .chart-wrapper { height: 260px; position: relative; margin-top: 16px; }
 
-    .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    .section-title h2 { font-size: 18px; margin: 0 0 20px 0; }
-    
-    .table-container { border-radius: 12px; border: 1px solid #f1f5f9; overflow: hidden; }
-    .premium-table { width: 100%; border-collapse: collapse; }
-    .premium-table th { background: #f8fafc; padding: 12px 20px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; }
-    .premium-table td { padding: 12px 20px; border-top: 1px solid #f1f5f9; font-size: 14px; }
-    
-    .badge-dossier { background: #008766; color: white; padding: 2px 8px; border-radius: 6px; font-size: 11px; }
-    .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; }
-    .status-badge.valide { background: #dcfce7; color: #15803d; }
-    .amount { font-weight: 800; color: #008766; }
+    .stats-ribbon { 
+      background: #0f172a; padding: 32px; border-radius: 28px; 
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px;
+      color: white; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .ribbon-item { display: flex; flex-direction: column; gap: 6px; }
+    .ribbon-item .lab { font-size: 11px; text-transform: uppercase; opacity: 0.6; font-weight: 800; letter-spacing: 1px; }
+    .ribbon-item .val { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+    .ribbon-item .val.highlight { color: var(--bna-emerald); }
 
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .section-title h2 { font-size: 18px; font-weight: 950; color: #0f172a; margin: 0 0 24px 0; }
+    
+    .table-container { border-radius: 16px; border: 1.5px solid #f1f5f9; overflow-x: auto; width: 100%; }
+    .premium-table { width: 100%; border-collapse: collapse; min-width: 400px; }
+    .premium-table th { background: #f8fafc; padding: 14px 20px; text-align: left; font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; }
+    .premium-table td { padding: 14px 20px; border-top: 1.5px solid #f1f5f9; font-size: 14px; font-weight: 700; color: #334155; }
+    
+    .badge-dossier { background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; }
+    .status-badge { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .status-badge.valide { background: #ecfdf5; color: #059669; }
+    .amount { font-weight: 850; color: var(--bna-emerald); font-family: 'JetBrains Mono', monospace; }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 1024px) {
+      .main-content { margin-left: 0; }
+      .detail-page { padding: 24px; }
+      .profile-grid, .data-grid { grid-template-columns: 1fr; }
+      .stats-ribbon { grid-template-columns: 1fr 1fr; padding: 24px; gap: 24px; }
+    }
+
+    @media (max-width: 640px) {
+      .detail-page { padding: 16px; }
+      .stats-ribbon { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+      .info-item.full { grid-column: span 1; }
+      .ribbon-item .val { font-size: 20px; }
+    }
   `]
 })
 export class AvocatDetailComponent implements OnInit, AfterViewInit {

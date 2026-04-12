@@ -25,61 +25,80 @@ interface UserDTO {
       <app-sidebar></app-sidebar>
       <main class="main-content">
         <app-header title="Administration des Utilisateurs"></app-header>
-        
-        <div class="page-container">
-          <!-- SOVEREIGN BANNER -->
-          <div class="header-banner shadow-premium">
-             <div class="banner-info">
-                <h1>Régime des Identités</h1>
-                <p>Gestion souveraine des accès, permissions et hiérarchie BNA.</p>
-             </div>
-             <div class="banner-actions">
-                <button class="btn-add primary" (click)="showSignupModal = true">
-                   Nouveau Compte
-                </button>
-             </div>
+        <div class="dashboard-content">
+          <div class="page-header-actions mb-8">
+            <div>
+              <h2 class="text-3xl font-extrabold text-blue-900">Gestion des Accès</h2>
+              <p class="subtitle mt-1 text-slate-500">Contrôle des permissions, hiérarchie et suspension des comptes.</p>
+            </div>
+            <button class="btn-primary" (click)="showSignupModal = true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="16" y1="11" x2="22" y2="11"></line></svg>
+              Créer Nouveau Compte
+            </button>
           </div>
 
-          <!-- USER GRID -->
-          <div class="user-grid-premium fade-in">
-            <div class="user-identity-card shadow-premium" *ngFor="let u of users">
-               <div class="card-aura" [ngClass]="getRoleClass(u.roles[0])"></div>
-               
-               <div class="card-status-dot" [class.active]="u.enabled"></div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Utilisateur</th>
+                  <th>Roles & Responsabilités</th>
+                  <th>Responsable (Hiérarchie)</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let u of users">
+                  <td>
+                    <div class="user-cell">
+                      <div class="user-avatar">{{ u.username[0].toUpperCase() }}</div>
+                      <div class="user-info">
+                        <h4 class="font-bold text-slate-800">{{ u.username }}</h4>
+                        <p class="text-xs text-slate-400">{{ u.email }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="flex flex-wrap gap-1">
+                      <span class="role-badge" *ngFor="let r of u.roles">{{ r.replace('ROLE_', '').replace('_', ' ') }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="user-info" *ngIf="u.managerUsername">
+                        <span class="manager-tag">👤 {{ u.managerUsername }}</span>
+                    </div>
+                    <span class="text-xs text-slate-400 italic" *ngIf="!u.managerUsername">Aucun responsable</span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="u.enabled ? 'active' : 'suspended'">
+                      {{ u.enabled ? 'ACTIF' : 'SUSPENDU' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <!-- SUSPEND / RESTORE -->
+                      <button class="btn-action" 
+                             [title]="u.enabled ? 'Suspendre' : 'Réactiver'"
+                             (click)="toggleUserStatus(u)">
+                         <svg *ngIf="u.enabled" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                         <svg *ngIf="!u.enabled" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                      </button>
+                      
+                      <!-- EDIT -->
+                      <button class="btn-action" title="Modifier" (click)="openEditModal(u)">
+                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      </button>
 
-               <div class="card-inner">
-                  <div class="profile-section">
-                     <div class="avatar-glass">{{ u.username[0].toUpperCase() }}</div>
-                     <div class="identity-info">
-                        <h3>{{ u.username }}</h3>
-                        <span>{{ u.email }}</span>
-                     </div>
-                  </div>
-
-                  <div class="rank-pill" [ngClass]="getRoleClass(u.roles[0])">
-                     <span class="rank-icon">
-                        <svg *ngIf="isAdminRole(u)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        <svg *ngIf="isValidateurRole(u)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path></svg>
-                     </span>
-                     {{ (u.roles && u.roles[0]) ? u.roles[0].replace('ROLE_', '').replace('_', ' ') : 'NO ROLE' }}
-                  </div>
-
-                  <div class="manager-trace" *ngIf="u.managerUsername">
-                     <span class="trace-label">Supervisé par</span>
-                     <div class="manager-pill">{{ u.managerUsername }}</div>
-                  </div>
-
-                  <div class="card-controls">
-                     <button class="btn-control" (click)="openEditModal(u)" title="Modifier Accès">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path></svg>
-                     </button>
-                     <button class="btn-control danger" (click)="toggleUserStatus(u)" title="Status Access">
-                        <svg *ngIf="u.enabled" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line></svg>
-                        <svg *ngIf="!u.enabled" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                     </button>
-                  </div>
-               </div>
-            </div>
+                      <!-- DELETE (REAL) -->
+                      <button class="btn-action hover-danger" title="Supprimer Définitivement" (click)="deleteUser(u)">
+                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -167,7 +186,7 @@ interface UserDTO {
                          <select [(ngModel)]="updatedManagerId" name="managerId" class="form-control">
                              <option [ngValue]="null">Aucun responsable</option>
                              <option *ngFor="let user of users" [ngValue]="user.id">
-                                 {{ user.username }} ({{ user.roles[0]?.replace('ROLE_', '') }})
+                                 {{ user.username }} ({{ user.roles && user.roles[0] ? user.roles[0].toString().split('ROLE_').join('') : '' }})
                              </option>
                          </select>
                      </div>
@@ -191,74 +210,26 @@ interface UserDTO {
     }
 
     .app-layout { display: flex; min-height: 100vh; background-color: #f8fafc; font-family: 'Outfit', sans-serif; }
-    .main-content { flex: 1; display: flex; flex-direction: column; background: #f8fafc; }
-    .dashboard-content { padding: 48px; max-width: 1600px; width: 100%; margin: 0 auto; }
+    .main-content { flex: 1; display: flex; flex-direction: column; }
+    .dashboard-content { padding: 40px; max-width: 1400px; width: 100%; margin: 0 auto; }
     
-    /* USER GRID */
-    .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 32px; }
+    .btn-action {
+      background: white; border: 1px solid #e2e8f0; width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
+    }
+    .btn-action:hover { background: #f8fafc; border-color: var(--bna-green); transform: translateY(-2px); }
+    .btn-action.hover-danger:hover { border-color: #ef4444; background: #fef2f2; }
+    .btn-action.hover-danger:hover svg { stroke: #ef4444 !important; }
     
-    .user-card {
-      background: white; border-radius: 32px; padding: 28px;
-      position: relative; overflow: hidden; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1.5px solid #f1f5f9; box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-    }
-    .user-card:hover { transform: translateY(-8px); border-color: #008766; box-shadow: 0 15px 45px rgba(0, 135, 102, 0.08); }
-    
-    .card-status-pill {
-      position: absolute; top: 24px; right: 24px; font-size: 10px; font-weight: 800;
-      padding: 4px 12px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
-    }
-    .card-status-pill.active { background: #f0fdf4; color: #16a34a; }
-    .card-status-pill.suspended { background: #fef2f2; color: #dc2626; }
-    
-    .profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 32px; }
-    .profile-avatar {
-      width: 60px; height: 60px; background: #f8fafc; color: #008766;
-      border-radius: 20px; display: flex; align-items: center; justify-content: center;
-      font-size: 24px; font-weight: 800; border: 2px solid #f1f5f9;
-    }
-    .username { margin: 0; font-size: 18px; font-weight: 800; color: #1e293b; }
-    .email { font-size: 13px; color: #64748b; font-weight: 600; }
-
-    .tier-indicator {
-      background: #f8fafc; border-radius: 20px; padding: 16px; 
-      display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
-      border: 1px solid #f1f5f9;
-    }
-    .tier-icon {
-      width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
-      background: white; color: #64748b; box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    }
-    .tier-icon.admin { color: #8b5cf6; background: #f5f3ff; }
-    .tier-icon.validator { color: #0ea5e9; background: #f0f9ff; }
-    .tier-icon.charge { color: #008766; background: #f0fdf4; }
-    
-    .tier-info { display: flex; flex-direction: column; }
-    .tier-label { font-size: 12px; font-weight: 800; color: #1e293b; text-transform: uppercase; }
-    .tier-rank { font-size: 10px; font-weight: 700; color: #94a3b8; }
-
-    .hierarchy-map { display: flex; flex-direction: column; gap: 8px; }
-    .map-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
-    .manager-link {
-      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
-      background: #f1f5f9; color: #475569; border-radius: 10px; font-size: 12.5px; font-weight: 700;
-    }
-
-    .card-actions {
-      margin-top: 32px; padding-top: 24px; border-top: 1px dashed #e2e8f0;
-      display: flex; gap: 12px; justify-content: flex-end;
-    }
-    .btn-card-micro {
-      width: 40px; height: 40px; border-radius: 12px; border: none;
-      background: #f8fafc; color: #64748b; cursor: pointer; transition: 0.2s;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .btn-card-micro:hover { background: #008766; color: white; transform: translateY(-3px); }
-    .btn-card-micro.danger:hover { background: #ef4444; }
-
     .page-header-actions { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+    .page-header-actions h2 { font-size: 32px; font-weight: 800; color: var(--text-main); margin: 0; }
     .subtitle { color: var(--text-muted); font-size: 16px; margin: 4px 0 0 0; }
 
+    .table-container { 
+      background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+      overflow: hidden; border: 1px solid rgba(0,0,0,0.04);
+    }
+    table { width: 100%; border-collapse: collapse; }
     th { text-align: left; padding: 24px; background: #f8fafc; font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #f1f5f9; }
     td { padding: 24px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
     
@@ -430,21 +401,4 @@ export class UserManagementComponent implements OnInit {
       error: (err) => alert(err.error?.message || 'Erreur lors de la mise à jour')
     });
   }
-
-  // --- UI HELPERS ---
-  getRoleClass(role: string): string {
-    if (role?.includes('ADMIN')) return 'admin';
-    if (role?.includes('VALIDATEUR')) return 'validator';
-    return 'charge';
-  }
-
-  getRankLabel(role: string): string {
-    if (role?.includes('ADMIN')) return 'Niveau Système';
-    if (role?.includes('VALIDATEUR')) return 'Niveau N2-N1';
-    return 'Niveau Opérationnel (N0)';
-  }
-
-  isAdminRole(u: UserDTO): boolean { return u.roles[0]?.includes('ADMIN'); }
-  isValidateurRole(u: UserDTO): boolean { return u.roles[0]?.includes('VALIDATEUR'); }
-  isChargeRole(u: UserDTO): boolean { return u.roles[0]?.includes('CHARGE'); }
 }

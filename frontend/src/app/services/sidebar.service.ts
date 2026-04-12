@@ -1,21 +1,34 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SidebarService {
-  // Read state from localStorage, default to true (open) if not set
-  private sidebarOpen = new BehaviorSubject<boolean>(localStorage.getItem('sidebar') !== 'closed');
+  // Always start with sidebar open for better usability
+  private sidebarOpen = new BehaviorSubject<boolean>(true);
   sidebarOpen$ = this.sidebarOpen.asObservable();
 
-  constructor(private router: Router) { }
+  constructor(private router: Router) { 
+    // Side bar remains open usually, no auto-close needed
+    /*
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.close();
+    });
+    */
+  }
 
   toggle() {
     const newState = !this.sidebarOpen.value;
-    this.sidebarOpen.next(newState);
-    localStorage.setItem('sidebar', newState ? 'open' : 'closed');
+    this.setOpen(newState);
+  }
+
+  close() {
+    this.setOpen(false);
   }
 
   setOpen(open: boolean) {
@@ -29,6 +42,6 @@ export class SidebarService {
 
   navigate(path: string, queryParams?: any) {
     this.router.navigate([path], { queryParams });
-    // Point 3: Sidebar must NOT auto-collapse on navigation
+    this.close();
   }
 }

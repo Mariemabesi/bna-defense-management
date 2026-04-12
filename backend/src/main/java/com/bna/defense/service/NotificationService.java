@@ -60,6 +60,19 @@ public class NotificationService {
     }
 
     /**
+     * Notify pré-validateur that a new dossier has been submitted and awaits review
+     */
+    @Transactional
+    public void notifySubmitted(User preValidateur, Dossier dossier, String chargeUsername) {
+        String msg = String.format(
+            "📝 Nouveau dossier %s créé par %s. Il attend votre pré-validation.",
+            dossier.getReference(),
+            chargeUsername
+        );
+        create(preValidateur, msg, "PRE_VALIDATION_REQUIRED", dossier);
+    }
+
+    /**
      * Notify validateur that a dossier has been pre-validated and awaits final validation
      */
     @Transactional
@@ -84,10 +97,5 @@ public class NotificationService {
             motif
         );
         create(charge, msg, "REFUS", dossier);
-    }
-
-    @Transactional
-    public Notification save(Notification n) {
-        return notificationRepository.save(n);
     }
 }

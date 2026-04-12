@@ -30,11 +30,17 @@ export const routes: Routes = [
     { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
     { path: 'mes-dossiers', component: MesDossiersComponent, canActivate: [authGuard] },
     { path: 'nouveau-dossier', component: DossierFormComponent, canActivate: [authGuard] },
+    { path: 'nouvelle-affaire', loadComponent: () => import('./components/affaire-form/affaire-form.component').then(m => m.AffaireFormComponent), canActivate: [authGuard] },
+    { path: 'affaires', loadComponent: () => import('./components/affaire-list/affaire-list.component').then(m => m.AffaireListComponent), canActivate: [authGuard] },
     { path: 'modifier-dossier/:id', component: DossierFormComponent, canActivate: [authGuard] },
     { path: 'nouvelle-demande-frais', component: FraisFormComponent, canActivate: [authGuard] },
     { path: 'mes-frais', loadComponent: () => import('./components/mes-frais/mes-frais.component').then(m => m.MesFraisComponent), canActivate: [authGuard] },
-    // ⚖️ RÉFÉRENTIEL MODULE (Dynamic Engine)
+    // ⚖️ RÉFÉRENTIEL MODULE (Static Hub & Dynamic Engine)
+    { path: 'referentiel', loadComponent: () => import('./components/referentiel/referentiel.component').then(m => m.ReferentielComponent), canActivate: [authGuard] },
+    { path: 'referentiel/litige', redirectTo: 'litige' },
+    { path: 'litige', loadComponent: () => import('./components/referentiel-litige/referentiel-litige.component').then(m => m.LitigeComponent), canActivate: [authGuard] },
     { path: 'referentiel/:type', loadComponent: () => import('./components/referentiel-list/referentiel-list.component').then(m => m.ReferentielListComponent), canActivate: [authGuard] },
+    { path: 'action-justice', loadComponent: () => import('./components/legal-action/legal-action.component').then(m => m.LegalActionComponent), canActivate: [authGuard] },
     { path: 'invitations', loadComponent: () => import('./components/invitations/invitations.component').then(m => m.InvitationComponent), canActivate: [authGuard] },
     { path: 'admin/users', loadComponent: () => import('./components/user-management/user-management.component').then(m => m.UserManagementComponent), canActivate: [() => roleGuard(['ROLE_ADMIN'])] },
     { path: 'admin/logs', loadComponent: () => import('./components/audit-logs/audit-logs.component').then(m => m.AuditLogsComponent), canActivate: [() => roleGuard(['ROLE_ADMIN'])] },

@@ -9,13 +9,17 @@ import com.bna.defense.repository.AffaireRepository;
 import com.bna.defense.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class DossierService {
@@ -25,6 +29,7 @@ public class DossierService {
     @Autowired private UserRepository userRepository;
     @Autowired private AuditLogService auditLogService;
     @Autowired private NotificationService notificationService;
+    @Autowired private com.bna.defense.repository.AuditLogRepository auditLogRepository;
 
     private boolean hasRole(User user, Role.RoleType roleType) {
         return user.getRoles().stream().anyMatch(r -> r.getName() == roleType);
@@ -42,6 +47,13 @@ public class DossierService {
         boolean isPreVal    = !isSuper && hasRole(currentUser, Role.RoleType.ROLE_PRE_VALIDATEUR);
         boolean isValidateur = !isSuper && hasRole(currentUser, Role.RoleType.ROLE_VALIDATEUR);
 
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        Pageable sortedPageable = org.springframework.data.domain.PageRequest.of(
+            pageable.getPageNumber(), 
+            pageable.getPageSize(), 
+            sort
+        );
+
         return dossierRepository.findAllWithRBAC(
             currentUser,
             currentUser.getUsername(),
@@ -49,8 +61,10 @@ public class DossierService {
             isCharge,
             isPreVal,
             isValidateur,
-            pageable
+            sortedPageable
         );
+
+
     }
 
     public Dossier getDossierById(Long id) {
@@ -58,11 +72,47 @@ public class DossierService {
             .orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
     }
 
+    public Map<String, Object> getDashboardStats(User user) {
+        List<Dossier> relevant;
+        boolean isSuper = isSuper(user);
+        boolean isCharge = hasRole(user, Role.RoleType.ROLE_CHARGE_DOSSIER);
+        boolean isPreVal = hasRole(user, Role.RoleType.ROLE_PRE_VALIDATEUR);
+        boolean isValidateur = hasRole(user, Role.RoleType.ROLE_VALIDATEUR);
+
+        if (isSuper) {
+            relevant = dossierRepository.findAll();
+        } else if (isCharge) {
+            relevant = dossierRepository.findAll().stream()
+                .filter(d -> user.getUsername().equals(d.getCreatedBy()) || (d.getAssignedCharge() != null && d.getAssignedCharge().getUsername().equals(user.getUsername())))
+                .sorted((a,b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .collect(Collectors.toList());
+        } else if (isPreVal) {
+            relevant = dossierRepository.findPendingForPreValidateur(user);
+        } else if (isValidateur) {
+            relevant = dossierRepository.findPendingForValidateur(user);
+        } else {
+            relevant = List.of();
+        }
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("total", relevant.size());
+        stats.put("urgent", relevant.stream().filter(d -> d.getPriorite() == Dossier.Priorite.HAUTE).count());
+        stats.put("enCours", relevant.stream().filter(d -> 
+            d.getStatut() == Dossier.StatutDossier.EN_COURS || 
+            d.getStatut() == Dossier.StatutDossier.OUVERT || 
+            d.getStatut() == Dossier.StatutDossier.EN_ATTENTE_PREVALIDATION || 
+            d.getStatut() == Dossier.StatutDossier.EN_ATTENTE_VALIDATION).count());
+        stats.put("valide", relevant.stream().filter(d -> d.getStatut() == Dossier.StatutDossier.VALIDE || d.getStatut() == Dossier.StatutDossier.CLOTURE).count());
+        stats.put("refuse", relevant.stream().filter(d -> d.getStatut() == Dossier.StatutDossier.REFUSE).count());
+
+        return stats;
+    }
+
     @Transactional
     public Dossier createDossier(Dossier dossier, User creator) {
         dossier.setCreatedBy(creator.getUsername());
         if (dossier.getStatut() == null) {
-            dossier.setStatut(Dossier.StatutDossier.OUVERT);
+            dossier.setStatut(Dossier.StatutDossier.EN_ATTENTE_PREVALIDATION);
         }
         if (dossier.getFraisReel() == null)  dossier.setFraisReel(BigDecimal.ZERO);
         if (dossier.getFraisInitial() == null) dossier.setFraisInitial(BigDecimal.ZERO);
@@ -72,13 +122,11 @@ public class DossierService {
             dossier.setAssignedCharge(creator);
         }
 
-        // Generate reference DEF-YYYY-XXXX
-        if (dossier.getReference() == null || dossier.getReference().trim().isEmpty()) {
-            int randomNum = new Random().nextInt(9000) + 1000;
-            dossier.setReference("DEF-" + java.time.Year.now().getValue() + "-" + randomNum);
-        }
-
         Dossier saved = dossierRepository.save(dossier);
+
+        // Audit log (Point 9 + User Request)
+        auditLogService.log(creator.getUsername(), "CREATION_DOSSIER", "Dossier", saved.getId(),
+            "Dossier " + saved.getReference() + " créé par " + creator.getUsername());
 
         // Auto-create initial affaire
         if (saved.getAffaires() == null || saved.getAffaires().isEmpty()) {
@@ -89,11 +137,19 @@ public class DossierService {
             defaultAffaire.setStatut(Affaire.StatutAffaire.EN_COURS);
             defaultAffaire.setDateOuverture(java.time.LocalDate.now());
             affaireRepository.save(defaultAffaire);
+            
+            // Notify pré-validateur (manager of chargé)
+            if (creator.getManager() != null) {
+                notificationService.notifySubmitted(creator.getManager(), saved, creator.getUsername());
+            }
+            
             return dossierRepository.findById(saved.getId()).orElse(saved);
         }
 
-        auditLogService.log(creator.getUsername(), "CREATION_DOSSIER", "Dossier", saved.getId(),
-            "Dossier " + saved.getReference() + " créé par " + creator.getUsername());
+        // Notify pré-validateur (manager of chargé)
+        if (creator.getManager() != null) {
+            notificationService.notifySubmitted(creator.getManager(), saved, creator.getUsername());
+        }
 
         return saved;
     }
@@ -105,20 +161,49 @@ public class DossierService {
         return dossierRepository.save(dossier);
     }
 
+    @Transactional
+    public Dossier updateDossier(Long id, Dossier updatedDossier, String username) {
+        Dossier existing = getDossierById(id);
+        
+        // Update fields but keeps the reference (Point 5 + User request)
+        existing.setTitre(updatedDossier.getTitre());
+        existing.setPriorite(updatedDossier.getPriorite());
+        existing.setBudgetProvisionne(updatedDossier.getBudgetProvisionne());
+        existing.setDescription(updatedDossier.getDescription());
+        existing.setStatut(updatedDossier.getStatut());
+        
+        existing.setLastModifiedBy(username);
+        Dossier saved = dossierRepository.save(existing);
+        
+        auditLogService.log(username, "MODIFICATION_DOSSIER", "Dossier", id,
+            "Dossier " + existing.getReference() + " modifié par " + username);
+            
+        return saved;
+    }
+
     /**
      * Chargé submits dossier for pre-validation → status = EN_ATTENTE_PREVALIDATION
      */
     @Transactional
     public Dossier soumettre(Long id, String username) {
         Dossier dossier = getDossierById(id);
-        if (dossier.getStatut() != Dossier.StatutDossier.OUVERT && dossier.getStatut() != Dossier.StatutDossier.EN_COURS) {
-            throw new RuntimeException("Seuls les dossiers OUVERT ou EN_COURS peuvent être soumis.");
+        if (dossier.getStatut() != Dossier.StatutDossier.OUVERT && 
+            dossier.getStatut() != Dossier.StatutDossier.EN_COURS &&
+            dossier.getStatut() != Dossier.StatutDossier.REFUSE) {
+            throw new RuntimeException("Seuls les dossiers OUVERT, EN_COURS ou REFUSE peuvent être soumis.");
         }
         dossier.setStatut(Dossier.StatutDossier.EN_ATTENTE_PREVALIDATION);
         Dossier saved = dossierRepository.save(dossier);
 
         auditLogService.log(username, "SOUMISSION_DOSSIER", "Dossier", id,
             "Dossier soumis pour pré-validation par " + username);
+
+        // Notify pré-validateur
+        User creator = userRepository.findByUsername(username).orElseThrow();
+        if (creator.getManager() != null) {
+            notificationService.notifySubmitted(creator.getManager(), saved, username);
+        }
+
         return saved;
     }
 
@@ -152,23 +237,38 @@ public class DossierService {
      */
     @Transactional
     public Dossier refuser(Long id, String motif, String refuseurUsername) {
-        if (motif == null || motif.trim().length() < 20) {
-            throw new RuntimeException("Le motif du refus doit contenir au moins 20 caractères.");
+        if (motif == null || motif.trim().length() < 5) {
+            throw new RuntimeException("Le motif du refus doit contenir au moins 5 caractères.");
         }
         Dossier dossier = getDossierById(id);
         dossier.setStatut(Dossier.StatutDossier.REFUSE);
         dossier.setMotifRefus(motif);
         Dossier saved = dossierRepository.save(dossier);
 
-        // Notify chargé
-        User assignedCharge = dossier.getAssignedCharge();
-        if (assignedCharge != null) {
-            notificationService.notifyRefus(assignedCharge, saved, motif, refuseurUsername);
+        // Notify chargé or creator
+        try {
+            User recipient = dossier.getAssignedCharge();
+            if (recipient == null && dossier.getCreatedBy() != null) {
+                recipient = userRepository.findByUsername(dossier.getCreatedBy()).orElse(null);
+            }
+
+            if (recipient != null) {
+                notificationService.notifyRefus(recipient, saved, motif, refuseurUsername);
+            } else {
+                System.out.println("WARN: Aucun utilisateur trouvé pour notifier le refus du dossier ID: " + id);
+            }
+        } catch (Exception e) {
+            System.err.println("ERROR: Échec de l'envoi de notification de refus: " + e.getMessage());
+            // We don't throw here to avoid rolling back the status change if only notification fails
         }
 
-        // Audit log with motif
-        auditLogService.log(refuseurUsername, "REFUS_DOSSIER", "Dossier", id,
-            "Dossier refusé par " + refuseurUsername + ". Motif: " + motif);
+        // Audit log
+        try {
+            auditLogService.log(refuseurUsername, "REFUS_DOSSIER", "Dossier", id,
+                "Dossier refusé par " + refuseurUsername + ". Motif: " + motif);
+        } catch (Exception e) {
+            System.err.println("ERROR: Échec du log d'audit pour le refus: " + e.getMessage());
+        }
         return saved;
     }
 
@@ -243,4 +343,17 @@ public class DossierService {
     public List<Dossier> searchDossiers(String query) {
         return dossierRepository.searchDossiers(query);
     }
+
+    public List<com.bna.defense.entity.AuditLog> getDossierHistory(Long dossierId) {
+        return auditLogRepository.findByEntityNameAndEntityIdOrderByTimestampDesc("Dossier", dossierId);
+    }
+
+    public void archiveDossier(Long id) {
+        Dossier dossier = dossierRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
+        dossier.setArchived(true);
+        dossierRepository.save(dossier);
+    }
 }
+
+

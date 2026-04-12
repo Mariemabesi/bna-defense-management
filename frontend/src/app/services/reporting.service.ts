@@ -16,6 +16,14 @@ export interface DashboardStats {
     totalBudgetProvisionne: number;
 }
 
+export interface DynamicStats {
+    total: number;
+    urgent: number;
+    enCours: number;
+    valide: number;
+    refuse: number;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -26,6 +34,10 @@ export class ReportingService {
 
     getDashboardStats(): Observable<DashboardStats> {
         return this.http.get<DashboardStats>(`${this.apiUrl}/dashboard-stats`);
+    }
+
+    getUserDynamicStats(): Observable<DynamicStats> {
+        return this.http.get<DynamicStats>(`/api/stats/user`);
     }
 
     exportDashboardPdf(): void {

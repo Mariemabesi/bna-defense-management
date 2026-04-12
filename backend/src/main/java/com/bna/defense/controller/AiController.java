@@ -1,9 +1,16 @@
 package com.bna.defense.controller;
 
 import com.bna.defense.service.AiClient;
+import com.bna.defense.entity.AuditLog;
+import com.bna.defense.entity.AiResult;
+import com.bna.defense.repository.AiResultRepository;
+import com.bna.defense.repository.AuditLogRepository;
+import com.bna.defense.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -12,12 +19,12 @@ import java.util.Map;
 public class AiController {
 
     @Autowired private AiClient aiClient;
-    @Autowired private com.bna.defense.repository.AiResultRepository aiResultRepository;
-    @Autowired private com.bna.defense.repository.AuditLogRepository auditLogRepository;
-    @Autowired private com.bna.defense.repository.UserRepository userRepository;
+    @Autowired private AiResultRepository aiResultRepository;
+    @Autowired private AuditLogRepository auditLogRepository;
+    @Autowired private UserRepository userRepository;
 
-    private void logAiAction(String feature, String entityType, Long entityId, String details, java.security.Principal principal) {
-        com.bna.defense.entity.AuditLog log = new com.bna.defense.entity.AuditLog();
+    private void logAiAction(String feature, String entityType, Long entityId, String details, Principal principal) {
+        AuditLog log = new AuditLog();
         log.setUserEmail(principal != null ? principal.getName() : "SYSTEM");
         log.setAction("AI_" + feature);
         log.setEntityName(entityType);
@@ -27,12 +34,12 @@ public class AiController {
     }
 
     private void saveAiResult(String feature, String entityType, Long entityId, Map<String, Object> result) {
-        com.bna.defense.entity.AiResult aiResult = new com.bna.defense.entity.AiResult(feature, entityType, entityId, result.toString());
+        AiResult aiResult = new AiResult(feature, entityType, entityId, result.toString());
         aiResultRepository.save(aiResult);
     }
 
     @PostMapping("/classify-dossier")
-    public Mono<Map<String, Object>> classifyDossier(@RequestBody Map<String, String> request, java.security.Principal principal) {
+    public Mono<Map<String, Object>> classifyDossier(@RequestBody Map<String, String> request, Principal principal) {
         String desc = request.get("description");
         return aiClient.classifyDossier(desc)
             .doOnNext(res -> {
@@ -42,7 +49,7 @@ public class AiController {
     }
 
     @PostMapping("/risk-score")
-    public Mono<Map<String, Object>> calculateRiskScore(@RequestBody Map<String, Object> request, java.security.Principal principal) {
+    public Mono<Map<String, Object>> calculateRiskScore(@RequestBody Map<String, Object> request, Principal principal) {
         Long dossierId = Long.valueOf(request.get("dossierId").toString());
         return aiClient.calculateRiskScore(dossierId, request)
             .doOnNext(res -> {
@@ -52,7 +59,7 @@ public class AiController {
     }
 
     @PostMapping("/summarize-dossier")
-    public Mono<Map<String, Object>> summarizeDossier(@RequestBody Map<String, Object> request, java.security.Principal principal) {
+    public Mono<Map<String, Object>> summarizeDossier(@RequestBody Map<String, Object> request, Principal principal) {
         Long dossierId = Long.valueOf(request.get("dossierId").toString());
         return aiClient.summarizeDossier(dossierId)
             .doOnNext(res -> {
@@ -62,7 +69,7 @@ public class AiController {
     }
 
     @PostMapping("/detect-anomaly")
-    public Mono<Map<String, Object>> detectAnomaly(@RequestBody Map<String, Object> request, java.security.Principal principal) {
+    public Mono<Map<String, Object>> detectAnomaly(@RequestBody Map<String, Object> request, Principal principal) {
         Long fraisId = Long.valueOf(request.get("fraisId").toString());
         return aiClient.detectAnomaly(fraisId)
             .doOnNext(res -> {
@@ -72,7 +79,7 @@ public class AiController {
     }
 
     @PostMapping("/predict-budget")
-    public Mono<Map<String, Object>> predictBudget(@RequestBody Map<String, Object> request, java.security.Principal principal) {
+    public Mono<Map<String, Object>> predictBudget(@RequestBody Map<String, Object> request, Principal principal) {
         Long dossierId = Long.valueOf(request.get("dossierId").toString());
         return aiClient.predictBudget(dossierId)
             .doOnNext(res -> {
@@ -98,12 +105,12 @@ public class AiController {
     }
 
     @PostMapping("/nl-search")
-    public Mono<java.util.List<Map<String, Object>>> nlSearch(@RequestBody Map<String, String> request) {
+    public Mono<List<Map<String, Object>>> nlSearch(@RequestBody Map<String, String> request) {
         return aiClient.nlSearch(request.get("query"));
     }
 
     @GetMapping("/smart-notifications")
-    public Mono<java.util.List<Map<String, Object>>> getSmartNotifications() {
+    public Mono<List<Map<String, Object>>> getSmartNotifications() {
         return aiClient.getSmartNotifications();
     }
 

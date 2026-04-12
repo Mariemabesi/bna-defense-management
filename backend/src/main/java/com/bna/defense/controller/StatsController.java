@@ -1,8 +1,12 @@
 package com.bna.defense.controller;
 
-import com.bna.defense.repository.DossierRepository;
 import com.bna.defense.entity.Dossier;
+import com.bna.defense.entity.User;
+import com.bna.defense.repository.DossierRepository;
+import com.bna.defense.repository.UserRepository;
+import com.bna.defense.service.DossierService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -16,6 +20,12 @@ public class StatsController {
 
     @Autowired
     private DossierRepository dossierRepository;
+    
+    @Autowired
+    private DossierService dossierService;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping("/global")
     public Map<String, Object> getGlobalStats() {
@@ -35,6 +45,13 @@ public class StatsController {
         stats.put("tauxValidation", Math.round(rate * 10.0) / 10.0);
 
         return stats;
+    }
+
+    @GetMapping("/user")
+    public Map<String, Object> getUserStats(Authentication auth) {
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        return dossierService.getDashboardStats(user);
     }
 
     @GetMapping("/validation-rate")

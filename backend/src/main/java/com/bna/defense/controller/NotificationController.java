@@ -48,12 +48,4 @@ public class NotificationController {
         notificationService.markAllAsRead(user);
         return ResponseEntity.ok().build();
     }
-
-    @PostMapping
-    public Notification saveNotification(@RequestBody Notification notification, Principal principal) {
-        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
-        notification.setUser(user);
-        notification.setRead(false);
-        return notificationService.save(notification);
-    }
 }

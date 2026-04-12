@@ -10,6 +10,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
 import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
 import { AIService, AIAnalysis } from '../../services/ai.service';
+import { ReferentielService, Auxiliaire } from '../../services/referentiel.service';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
 @Component({
@@ -19,172 +20,386 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
+
       <main class="main-content">
-        <app-header [title]="isEditMode ? 'Modification Stratégique' : 'Nouveau Commandement'"></app-header>
-        
-        <div class="page-container">
-          <!-- SOVEREIGN FORM HEADER -->
-          <div class="header-banner shadow-premium">
-             <div class="banner-info">
-                <h1>{{ isEditMode ? 'Ajustement de Dossier' : 'Initialisation de Dossier' }}</h1>
-                <p>Enregistrez un nouveau litige dans le registre souverain de la BNA.</p>
-             </div>
-             <button class="btn-back-ghost" (click)="goBack()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
-                RETOUR
-             </button>
-          </div>
+        <app-header [title]="isEditMode ? 'Modifier Dossier' : 'Nouveau Dossier'"></app-header>
 
-          <!-- SOVEREIGN BENTO FORM -->
-          <div class="form-bento shadow-premium fade-in">
-             <form (ngSubmit)="onSubmit()" #dossierForm="ngForm" class="executive-form">
+        <div class="dashboard-content">
+          <div class="form-page">
+            <header class="page-header" style="margin-bottom: 24px;">
+              <button class="btn-back" (click)="goBack()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Retour
+              </button>
+            </header>
+
+            <div class="form-container">
+              <form (ngSubmit)="onSubmit()" #dossierForm="ngForm">
+                <div class="form-section">
+                  <h3 class="section-title">Informations Générales</h3>
+                  <div class="grid-2-col">
+                    <div class="form-group">
+                      <label for="reference">Référence Dossier *</label>
+                      <div class="input-prefix-group">
+                        <span class="prefix-addon">DEF-2026-</span>
+                        <input type="text" id="reference" name="referenceSuffix" [(ngModel)]="referenceSuffix" [disabled]="isEditMode" required placeholder="Ex: 001" class="form-control with-prefix" [style.opacity]="isEditMode ? '0.7' : '1'">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="titre">Titre / Objet du Dossier *</label>
+                      <input type="text" id="titre" name="titre" [(ngModel)]="dossier.titre" required placeholder="Ex: Contentieux Commercial vs Société Alpha" class="form-control">
+                    </div>
+                    <div class="form-group">
+                      <label for="partieLitige">Partie au Litige (Client/Adversaire) *</label>
+                      <select id="partieLitige" name="partieLitigeId" [(ngModel)]="selectedPartieLitigeId" required class="form-control">
+                        <option [value]="null">-- Sélectionner une Partie --</option>
+                        <option *ngFor="let p of partiesLitige" [value]="p.id">{{ p.nom }} {{ p.prenom || '' }} ({{ p.type }})</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h3 class="section-title">Acteurs Juridiques</h3>
+                  <div class="grid-3-col">
+                    <div class="form-group">
+                      <label for="avocat">Avocat Conseil</label>
+                      <select id="avocat" name="avocatId" [(ngModel)]="selectedAvocatId" class="form-control">
+                        <option [value]="null">-- Sélectionner un Avocat --</option>
+                        <option *ngFor="let a of avocats" [value]="a.id">{{ a.nom }}</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="huissier">Huissier de Justice</label>
+                      <select id="huissier" name="huissierId" [(ngModel)]="selectedHuissierId" class="form-control">
+                        <option [value]="null">-- Sélectionner un Huissier --</option>
+                        <option *ngFor="let h of huissiers" [value]="h.id">{{ h.nom }}</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="expert">Expert Mandaté</label>
+                      <select id="expert" name="expertId" [(ngModel)]="selectedExpertId" class="form-control">
+                        <option [value]="null">-- Sélectionner un Expert --</option>
+                        <option *ngFor="let e of experts" [value]="e.id">{{ e.nom }}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h3 class="section-title">Budget & Notes</h3>
+                  <div class="form-group">
+                    <label for="budget">Budget Provisionné (TND)</label>
+                    <input type="number" id="budget" name="budget" [(ngModel)]="dossier.budgetProvisionne" placeholder="Ex: 5000" class="form-control">
+                  </div>
+                  <div class="form-group full-width">
+                    <label for="description">Description / Notes additionnelles</label>
+                    <textarea id="description" name="description" [(ngModel)]="dossier.description" (input)="onDescriptionInput()" rows="4" placeholder="Résumé du litige ou informations pertinentes..." class="form-control"></textarea>
+                    
+                    <!-- AI SUGGESTIONS CHIPS -->
+                    <div class="ai-chips-container" *ngIf="aiLoading || aiSuggestion">
+                      <div class="ai-badge">✨ Suggestions IA</div>
+                      <div class="ai-loading-spinner" *ngIf="aiLoading">Analyse Claude en cours...</div>
+                      <div class="ai-chips" *ngIf="aiSuggestion">
+                        <button type="button" class="ai-chip" (click)="applyAi('type', aiSuggestion.typeProcedure)">
+                           {{ aiSuggestion.typeProcedure }}
+                        </button>
+                        <button type="button" class="ai-chip" (click)="applyAi('phase', aiSuggestion.phaseInitiale)">
+                           {{ aiSuggestion.phaseInitiale }}
+                        </button>
+                        <button type="button" class="ai-chip nature" (click)="applyTarget('natureAffaire', aiSuggestion.natureAffaire)">
+                           {{ aiSuggestion.natureAffaire }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn-cancel" (click)="goBack()">Annuler</button>
+                  <button type="submit" class="btn-submit" [disabled]="!dossierForm.form.valid || loading">
+                    <span *ngIf="!loading">{{ isEditMode ? 'Enregistrer les modifications' : 'Créer le dossier' }}</span>
+                    <span *ngIf="loading" class="loader"></span>
+                  </button>
+                </div>
                 
-                <!-- SECTION 1: IDENTITY -->
-                <div class="bento-section">
-                   <div class="section-badge">IDENTITÉ</div>
-                   <div class="input-grid">
-                      <div class="input-unit">
-                         <label>Référence Interne</label>
-                         <div class="prefix-capsule">
-                            <span class="prefix">DEF-</span>
-                            <input type="text" name="referenceSuffix" [(ngModel)]="referenceSuffix" required placeholder="2026-X" class="glass-field">
-                         </div>
-                      </div>
-                      <div class="input-unit">
-                         <label>Intitulé de l'Affaire</label>
-                         <input type="text" name="titre" [(ngModel)]="dossier.titre" required placeholder="Objet du litige..." class="glass-field">
-                      </div>
-                   </div>
+                <div class="error-message" *ngIf="error">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                  {{ error }}
                 </div>
-
-                <!-- SECTION 2: PARAMETERS -->
-                <div class="bento-section">
-                   <div class="section-badge">STRATÉGIE</div>
-                   <div class="input-grid triple">
-                      <div class="input-unit">
-                         <label>Priorité Exécutive</label>
-                         <select name="priorite" [(ngModel)]="dossier.priorite" class="glass-select">
-                            <option value="HAUTE">Haute (Critique)</option>
-                            <option value="MOYENNE">Moyenne (Standard)</option>
-                            <option value="BASSE">Basse (Secondaire)</option>
-                         </select>
-                      </div>
-                      <div class="input-unit">
-                         <label>Statut Initial</label>
-                         <select name="statut" [(ngModel)]="dossier.statut" required class="glass-select">
-                            <option value="OUVERT">Ouvert (Actif)</option>
-                            <option value="EN_COURS">En Cours (Investigation)</option>
-                         </select>
-                      </div>
-                      <div class="input-unit">
-                         <label>Provision Budget (TND)</label>
-                         <input type="number" name="budget" [(ngModel)]="dossier.budgetProvisionne" placeholder="5000.00" class="glass-field">
-                      </div>
-                   </div>
-                </div>
-
-                <!-- SECTION 3: ANALYSIS -->
-                <div class="bento-section full">
-                   <div class="section-badge">ANALYSE & NOTES</div>
-                   <div class="input-unit">
-                      <label>Argumentaire / Résumé des Faits</label>
-                      <textarea name="description" [(ngModel)]="dossier.description" (input)="onDescriptionInput()" rows="5" placeholder="Détaillez le contexte judiciaire..." class="glass-area"></textarea>
-                   </div>
-
-                   <!-- AI SENTINEL PANEL -->
-                   <div class="ai-sentinel-panel shadow-premium" *ngIf="aiLoading || aiSuggestion">
-                      <div class="sentinel-header">
-                         <div class="aura-dot"></div>
-                         <span>SENTINEL AI ANALYSIS</span>
-                      </div>
-                      <div class="sentinel-loader" *ngIf="aiLoading">Intelligence Artificielle en cours de réflexion...</div>
-                      <div class="sentinel-chips" *ngIf="aiSuggestion">
-                         <button type="button" class="ghost-tag" (click)="applyAi('type', aiSuggestion.typeProcedure)">
-                            {{ aiSuggestion.typeProcedure }}
-                         </button>
-                         <button type="button" class="ghost-tag" (click)="applyAi('phase', aiSuggestion.phaseInitiale)">
-                            {{ aiSuggestion.phaseInitiale }}
-                         </button>
-                         <button type="button" class="ghost-tag emerald" (click)="applyTarget('natureAffaire', aiSuggestion.natureAffaire)">
-                            {{ aiSuggestion.natureAffaire }}
-                         </button>
-                      </div>
-                   </div>
-                </div>
-
-                <!-- FORM ACTIONS -->
-                <div class="form-footer">
-                   <button type="button" (click)="goBack()" class="btn-executive secondary">ANNULER</button>
-                   <button type="submit" [disabled]="!dossierForm.form.valid || loading" class="btn-executive primary">
-                      <span *ngIf="!loading">{{ isEditMode ? 'METTRE À JOUR' : 'INITIALISER LE DOSSIER' }}</span>
-                      <div *ngIf="loading" class="executive-loader"></div>
-                   </button>
-                </div>
-             </form>
+              </form>
+            </div>
           </div>
         </div>
       </main>
     </div>
   `,
   styles: [`
-    .app-layout { display: flex; min-height: 100vh; background: transparent; }
-    .main-content { flex: 1; margin-left: var(--sidebar-width); }
-    .page-container { padding: 48px; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; animation: fadeUp 0.6s ease-out; }
+    .dashboard-content { padding: 40px; }
+    .form-page { max-width: 900px; margin: 0 auto; }
 
-    .header-banner { 
-      background: white; border-radius: 32px; padding: 40px; border-left: 5px solid var(--bna-emerald);
-      display: flex; justify-content: space-between; align-items: center; 
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    .form-page {
+      max-width: 900px;
+      margin: 0 auto;
     }
-    .banner-info h1 { font-size: 32px; font-weight: 850; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -1px; }
-    .banner-info p { font-size: 15px; color: #64748b; margin: 0; font-weight: 600; }
-    
-    .btn-back-ghost { display: flex; align-items: center; gap: 10px; background: none; border: none; color: #94a3b8; font-weight: 850; font-size: 11px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
-    .btn-back-ghost:hover { color: var(--bna-emerald); transform: translateX(-5px); }
 
-    .form-bento { background: white; border-radius: 32px; padding: 48px; }
-    .bento-section { margin-bottom: 48px; }
-    .section-badge { display: inline-block; font-size: 10px; font-weight: 950; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid #f1f5f9; width: 100%; }
-    
-    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    .input-grid.triple { grid-template-columns: 1fr 1fr 1fr; }
-    .input-unit { display: flex; flex-direction: column; gap: 10px; }
-    .input-unit label { font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: 1px; }
-    
-    .glass-field, .glass-select, .glass-area { padding: 16px; border-radius: 14px; border: 2.5px solid #f1f5f9; background: #f8fafc; font-family: inherit; font-size: 14px; font-weight: 700; color: #1e293b; transition: 0.3s; }
-    .glass-field:focus, .glass-select:focus, .glass-area:focus { outline: none; border-color: var(--bna-emerald); background: white; box-shadow: 0 10px 20px rgba(0, 135, 102, 0.05); }
-    
-    .prefix-capsule { display: flex; background: #f1f5f9; border-radius: 14px; overflow: hidden; border: 2.5px solid #f1f5f9; transition: 0.3s; }
-    .prefix-capsule:focus-within { border-color: var(--bna-emerald); background: white; }
-    .prefix { background: #e2e8f0; color: #475569; font-weight: 900; padding: 0 16px; display: flex; align-items: center; font-size: 12px; }
-    .prefix-capsule .glass-field { border: none; background: transparent; flex: 1; }
+    @media (max-width: 1024px) {
+      .dashboard-content { padding: 16px; }
+    }
 
-    .ai-sentinel-panel { margin-top: 32px; background: #fafafa; border-radius: 20px; padding: 24px; border: 1.5px dashed var(--bna-emerald); position: relative; }
-    .sentinel-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .sentinel-header span { font-size: 10px; font-weight: 900; color: var(--bna-emerald); letter-spacing: 1px; }
-    .aura-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bna-emerald); box-shadow: 0 0 10px var(--bna-emerald); animation: pulse 2s infinite; }
-    .sentinel-chips { display: flex; flex-wrap: wrap; gap: 10px; }
-    .ghost-tag { background: white; border: 1.5px solid #e2e8f0; padding: 8px 16px; border-radius: 12px; font-size: 11px; font-weight: 850; cursor: pointer; transition: 0.2s; color: #64748b; }
-    .ghost-tag:hover { border-color: var(--bna-emerald); color: var(--bna-emerald); transform: translateY(-2px); }
-    .ghost-tag.emerald { border-color: var(--bna-emerald); color: var(--bna-emerald); background: #ecfdf5; }
+    .page-header {
+      margin-bottom: 40px;
+    }
 
-    .form-footer { margin-top: 32px; padding-top: 32px; border-top: 2px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 20px; }
-    .btn-executive { padding: 16px 32px; border-radius: 16px; border: none; font-weight: 850; letter-spacing: 1px; font-size: 12px; cursor: pointer; transition: 0.3s; }
-    .btn-executive.primary { background: var(--bna-emerald); color: white; box-shadow: 0 10px 20px rgba(0, 135, 102, 0.2); }
-    .btn-executive.secondary { background: #f8fafc; color: #64748b; }
-    .btn-executive:hover:not(:disabled) { transform: translateY(-3px); filter: brightness(1.1); }
-    .btn-executive:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+    .btn-back {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: 24px;
+      transition: color 0.2s;
+    }
 
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
-    
-    .executive-loader { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-back:hover {
+      color: var(--bna-green);
+    }
+
+    .header-content h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 8px 0;
+    }
+
+    .header-content p {
+      color: var(--text-secondary);
+      font-size: 15px;
+      margin: 0;
+    }
+
+    .form-container {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      border: 1px solid var(--bna-border);
+    }
+
+    .form-section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--bna-grey);
+      margin-top: 0;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--bna-border);
+    }
+
+    .grid-2-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .grid-3-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group.full-width {
+      margin-top: 24px;
+    }
+
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-control {
+      padding: 14px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: #f8fafc;
+      transition: all 0.2s;
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--bna-green);
+      background: var(--white);
+      box-shadow: 0 0 0 4px rgba(0, 135, 102, 0.05);
+    }
+
+    .input-prefix-group {
+      display: flex;
+      align-items: center;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: focus-within 0.2s;
+    }
+
+    .input-prefix-group:focus-within {
+      border-color: var(--bna-green);
+      box-shadow: 0 0 0 4px rgba(0, 135, 102, 0.05);
+      background: white;
+    }
+
+    .prefix-addon {
+      padding: 0 16px;
+      background: #e2e8f0;
+      color: #475569;
+      font-weight: 700;
+      font-size: 14px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      border-right: 1px solid #e2e8f0;
+    }
+
+    .form-control.with-prefix {
+      border: none;
+      background: transparent;
+      flex: 1;
+      height: 48px;
+      padding-left: 12px;
+    }
+
+    .form-control.with-prefix:focus {
+      box-shadow: none;
+    }
+
+    select.form-control {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 16px;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--bna-border);
+    }
+
+    .btn-cancel {
+      padding: 12px 24px;
+      background: white;
+      border: 1px solid var(--bna-border);
+      color: var(--text-secondary);
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+      background: #f8fafc;
+      color: var(--text-primary);
+    }
+
+    .btn-submit {
+      padding: 12px 28px;
+      background: var(--bna-green);
+      border: none;
+      color: white;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-width: 160px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background: var(--bna-green-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #fee2e2;
+      color: #dc2626;
+      border-radius: 10px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+    }
+
+    .loader {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+    }
+
+    .ai-chips-container { margin-top: 12px; padding: 12px; background: rgba(0, 135, 102, 0.03); border-radius: 12px; border: 1px dashed rgba(0, 135, 102, 0.2); }
+    .ai-badge { display: inline-block; font-size: 10px; font-weight: 800; color: #008766; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .ai-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ai-chip { background: white; border: 1.5px solid #008766; color: #008766; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    .ai-chip:hover { background: #008766; color: white; transform: translateY(-2px); }
+    .ai-loading-spinner { font-size: 12px; color: #64748b; font-style: italic; }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .form-page { padding: 20px; }
+      .grid-2-col { grid-template-columns: 1fr; gap: 16px; }
+      .form-actions { flex-direction: column-reverse; }
+      .btn-cancel, .btn-submit { width: 100%; }
+    }
   `]
 })
 export class DossierFormComponent {
   dossier: Partial<Dossier> = {
-    statut: 'OUVERT',
+    statut: 'EN_ATTENTE_PREVALIDATION',
     priorite: 'MOYENNE'
   };
 
@@ -192,6 +407,7 @@ export class DossierFormComponent {
   error = '';
   isEditMode = false;
   dossierId: string | null = null;
+  numericId: number | null = null;
   referenceSuffix = '';
 
   constructor(
@@ -201,8 +417,19 @@ export class DossierFormComponent {
     private location: Location,
     private notificationService: NotificationService,
     private confirmService: ConfirmDialogService,
-    private aiService: AIService
+    private aiService: AIService,
+    private referentielService: ReferentielService
   ) { }
+
+  avocats: Auxiliaire[] = [];
+  huissiers: Auxiliaire[] = [];
+  experts: Auxiliaire[] = [];
+  partiesLitige: any[] = [];
+
+  selectedAvocatId: number | null = null;
+  selectedHuissierId: number | null = null;
+  selectedExpertId: number | null = null;
+  selectedPartieLitigeId: number | null = null;
 
   aiLoading = false;
   aiSuggestion: AIAnalysis | null = null;
@@ -223,6 +450,18 @@ export class DossierFormComponent {
         this.performAiClassification(desc);
       }
     });
+    this.loadAuxiliaires();
+  }
+
+  loadAuxiliaires(): void {
+    this.referentielService.getAuxiliaires().subscribe(list => {
+      this.avocats = list.filter(a => a.type === 'AVOCAT');
+      this.huissiers = list.filter(a => a.type === 'HUISSIER');
+      this.experts = list.filter(a => a.type === 'EXPERT');
+    });
+    this.referentielService.getItems('parties-litige').subscribe(list => {
+      this.partiesLitige = list;
+    });
   }
 
   loadDossier(): void {
@@ -231,13 +470,21 @@ export class DossierFormComponent {
       next: (data) => {
         const dossiers = Array.isArray(data) ? data : (data.content || []);
         const found = dossiers.find((d: any) => d.reference === this.dossierId);
-        if (found) {
-          this.dossier = { ...found };
-          if (found.reference.startsWith('DEF-')) {
-            this.referenceSuffix = found.reference.substring(4);
-          } else {
-            this.referenceSuffix = found.reference;
-          }
+          if (found) {
+            this.dossier = { ...found };
+            this.numericId = found.id;
+            this.selectedAvocatId = found.avocat?.id || null;
+            this.selectedHuissierId = found.huissier?.id || null;
+            this.selectedExpertId = found.expert?.id || null;
+            this.selectedPartieLitigeId = found.partieLitige?.id || null;
+
+            if (found.reference.startsWith('DEF-2026-')) {
+              this.referenceSuffix = found.reference.substring(9);
+            } else if (found.reference.startsWith('DEF-')) {
+              this.referenceSuffix = found.reference.substring(4);
+            } else {
+              this.referenceSuffix = found.reference;
+            }
         }
       }
     });
@@ -248,7 +495,7 @@ export class DossierFormComponent {
   }
 
   onSubmit(): void {
-    if (!this.referenceSuffix || !this.dossier.titre) {
+    if (!this.dossier.titre || (!this.isEditMode && !this.referenceSuffix)) {
       return;
     }
  
@@ -261,43 +508,42 @@ export class DossierFormComponent {
         this.loading = true;
         this.error = '';
  
-        const fullReference = `DEF-${this.referenceSuffix}`;
-        this.dossier.reference = fullReference;
- 
+        const fullReference = `DEF-2026-${this.referenceSuffix}`;
         const dossierToSave: Dossier = {
-          reference: fullReference,
+          id: this.numericId || undefined,
+          reference: this.isEditMode ? this.dossier.reference! : fullReference,
           titre: this.dossier.titre!,
-          statut: this.dossier.statut || 'OUVERT',
+          statut: this.dossier.statut || 'EN_ATTENTE_PREVALIDATION',
           priorite: this.dossier.priorite || 'MOYENNE',
           budgetProvisionne: this.dossier.budgetProvisionne,
-          description: this.dossier.description
+          description: this.dossier.description,
+          avocat: this.selectedAvocatId ? { id: this.selectedAvocatId } : undefined,
+          huissier: this.selectedHuissierId ? { id: this.selectedHuissierId } : undefined,
+          expert: this.selectedExpertId ? { id: this.selectedExpertId } : undefined,
+          partieLitige: this.selectedPartieLitigeId ? { id: this.selectedPartieLitigeId } : undefined
         };
  
-        this.dossierService.createDossier(dossierToSave).subscribe({
+        const action = this.isEditMode && this.numericId
+          ? this.dossierService.updateDossier(this.numericId, dossierToSave)
+          : this.dossierService.createDossier(dossierToSave);
+
+        action.subscribe({
           next: (savedDossier) => {
-            // Trigger multi-role notifications
-            this.notificationService.addNotification(
-              `Nouveau dossier créé : ${savedDossier.reference}. En attente de traitement.`,
-              'ROLE_ADMIN', 'SUCCESS'
-            );
-            this.notificationService.addNotification(
-              `Action Requise : Nouveau dossier ${savedDossier.reference} à pré-valider.`,
-              'ROLE_PRE_VALIDATEUR', 'WARNING'
-            );
-            this.notificationService.addNotification(
-              `Info : Dossier ${savedDossier.reference} soumis au circuit de validation.`,
-              'ROLE_VALIDATEUR', 'INFO'
-            );
-            this.notificationService.addNotification(
-              `Assignation : Nouvelle affectation auxiliaire pour le dossier ${savedDossier.reference}.`,
-              'ROLE_ADMIN', 'INFO'
-            );
- 
+            const msg = this.isEditMode ? `Dossier ${savedDossier.reference} mis à jour.` : `Nouveau dossier créé : ${savedDossier.reference}.`;
+            this.notificationService.addNotification(msg, 'ROLE_ADMIN', 'SUCCESS');
+            
+            if (!this.isEditMode) {
+                this.notificationService.addNotification(
+                  `Action Requise : Nouveau dossier ${savedDossier.reference} à pré-valider.`,
+                  'ROLE_PRE_VALIDATEUR', 'WARNING'
+                );
+            }
+
             this.router.navigate(['/dashboard']);
           },
           error: (err) => {
-            console.error('Erreur lors de la création du dossier', err);
-            this.error = "Erreur de connexion au serveur.";
+            console.error('Erreur lors de la sauvegarde du dossier', err);
+            this.error = "Erreur de connexion au serveur ou référence déjà existante.";
             this.loading = false;
           }
         });

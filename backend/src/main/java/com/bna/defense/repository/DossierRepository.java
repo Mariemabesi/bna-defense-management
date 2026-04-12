@@ -16,17 +16,29 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
     Optional<Dossier> findByReference(String reference);
 
     /**
-     * Role-scoped RBAC Query (Fixed for proper hierarchy isolation):
-     * - ADMIN / SUPER_VALIDATEUR: see everything
-     * - VALIDATEUR: see dossiers where the Chargé's manager's manager = validateur (i.e. entire subtree)
-     * - PRE_VALIDATEUR: ONLY see dossiers where assignedCharge.manager = currentUser (their direct Chargés only)
-     * - CHARGE_DOSSIER: ONLY see their own dossiers (createdBy = username)
+     * Role-scoped RBAC Query:
+     * - ADMIN / SUPER_VALIDATEUR : see everything
+     * - PRE_VALIDATEUR           : see dossiers where assignedCharge.manager = currentUser
+     * - CHARGE_DOSSIER           : see only their own dossiers (createdBy or assignedCharge)
+     * - VALIDATEUR               : ONLY see dossiers that the pre-validateur has approved
+     *                              (statut >= EN_ATTENTE_VALIDATION). A dossier created by a
+     *                              chargé is INVISIBLE to the validateur until pre-validated.
      */
-    @Query("SELECT d FROM Dossier d LEFT JOIN d.assignedCharge ac " +
-           "WHERE (:isSuper = true) " +
-           "OR (:isCharge = true AND (d.createdBy = :username OR d.assignedCharge.username = :username)) " +
-           "OR (:isPreVal = true AND ac IS NOT NULL AND ac.manager = :user) " +
-           "OR (:isValidateur = true AND ac IS NOT NULL AND (ac.manager = :user OR ac.manager.manager = :user))")
+    @Query("SELECT DISTINCT d FROM Dossier d " +
+           "LEFT JOIN d.assignedCharge ac " +
+           "LEFT JOIN ac.manager m " +
+           "LEFT JOIN m.manager mm " +
+           "WHERE d.archived = false AND (" +
+           "(:isSuper = true) " +
+           "OR (:isCharge = true AND (d.createdBy = :username OR ac.username = :username)) " +
+           "OR (:isPreVal = true AND ac IS NOT NULL AND m = :user) " +
+           "OR (:isValidateur = true AND (" +
+           "    d.statut = 'EN_ATTENTE_VALIDATION' " +
+           "    OR d.statut = 'VALIDE' " +
+           "    OR d.statut = 'REFUSE' " +
+           "    OR d.statut = 'CLOTURE'" +
+           "))" +
+           ")")
     Page<Dossier> findAllWithRBAC(
         @Param("user") User user,
         @Param("username") String username,
@@ -36,6 +48,12 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
         @Param("isValidateur") boolean isValidateur,
         Pageable pageable
     );
+
+
+
+
+
+
 
     /**
      * Pre-validateur specific: dossiers waiting for pre-validation from their own Chargés

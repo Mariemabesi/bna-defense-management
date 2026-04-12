@@ -83,7 +83,7 @@ import { AuthService } from '../../services/auth.service';
       
       <div class="right-pane">
         <div class="welcome-text">
-          <h1>Rejoignez <br> Défense BNA <br> pour Réclamation</h1>
+          <h1>Rejoignez <br> Défense BNA <br> Action en Défense BNA</h1>
         </div>
         
         <div class="footer-links">
@@ -96,50 +96,83 @@ import { AuthService } from '../../services/auth.service';
     </div>
   `,
   styles: [`
-    .split-screen { height: 100vh; display: flex; background: #fff; overflow: hidden; }
-    .left-pane { flex: 5; display: flex; align-items: center; justify-content: center; padding: 40px; background: #fff; }
-    .signup-content { width: 100%; max-width: 420px; }
-    .logo-container { margin-bottom: 24px; text-align: center; }
-    .bna-main-logo { height: 50px; }
-    .auth-title { font-size: 24px; font-weight: 800; color: #004d3d; margin-bottom: 32px; text-align: center; letter-spacing: 1px; }
+    .split-screen { height: 100vh; display: flex; background: #fff; overflow-y: auto; }
+    .left-pane { flex: 5; display: flex; align-items: center; justify-content: center; padding: 40px; background: #fff; min-height: 100vh; }
+    .signup-content { width: 100%; max-width: 440px; animation: fadeIn 0.8s ease-out; }
+    .logo-container { margin-bottom: 32px; text-align: center; }
+    .bna-main-logo { height: 65px; object-fit: contain; }
+    .auth-title { font-size: 26px; font-weight: 900; color: #004d3d; margin-bottom: 32px; text-align: center; letter-spacing: 1.5px; }
     
-    .form-group { margin-bottom: 20px; position: relative; }
-    .form-group label { display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group { margin-bottom: 24px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.8px; }
     
     .input-container { position: relative; display: flex; align-items: center; }
     .input-container input, .form-control-select { 
-      width: 100%; padding: 12px 12px 12px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; transition: all 0.2s; 
+      width: 100%; padding: 14px 16px 14px 48px; border: 1.8px solid #e2e8f0; border-radius: 12px; font-size: 15px; outline: none; transition: all 0.3s; 
+      color: #1e293b; background: #f8fafc;
     }
-    .input-container input:focus { border-color: #008766; box-shadow: 0 0 0 3px rgba(0,135,102,0.1); }
-    .icon { position: absolute; left: -30px; top: 50%; transform: translateY(-50%); color: #64748b; }
+    .input-container input::placeholder { color: #94a3b8; font-weight: 500; }
+    .input-container input:focus { border-color: #008766; background: white; box-shadow: 0 0 0 4px rgba(0,135,102,0.1); }
+    .icon { position: absolute; left: 16px; color: #64748b; transition: color 0.3s; pointer-events: none; }
+    .input-container input:focus + .icon { color: #008766; }
 
-    .roles-checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
-    .role-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #475569; font-weight: 600; }
-    .role-checkbox input { width: 18px; height: 18px; cursor: pointer; accent-color: #008766; }
+    .roles-checkbox-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 16px 0; }
+    .role-checkbox { 
+      display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 14px; color: #475569; font-weight: 700; 
+      padding: 12px 16px; border: 1.5px solid #f1f5f9; border-radius: 10px; transition: 0.2s;
+    }
+    .role-checkbox:hover { background: #f8fafc; border-color: #e2e8f0; }
+    .role-checkbox input { width: 20px; height: 20px; cursor: pointer; accent-color: #008766; }
+    .role-checkbox input:checked + .role-label { color: #008766; }
 
     .btn-submit { 
-      width: 100%; padding: 14px; background: #008766; color: white; border: none; border-radius: 8px; 
-      font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 10px;
+      width: 100%; padding: 16px; background: linear-gradient(135deg, #008766 0%, #005a44 100%); color: white; border: none; border-radius: 12px; 
+      font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); margin-top: 10px;
+      box-shadow: 0 10px 20px rgba(0, 135, 102, 0.2);
     }
-    .btn-submit:hover:not(:disabled) { background: #007256; transform: translateY(-1px); }
-    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 25px rgba(0, 135, 102, 0.3); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
-    .login-prompt { margin-top: 20px; text-align: center; font-size: 14px; color: #64748b; }
-    .login-prompt a { color: #008766; text-decoration: none; font-weight: 700; }
-    .copyright { margin-top: 40px; text-align: center; font-size: 12px; color: #94a3b8; }
+    .login-prompt { margin-top: 24px; text-align: center; font-size: 15px; color: #64748b; font-weight: 600; }
+    .login-prompt a { color: #008766; text-decoration: none; font-weight: 800; border-bottom: 2px solid transparent; transition: 0.2s; }
+    .login-prompt a:hover { border-bottom-color: #008766; }
+    
+    .copyright { margin: 48px 0 20px; text-align: center; font-size: 12px; color: #94a3b8; font-weight: 700; letter-spacing: 1px; }
 
     .right-pane { 
-      flex: 6; background: linear-gradient(135deg, #1a3a31 0%, #2d5a4c 100%); 
+      flex: 6; background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%); 
       border-top-left-radius: 60px; border-bottom-left-radius: 60px; padding: 80px; 
       display: flex; flex-direction: column; justify-content: center; color: white; position: relative;
+      overflow: hidden;
     }
-    .welcome-text h1 { font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 40px; }
+    .right-pane::before {
+      content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(0,135,102,0.15) 0%, transparent 70%); border-radius: 50%;
+    }
     
-    .footer-links { display: flex; gap: 24px; position: absolute; bottom: 40px; left: 80px; }
-    .footer-links a { color: rgba(255,255,255,0.6); font-size: 13px; text-decoration: none; font-weight: 600; transition: color 0.2s; }
-    .footer-links a:hover { color: white; }
+    .welcome-text h1 { font-size: 56px; font-weight: 900; line-height: 1.05; margin-bottom: 40px; letter-spacing: -2px; }
+    
+    .footer-links { display: flex; gap: 32px; position: absolute; bottom: 60px; left: 80px; }
+    .footer-links a { color: rgba(255,255,255,0.5); font-size: 14px; text-decoration: none; font-weight: 700; transition: 0.3s; }
+    .footer-links a:hover { color: #008766; transform: translateY(-2px); }
 
-    .error-msg { color: #ef4444; font-size: 13px; font-weight: 600; margin-bottom: 15px; text-align: center; background: #fef2f2; padding: 10px; border-radius: 8px; }
+    .error-msg { color: #ef4444; font-size: 14px; font-weight: 700; margin-bottom: 20px; text-align: center; background: #fef2f2; padding: 14px; border-radius: 12px; border-left: 4px solid #ef4444; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 1024px) {
+      .right-pane { display: none; }
+      .left-pane { flex: 1; padding: 24px; }
+      .signup-content { max-width: 100%; }
+      .welcome-text h1 { font-size: 42px; }
+    }
+
+    @media (max-width: 480px) {
+      .auth-title { font-size: 22px; }
+      .roles-checkbox-grid { grid-template-columns: 1fr; }
+      .logo-container { margin-bottom: 20px; }
+      .login-prompt { font-size: 14px; }
+    }
   `]
 })
 export class SignupComponent implements OnInit {

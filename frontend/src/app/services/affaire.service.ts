@@ -5,7 +5,9 @@ import { Observable } from 'rxjs';
 export interface Affaire {
     id?: number;
     referenceJudiciaire: string;
-    type: 'CIVIL' | 'PENAL' | 'PRUDHOMME' | 'PATRIMOINE_IMMOBILIER';
+    titre: string;
+    description?: string;
+    type: 'CIVIL' | 'PENAL' | 'PRUDHOMME' | 'PATRIMOINE_IMMOBILIER' | 'CREDIT' | 'LITIGE' | 'GARANTIE';
     statut: 'EN_COURS' | 'GAGNE' | 'PERDU' | 'CLASSE';
     dateOuverture?: string;
     dossierId: number;
@@ -18,6 +20,19 @@ export class AffaireService {
     private apiUrl = '/api/affaires';
 
     constructor(private http: HttpClient) { }
+
+    getAllAffaires(): Observable<Affaire[]> {
+        return this.http.get<Affaire[]>(this.apiUrl);
+    }
+
+    exportListPdf(): Observable<Blob> {
+        return this.http.get(`${this.apiUrl}/export/pdf`, { responseType: 'blob' });
+    }
+
+    exportSinglePdf(id: number): Observable<Blob> {
+        return this.http.get(`${this.apiUrl}/${id}/export/pdf`, { responseType: 'blob' });
+    }
+
 
     getAffairesByDossier(dossierId: number): Observable<Affaire[]> {
         return this.http.get<Affaire[]>(`${this.apiUrl}/dossier/${dossierId}`);

@@ -13,173 +13,330 @@ import { HeaderComponent } from '../header/header.component';
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
+
       <main class="main-content">
-        <app-header title="Identité Souveraine"></app-header>
-        
-        <div class="page-container">
-          <!-- EXECUTIVE IDENTITY BANNER -->
-          <div class="identity-banner shadow-premium fade-in">
-             <div class="avatar-deck-large shadow-premium hover-trigger" (click)="fileInput.click()">
-                <div class="glow-ring"></div>
+        <app-header title="Mon Profil"></app-header>
+
+        <div class="dashboard-content">
+          <div class="profile-container">
+            <div class="header mb-6 profile-header-flex">
+              <div class="user-avatar-large shadow-lg hover-trigger" (click)="fileInput.click()">
                 <img *ngIf="currentUser?.avatarUrl" [src]="getFullUrl(currentUser.avatarUrl)" class="avatar-img">
                 <div *ngIf="!currentUser?.avatarUrl" class="avatar-placeholder">
-                   <span *ngIf="currentUser?.fullName || profileData.firstName">{{ getInitials() }}</span>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" *ngIf="!currentUser?.fullName && !profileData.firstName">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span *ngIf="currentUser?.fullName || profileData.firstName">{{ getInitials() }}</span>
                 </div>
                 <div class="upload-overlay">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                 </div>
-             </div>
-             <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" style="display: none">
-             <div class="banner-body">
-                <h1>{{ currentUser?.fullName || 'Personnel de la Banque' }}</h1>
-                <p>Gestionnaire de Portefeuille • Département Juridique • BNA</p>
-                <div class="persona-meta"><span class="role-badge">{{ currentUser?.role || 'UTILISATEUR' }}</span><span class="status-badge active">SESSION SÉCURISÉE</span></div>
-             </div>
-          </div>
+              </div>
+              <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" style="display: none">
+              <div>
+                <h1 class="text-2xl font-bold text-slate-800">Paramètres du Compte</h1>
+                <p class="text-sm text-slate-500">Gérez vos informations personnelles et votre sécurité.</p>
+              </div>
+            </div>
 
-          <!-- SOVEREIGN BENTO CARDS -->
-          <div class="bento-grid-profile">
-             <!-- DATA CARD -->
-             <div class="premium-glass-card shadow-premium fade-in">
-                <div class="card-header-sovereign">
-                   <div class="aura-pulse-emerald"></div>
-                   <h3>Données Personnelles</h3>
+            <div class="cards-container">
+              <!-- Informations personnelles -->
+              <div class="card">
+                <div class="card-header">
+                  <h3>Données Personnelles</h3>
                 </div>
-                <div class="glass-body">
-                   <div *ngIf="profileSuccess" class="success-toast-inline">{{ profileSuccess }}</div>
-                   <div *ngIf="profileError" class="error-toast-inline">{{ profileError }}</div>
-                   
-                   <div class="input-unit">
-                      <label>Matricule / Username</label>
-                      <input type="text" [value]="currentUser?.username" class="glass-field-locked" disabled>
-                   </div>
-                   <div class="input-row">
-                      <div class="input-unit">
-                         <label>Prénom</label>
-                         <input type="text" [(ngModel)]="profileData.firstName" class="glass-field">
-                      </div>
-                      <div class="input-unit">
-                         <label>Nom</label>
-                         <input type="text" [(ngModel)]="profileData.lastName" class="glass-field">
-                      </div>
-                   </div>
-                   <div class="input-unit">
-                      <label>Email Professionnel</label>
-                      <input type="email" [(ngModel)]="profileData.email" class="glass-field">
-                   </div>
-                   <div class="form-action-footer">
-                      <button class="btn-executive primary" [disabled]="isSavingProfile" (click)="saveProfile()">
-                         {{ isSavingProfile ? 'MISE À JOUR...' : 'ENREGISTRER' }}
-                      </button>
-                   </div>
-                </div>
-             </div>
+                <div class="card-body">
+                  <div *ngIf="profileSuccess" class="success-msg">{{ profileSuccess }}</div>
+                  <div *ngIf="profileError" class="error-msg">{{ profileError }}</div>
+                  
+                  <div class="form-group">
+                    <label>Nom d'utilisateur</label>
+                    <input type="text" [value]="currentUser?.username" class="form-control" disabled>
+                  </div>
+                  
+                  <div class="form-row">
+                    <div class="form-group flex-1">
+                      <label>Nom</label>
+                      <input type="text" [(ngModel)]="profileData.lastName" class="form-control" placeholder="Votre nom">
+                    </div>
+                    <div class="form-group flex-1">
+                      <label>Prénom</label>
+                      <input type="text" [(ngModel)]="profileData.firstName" class="form-control" placeholder="Votre prénom">
+                    </div>
+                  </div>
 
-             <!-- SECURITY CARD -->
-             <div class="premium-glass-card shadow-premium fade-in">
-                <div class="card-header-sovereign">
-                   <div class="aura-pulse-red"></div>
-                   <h3>Sécurité du Compte</h3>
+                  <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" [(ngModel)]="profileData.email" class="form-control" placeholder="votre.email@bna.dz">
+                  </div>
+
+                  <div class="actions mt-4">
+                    <button class="btn-primary" [disabled]="isSavingProfile" (click)="saveProfile()">
+                      {{ isSavingProfile ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+                    </button>
+                  </div>
                 </div>
-                <div class="glass-body">
-                   <div *ngIf="passwordSuccess" class="success-toast-inline">{{ passwordSuccess }}</div>
-                   <div *ngIf="passwordError" class="error-toast-inline">{{ passwordError }}</div>
-                   
-                   <div class="input-unit">
-                      <label>Ancien Mot de Passe</label>
-                      <input type="password" [(ngModel)]="passwordData.oldPassword" class="glass-field" placeholder="••••••••">
-                   </div>
-                   <div class="input-unit">
-                      <label>Nouveau Mot de Passe</label>
-                      <input type="password" [(ngModel)]="passwordData.newPassword" (input)="onPasswordInput($event)" class="glass-field" placeholder="••••••••">
-                      <div class="strength-deck" *ngIf="passwordData.newPassword">
-                         <div class="deck-bar" [style.width.%]="(passwordStrength/4)*100" [class.weak]="passwordStrength <= 1" [class.good]="passwordStrength === 2" [class.strong]="passwordStrength >= 3"></div>
-                         <span class="deck-label">{{ passwordStrengthLabel }}</span>
+              </div>
+
+              <!-- Mot de passe -->
+              <div class="card">
+                <div class="card-header">
+                  <h3>Mot de passe</h3>
+                </div>
+                <div class="card-body">
+                  <div *ngIf="passwordSuccess" class="success-msg">{{ passwordSuccess }}</div>
+                  <div *ngIf="passwordError" class="error-msg">{{ passwordError }}</div>
+
+                  <div class="form-group">
+                    <label>Ancien mot de passe</label>
+                    <input type="password" [(ngModel)]="passwordData.oldPassword" class="form-control" placeholder="••••••••">
+                  </div>
+
+                  <div class="form-group">
+                    <label>Nouveau mot de passe</label>
+                    <input type="password" [(ngModel)]="passwordData.newPassword" (input)="onPasswordInput($event)" class="form-control" placeholder="••••••••">
+                    <div class="password-strength-meter" *ngIf="passwordData.newPassword">
+                      <div class="strength-bar" 
+                           [style.width.%]="(passwordStrength/4)*100" 
+                           [class.weak]="passwordStrength <= 1" 
+                           [class.good]="passwordStrength === 2" 
+                           [class.strong]="passwordStrength >= 3">
                       </div>
-                   </div>
-                   <div class="input-unit">
-                      <label>Confirmer Nouveau</label>
-                      <input type="password" [(ngModel)]="passwordData.confirmPassword" class="glass-field" placeholder="••••••••">
-                   </div>
-                   <div class="form-action-footer">
-                      <button class="btn-executive secondary" [disabled]="isChangingPassword" (click)="changePassword()">
-                         {{ isChangingPassword ? 'CHANGEMENT...' : 'MISE À JOUR SÉCURITÉ' }}
-                      </button>
-                   </div>
+                      <span class="strength-label">{{ passwordStrengthLabel }}</span>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Confirmer le nouveau mot de passe</label>
+                    <input type="password" [(ngModel)]="passwordData.confirmPassword" class="form-control" placeholder="••••••••">
+                  </div>
+
+                  <div class="actions mt-4">
+                    <button class="btn-primary" [disabled]="isChangingPassword" (click)="changePassword()">
+                      {{ isChangingPassword ? 'Enregistrement...' : 'Changer le mot de passe' }}
+                    </button>
+                  </div>
                 </div>
-             </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>
     </div>
   `,
   styles: [`
-    .app-layout { display: flex; min-height: 100vh; background: transparent; }
-    .main-content { flex: 1; margin-left: var(--sidebar-width); }
-    .page-container { padding: 48px; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; animation: fadeUp 0.6s ease-out; }
-
-    /* IDENTITY BANNER */
-    .identity-banner { 
-      background: white; border-radius: 32px; padding: 48px; display: flex; align-items: center; gap: 40px; position: relative; overflow: hidden;
-      background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+      background-color: #f0f4f8;
     }
-    .avatar-deck-large { 
-      width: 120px; height: 120px; border-radius: 40px; position: relative; cursor: pointer; background: #0f172a;
-      display: flex; align-items: center; justify-content: center; color: white; font-weight: 850; font-size: 32px;
+
+    .main-content {
+      flex: 1;
+      padding-left: 250px; /* MATCH SIDEBAR WIDTH */
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
     }
-    .glow-ring { position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px; border-radius: 45px; border: 2px dashed var(--bna-emerald); opacity: 0.3; animation: spin-slow 10s linear infinite; }
-    .avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 40px; }
-    .upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); border-radius: 40px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; }
-    .avatar-deck-large:hover .upload-overlay { opacity: 1; }
-    
-    .banner-body h1 { font-size: 36px; font-weight: 900; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -1.5px; }
-    .banner-body p { font-size: 15px; color: #64748b; margin: 0 0 16px 0; font-weight: 600; }
-    .persona-meta { display: flex; gap: 12px; }
-    .role-badge { padding: 6px 14px; background: #0f172a; color: white; border-radius: 12px; font-size: 10px; font-weight: 850; letter-spacing: 1px; }
-    .status-badge.active { padding: 6px 14px; background: #ecfdf5; color: #059669; border-radius: 12px; font-size: 10px; font-weight: 850; }
 
-    /* BENTO GRID */
-    .bento-grid-profile { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    .premium-glass-card { background: white; border-radius: 32px; padding: 40px; }
-    .card-header-sovereign { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 2px solid #f1f5f9; }
-    .card-header-sovereign h3 { font-size: 18px; font-weight: 850; margin: 0; color: #1e293b; }
-    
-    .aura-pulse-emerald { width: 10px; height: 10px; background: var(--bna-emerald); border-radius: 50%; box-shadow: 0 0 10px var(--bna-emerald); }
-    .aura-pulse-red { width: 10px; height: 10px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 10px #ef4444; }
+    .dashboard-content {
+      padding: 32px;
+      flex: 1;
+    }
 
-    .glass-body { display: flex; flex-direction: column; gap: 24px; }
-    .input-unit { display: flex; flex-direction: column; gap: 10px; }
-    .input-unit label { font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    
-    .glass-field { padding: 14px 18px; border-radius: 14px; border: 2.5px solid #f1f5f9; background: #f8fafc; font-size: 14px; font-weight: 700; color: #1e293b; transition: 0.3s; width: 100%; box-sizing: border-box; }
-    .glass-field:focus { outline: none; border-color: var(--bna-emerald); background: white; box-shadow: 0 10px 20px rgba(0, 135, 102, 0.05); }
-    .glass-field-locked { padding: 14px 18px; border-radius: 14px; border: 2.5px solid #f1f5f9; background: #f1f5f9; font-size: 14px; font-weight: 850; color: #94a3b8; width: 100%; box-sizing: border-box; }
-
-    .strength-deck { margin-top: 8px; display: flex; align-items: center; gap: 12px; }
-    .deck-bar { height: 4px; background: #f1f5f9; border-radius: 2px; transition: 0.4s; width: 80px; }
-    .deck-bar.weak { background: #ef4444; }
-    .deck-bar.good { background: #f59e0b; }
-    .deck-bar.strong { background: #10b981; }
-    .deck-label { font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; }
-
-    .form-action-footer { margin-top: 24px; padding-top: 24px; border-top: 2px solid #f1f5f9; }
-    .btn-executive { padding: 14px 28px; border-radius: 14px; border: none; font-weight: 850; font-size: 11px; letter-spacing: 1px; cursor: pointer; transition: 0.3s; width: 100%; }
-    .btn-executive.primary { background: var(--bna-emerald); color: white; box-shadow: 0 10px 20px rgba(0, 135, 102, 0.15); }
-    .btn-executive.secondary { background: #0f172a; color: white; }
-    .btn-executive:hover { transform: translateY(-3px); filter: brightness(1.1); }
-
-    .success-toast-inline { padding: 12px; background: #ecfdf5; color: #059669; border-radius: 12px; font-size: 12px; font-weight: 850; text-align: center; }
-    .error-toast-inline { padding: 12px; background: #fef2f2; color: #ef4444; border-radius: 12px; font-size: 12px; font-weight: 850; text-align: center; }
-
-    @keyframes spin-slow { to { transform: rotate(360deg); } }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    .profile-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
 
     @media (max-width: 1024px) {
-      .bento-grid-profile { grid-template-columns: 1fr; }
-      .identity-banner { flex-direction: column; text-align: center; padding: 40px; }
-      .persona-meta { justify-content: center; }
+      .main-content { margin-left: 0; width: 100%; }
+      .dashboard-content { padding: 16px; }
     }
+    .profile-header-flex {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .user-avatar-large {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #008766 0%, #10b981 100%);
+      border-radius: 20px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 32px;
+      box-shadow: 0 10px 25px rgba(0,135,102,0.3);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .avatar-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .user-avatar-large:hover .upload-overlay {
+      opacity: 1;
+    }
+    .header h1 {
+      margin: 0;
+      color: #1e293b;
+      font-weight: 800;
+      font-size: 28px;
+    }
+    .header p {
+      margin: 8px 0 0 0;
+      color: #64748b;
+      font-size: 15px;
+    }
+    .cards-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+    @media (max-width: 768px) {
+      .cards-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid rgba(0,0,0,0.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      background: #fafafa;
+    }
+    .card-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .card-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-row {
+      display: flex;
+      gap: 16px;
+    }
+    .flex-1 {
+      flex: 1;
+    }
+    .form-group label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-control {
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 2px solid #e2e8f0;
+      font-size: 14px;
+      font-weight: 500;
+      background: #f8fafc;
+      transition: 0.2s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .form-control:focus {
+      border-color: #008766;
+      background: white;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(0,135,102,0.1);
+    }
+    .form-control:disabled {
+      background: #f1f5f9;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: #008766;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+      width: 100%;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #007256;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,135,102,0.2);
+    }
+    .btn-primary:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+    }
+    
+    .password-strength-meter { margin-top: 4px; display: flex; align-items: center; gap: 12px; }
+    .strength-bar { height: 4px; border-radius: 2px; transition: all 0.4s; background: #e2e8f0; width: 100px; }
+    .strength-bar.weak { background: #ef4444; }
+    .strength-bar.good { background: #f59e0b; }
+    .strength-bar.strong { background: #10b981; }
+    .strength-label { font-size: 11px; font-weight: 800; color: #64748b; }
+
+    .error-msg {
+      background: #fef2f2;
+      color: #dc2626;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid #fee2e2;
+    }
+    .success-msg {
+      background: #ecfdf5;
+      color: #059669;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid #d1fae5;
+    }
+    .mt-4 { margin-top: 16px; }
+    .mb-6 { margin-bottom: 24px; }
   `]
 })
 export class ProfileComponent implements OnInit {

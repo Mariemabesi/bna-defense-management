@@ -15,152 +15,202 @@ import { HeaderComponent } from '../header/header.component';
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
+
       <main class="main-content">
-        <app-header title="Commandement de Frais"></app-header>
-        
-        <div class="page-container">
-          <!-- SOVEREIGN FORM HEADER -->
-          <div class="header-banner shadow-premium">
-             <div class="banner-info">
-                <h1>Nouvelle Requête de Frais</h1>
-                <p>Enregistrez une demande d'honoraires ou de débours pour validation N1/N2.</p>
-             </div>
-             <button class="btn-back-ghost" routerLink="/dashboard">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5"></path><polyline points="12 19 5 12 12 5"></polyline></svg>
-                RETOUR DASHBOARD
-             </button>
-          </div>
+        <app-header title="Nouvelle Demande de Frais"></app-header>
 
-          <!-- SOVEREIGN BENTO FORM -->
-          <div class="form-bento shadow-premium fade-in">
-             <form [formGroup]="fraisForm" (ngSubmit)="onSubmit()" class="executive-form">
+        <div class="dashboard-content">
+          <div class="form-page">
+            <header class="page-header" style="margin-bottom: 24px;">
+              <div class="header-left">
+                <button class="btn-back" routerLink="/dashboard">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                  Retour
+                </button>
+              </div>
+            </header>
+
+            <div class="form-container">
+              <form [formGroup]="fraisForm" (ngSubmit)="onSubmit()">
                 
-                <!-- SECTION 1: CONTEXT -->
-                <div class="bento-section">
-                   <div class="section-badge">CONTEXTE JUDICIAIRE</div>
-                   <div class="input-grid">
-                      <div class="input-unit">
-                         <label>Dossier BNA Associé</label>
-                         <select formControlName="numeroDossier" class="glass-select" [ngClass]="{'is-invalid': submitted && f['numeroDossier'].errors}">
-                            <option value="">Sélectionnez un dossier actif</option>
-                            <option *ngFor="let d of dossiers" [value]="d.reference">
-                               {{ d.reference }} - {{ d.titre }}
-                            </option>
-                         </select>
+                <div class="form-section">
+                  <h2 class="section-title">Informations sur la Demande</h2>
+                  
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label for="numeroDossier">Numéro de Dossier Associé</label>
+                      <select id="numeroDossier" formControlName="numeroDossier" class="form-control" [ngClass]="{'is-invalid': submitted && f['numeroDossier'].errors}">
+                        <option value="">Sélectionnez un dossier</option>
+                        <option *ngFor="let d of dossiers" [value]="d.reference">
+                          {{ d.reference }} - {{ d.titre }}
+                        </option>
+                      </select>
+                      <div *ngIf="submitted && f['numeroDossier'].errors" class="invalid-feedback">
+                        Le dossier est requis.
                       </div>
-                      <div class="input-unit">
-                         <label>Nature du Débours</label>
-                         <select formControlName="typeFrais" class="glass-select" [ngClass]="{'is-invalid': submitted && f['typeFrais'].errors}">
-                            <option value="">Sélectionnez une catégorie</option>
-                            <option value="HONORAIRES_AVOCAT">Honoraires d'Avocat</option>
-                            <option value="FRAIS_HUISSIER">Frais d'Huissier</option>
-                            <option value="EXPERTISE">Frais d'Expertise</option>
-                            <option value="TIMBRAGE">Frais d'Enregistrement</option>
-                            <option value="AUTRE">Autre</option>
-                         </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="typeFrais">Type de Frais</label>
+                      <select id="typeFrais" formControlName="typeFrais" class="form-control" [ngClass]="{'is-invalid': submitted && f['typeFrais'].errors}">
+                        <option value="">Sélectionnez un type</option>
+                        <option value="HONORAIRES_AVOCAT">Honoraires d'Avocat</option>
+                        <option value="FRAIS_HUISSIER">Frais d'Huissier</option>
+                        <option value="EXPERTISE">Frais d'Expertise</option>
+                        <option value="TIMBRAGE">Frais d'Enregistrement / Timbrage</option>
+                        <option value="AUTRE">Autre</option>
+                      </select>
+                      <div *ngIf="submitted && f['typeFrais'].errors" class="invalid-feedback">
+                        Le type de frais est requis.
                       </div>
-                   </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="montant">Montant (TND)</label>
+                      <div class="input-group">
+                        <input type="number" id="montant" formControlName="montant" class="form-control" placeholder="0.00" step="0.01" [ngClass]="{'is-invalid': submitted && f['montant'].errors}">
+                      </div>
+                      <div *ngIf="submitted && f['montant'].errors" class="invalid-feedback">
+                        Un montant valide est requis.
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="dateFacture">Date de la Facture / Bordereau</label>
+                      <input type="date" id="dateFacture" formControlName="dateFacture" class="form-control" [ngClass]="{'is-invalid': submitted && f['dateFacture'].errors}">
+                      <div *ngIf="submitted && f['dateFacture'].errors" class="invalid-feedback">
+                        La date est requise.
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- SECTION 2: FINANCIALS -->
-                <div class="bento-section">
-                   <div class="section-badge">DÉTAILS FINANCIERS</div>
-                   <div class="input-grid triple">
-                      <div class="input-unit">
-                         <label>Montant TTC (TND)</label>
-                         <input type="number" formControlName="montant" placeholder="0.00" step="0.01" class="glass-field" [ngClass]="{'is-invalid': submitted && f['montant'].errors}">
+                <div class="form-section">
+                  <h2 class="section-title">Bénéficiaire</h2>
+                  <div class="form-grid">
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label for="beneficiaire">Nom de l'Auxiliaire / Bénéficiaire</label>
+                      <input type="text" id="beneficiaire" formControlName="beneficiaire" class="form-control" placeholder="Ex: Cabinet Me. Ben Youssef" [ngClass]="{'is-invalid': submitted && f['beneficiaire'].errors}">
+                      <div *ngIf="submitted && f['beneficiaire'].errors" class="invalid-feedback">
+                        Le bénéficiaire est requis.
                       </div>
-                      <div class="input-unit">
-                         <label>Date Pièce Jointe</label>
-                         <input type="date" formControlName="dateFacture" class="glass-field" [ngClass]="{'is-invalid': submitted && f['dateFacture'].errors}">
-                      </div>
-                      <div class="input-unit">
-                         <label>Identité du Bénéficiaire</label>
-                         <input type="text" formControlName="beneficiaire" placeholder="Ex: Cabinet Me. X" class="glass-field" [ngClass]="{'is-invalid': submitted && f['beneficiaire'].errors}">
-                      </div>
-                   </div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- SECTION 3: JUSTIFICATION -->
-                <div class="bento-section full">
-                   <div class="section-badge">PIÈCES JUSTIFICATIVES</div>
-                   <div class="upload-aura-zone">
-                      <div class="aura-icon">
-                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                      </div>
-                      <p>Glissez-déposez la facture scannée (PDF/IMG)</p>
-                      <input type="file" id="pi" multiple class="hidden-input">
-                      <label for="pi" class="btn-ghost-executive">PARCOURIR LE SYSTÈME</label>
-                   </div>
+                <div class="form-section">
+                  <h2 class="section-title">Pièces Jointes & Justificatifs</h2>
+                  <div class="form-group">
+                    <div class="file-upload-zone">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--bna-grey); margin-bottom: 12px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                      <p>Glissez-déposez vos factures scannées (PDF, JPG, PNG)</p>
+                      <span style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; display: block;">Taille max: 5Mo par fichier</span>
+                      <input type="file" id="piecesJointes" multiple class="file-input">
+                      <label for="piecesJointes" class="btn-secondary">Parcourir</label>
+                    </div>
+                    <p class="file-help-text">Veuillez obligatoirement attacher la copie de la facture, du reçu ou du bordereau correspondant pour permettre la Pré-validation.</p>
+                  </div>
                 </div>
 
-                <!-- FORM ACTIONS -->
-                <div class="form-footer">
-                   <button type="button" routerLink="/dashboard" class="btn-executive secondary">ANNULER</button>
-                   <button type="submit" [disabled]="loading" class="btn-executive primary">
-                      <span *ngIf="!loading">SOUMETTRE À L'AUDIT</span>
-                      <div *ngIf="loading" class="executive-loader"></div>
-                   </button>
+                <div class="form-actions">
+                  <button type="button" class="btn-secondary" routerLink="/dashboard">Annuler</button>
+                  <button type="submit" class="btn-primary" [disabled]="loading">
+                    <span *ngIf="loading" class="spinner"></span>
+                    Soumettre à la Pré-validation
+                  </button>
                 </div>
-
-                <div *ngIf="error" class="error-toast fade-in">{{ error }}</div>
-                <div *ngIf="successMsg" class="success-toast fade-in">{{ successMsg }}</div>
-             </form>
+                
+                <div *ngIf="error" class="alert alert-error mt-4">
+                  {{ error }}
+                </div>
+                <div *ngIf="successMsg" class="alert alert-success mt-4">
+                  {{ successMsg }}
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </main>
     </div>
   `,
   styles: [`
-    .app-layout { display: flex; min-height: 100vh; background: transparent; }
-    .main-content { flex: 1; margin-left: var(--sidebar-width); }
-    .page-container { padding: 48px; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; animation: fadeUp 0.6s ease-out; }
-
-    .header-banner { 
-      background: white; border-radius: 32px; padding: 40px; border-left: 5px solid var(--bna-emerald);
-      display: flex; justify-content: space-between; align-items: center; 
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    :host {
+      --sidebar-width: 280px;
     }
-    .banner-info h1 { font-size: 32px; font-weight: 850; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -1px; }
-    .banner-info p { font-size: 15px; color: #64748b; margin: 0; font-weight: 600; }
+
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .form-page { padding: 40px; max-width: 900px; margin: 0 auto; }
     
-    .btn-back-ghost { display: flex; align-items: center; gap: 10px; background: none; border: none; color: #94a3b8; font-weight: 850; font-size: 11px; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
-    .btn-back-ghost:hover { color: var(--bna-emerald); transform: translateX(-5px); }
-
-    .form-bento { background: white; border-radius: 32px; padding: 48px; }
-    .bento-section { margin-bottom: 48px; }
-    .section-badge { display: inline-block; font-size: 10px; font-weight: 950; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 24px; padding-bottom: 8px; border-bottom: 2px solid #f1f5f9; width: 100%; }
+    .page-header { margin-bottom: 32px; }
+    .header-left { display: flex; align-items: center; gap: 20px; }
+    .header-left h1 { font-size: 24px; font-weight: 600; color: var(--bna-grey); margin: 0; }
     
-    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    .input-grid.triple { grid-template-columns: 1fr 1fr 1fr; }
-    .input-unit { display: flex; flex-direction: column; gap: 10px; }
-    .input-unit label { font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: 1px; }
+    .btn-back { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; font-size: 15px; color: var(--text-secondary); cursor: pointer; padding: 0; font-weight: 500; transition: color 0.2s; }
+    .btn-back:hover { color: var(--bna-green); }
     
-    .glass-field, .glass-select { padding: 16px; border-radius: 14px; border: 2.5px solid #f1f5f9; background: #f8fafc; font-family: inherit; font-size: 14px; font-weight: 700; color: #1e293b; transition: 0.3s; width: 100%; box-sizing: border-box; }
-    .glass-field:focus, .glass-select:focus { outline: none; border-color: var(--bna-emerald); background: white; box-shadow: 0 10px 20px rgba(0, 135, 102, 0.05); }
-    .glass-field.is-invalid, .glass-select.is-invalid { border-color: #ef4444; }
+    .form-container { background: var(--white); border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--bna-border); padding: 40px; }
+    
+    .form-section { margin-bottom: 40px; }
+    .form-section:last-child { margin-bottom: 0; }
+    
+    .section-title { font-size: 16px; font-weight: 600; color: var(--bna-green); margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--bna-border); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    label { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    
+    .form-control { width: 100%; box-sizing: border-box; padding: 12px 16px; border: 1.5px solid var(--bna-border); border-radius: 10px; font-size: 15px; transition: all 0.2s; font-family: inherit; background-color: #f8fafc; }
+    .form-control:focus { outline: none; border-color: var(--bna-green); box-shadow: 0 0 0 3px rgba(0, 135, 102, 0.1); background-color: var(--white); }
+    .form-control.is-invalid { border-color: #ef4444; }
+    
+    .invalid-feedback { color: #ef4444; font-size: 13px; margin-top: 4px; }
+    
+    .file-upload-zone { border: 2px dashed var(--bna-border); border-radius: 12px; padding: 32px; text-align: center; background: #f8fafc; transition: all 0.2s; }
+    .file-upload-zone:hover { border-color: var(--bna-green); background: rgba(0, 135, 102, 0.02); }
+    .file-upload-zone p { color: var(--text-primary); font-weight: 500; margin: 0 0 4px 0; }
+    .file-input { display: none; }
+    
+    .file-help-text { font-size: 13px; color: var(--text-secondary); margin-top: 12px; font-style: italic; }
 
-    .upload-aura-zone { border: 2.5px dashed #e2e8f0; border-radius: 20px; padding: 40px; text-align: center; background: #fafafa; transition: 0.3s; }
-    .upload-aura-zone:hover { border-color: var(--bna-emerald); background: #ecfdf5; }
-    .aura-icon { color: #94a3b8; margin-bottom: 16px; }
-    .upload-aura-zone p { font-size: 14px; font-weight: 700; color: #475569; margin-bottom: 16px; }
-    .hidden-input { display: none; }
-    .btn-ghost-executive { display: inline-block; padding: 10px 24px; background: white; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 11px; font-weight: 900; letter-spacing: 1px; cursor: pointer; transition: 0.2s; }
-    .btn-ghost-executive:hover { border-color: var(--bna-emerald); color: var(--bna-emerald); }
+    .form-actions { display: flex; justify-content: flex-end; gap: 16px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--bna-border); }
+    
+    .btn-primary { background: var(--bna-green); color: white; border: none; padding: 12px 28px; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-primary:hover:not(:disabled) { background: var(--bna-green-dark); }
+    .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+    
+    .btn-secondary { background: var(--white); color: var(--text-primary); border: 1.5px solid var(--bna-border); padding: 12px 28px; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.2s; }
+    .btn-secondary:hover { background: #f8fafc; border-color: var(--bna-grey); }
+    
+    .alert { padding: 16px; border-radius: 10px; font-size: 14px; font-weight: 500; margin-top: 24px; }
+    .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; }
+    
+    .mt-4 { margin-top: 1rem; }
 
-    .form-footer { margin-top: 32px; padding-top: 32px; border-top: 2px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 20px; }
-    .btn-executive { padding: 16px 32px; border-radius: 16px; border: none; font-weight: 850; letter-spacing: 1px; font-size: 12px; cursor: pointer; transition: 0.3s; }
-    .btn-executive.primary { background: var(--bna-emerald); color: white; box-shadow: 0 10px 20px rgba(0, 135, 102, 0.2); }
-    .btn-executive.secondary { background: #f8fafc; color: #64748b; }
-    .btn-executive:hover:not(:disabled) { transform: translateY(-3px); filter: brightness(1.1); }
-    .btn-executive:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
-
-    .error-toast { margin-top: 24px; padding: 16px; background: #fef2f2; color: #ef4444; border-radius: 12px; font-weight: 800; font-size: 13px; text-align: center; }
-    .success-toast { margin-top: 24px; padding: 16px; background: #ecfdf5; color: #10b981; border-radius: 12px; font-weight: 800; font-size: 13px; text-align: center; }
-
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    .executive-loader { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 768px) {
+      .form-page { padding: 20px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-container { padding: 24px; }
+      .form-actions { flex-direction: column-reverse; }
+      .btn-primary, .btn-secondary { width: 100%; }
+      .form-group[style] { grid-column: auto !important; }
+    }
   `]
 })
 export class FraisFormComponent implements OnInit {

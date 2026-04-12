@@ -33,7 +33,7 @@ services:
     container_name: bna-fastapi
     restart: always
     environment:
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
     ports:
       - "8000:8000"
 

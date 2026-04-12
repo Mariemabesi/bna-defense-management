@@ -83,12 +83,30 @@ public class DataInitializer {
                 auxiliaireRepository.save(a1);
             }
 
-            if (partieLitigeRepository.count() == 0) {
+            if (partieLitigeRepository.count() <= 1) {
                 PartieLitige p1 = new PartieLitige();
-                p1.setNom("Société Alpha SARL"); p1.setType(PartieLitige.TypePartie.BNE);
+                p1.setNom("Société Alpha SARL"); p1.setType(PartieLitige.TypePartie.CJN);
                 p1.setIdentifiantFiscal("1234567ABC"); p1.setTelephone("71 111 222");
                 p1.setAdresse("Zone Industrielle, Ben Arous");
                 partieLitigeRepository.save(p1);
+
+                PartieLitige p2 = new PartieLitige();
+                p2.setNom("Ahmed Ben Ali"); p2.setType(PartieLitige.TypePartie.PHYSIQUE);
+                p2.setCin("08877665"); p2.setTelephone("98 765 432");
+                p2.setAdresse("Rue des Oranges, Tunis");
+                partieLitigeRepository.save(p2);
+
+                PartieLitige p3 = new PartieLitige();
+                p3.setNom("Boulangerie Moderne SA"); p3.setType(PartieLitige.TypePartie.CJN);
+                p3.setIdentifiantFiscal("9988776XYZ"); p3.setTelephone("72 333 444");
+                p3.setAdresse("AV Habib Bourguiba, Sfax");
+                partieLitigeRepository.save(p3);
+
+                PartieLitige p4 = new PartieLitige();
+                p4.setNom("Sonia Mansour"); p4.setType(PartieLitige.TypePartie.PHYSIQUE);
+                p4.setCin("01122334"); p4.setTelephone("21 000 999");
+                p4.setAdresse("Ennasr 2, Ariana");
+                partieLitigeRepository.save(p4);
             }
 
             if (dossierRepository.count() == 0) {

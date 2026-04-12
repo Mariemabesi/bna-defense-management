@@ -1,7 +1,8 @@
-backend_run.log
-ai_run.log
-frontend_run.log
 backend/target/
 frontend/dist/
 frontend/.angular/
+node_modules/
+frontend/node_modules/
 .DS_Store
+*.log
+.env

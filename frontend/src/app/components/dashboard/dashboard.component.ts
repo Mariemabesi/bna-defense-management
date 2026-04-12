@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { DossierService } from '../../services/dossier.service';
 import { FraisService } from '../../services/frais.service';
@@ -12,6 +13,8 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
 import { ReferentielService, Auxiliaire } from '../../services/referentiel.service';
 import { AIService, AIAnalysis } from '../../services/ai.service';
+import { SidebarService } from '../../services/sidebar.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -20,7 +23,7 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, SidebarComponent, HeaderComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, SidebarComponent, HeaderComponent],
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>
@@ -29,111 +32,68 @@ Chart.register(...registerables);
         <app-header title="Espace {{ getSpaceName() }}"></app-header>
 
         <div class="dashboard-content">
-          <div class="global-report-btn-container mb-6">
+          <div class="global-report-btn-container mb-6" *ngIf="!isAdmin()">
             <button class="btn-primary generate-pdf-btn" (click)="exportGlobalStats()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
               Générer Analyse Globale (PDF)
             </button>
           </div>
-      <ng-container *ngIf="isChargeDossier() && !isAdmin()">
-        <section class="deadline-premium-section fade-in">
-          <div class="section-header-sovereign">
-             <div class="title-deck">
-                <div class="aura-pulse-emerald"></div>
-                <div>
-                   <h2 class="executive-title">ÉCHÉANCES CLÉS</h2>
-                   <p class="executive-subtitle">Priorités opérationnelles et jalons judiciaires de la semaine.</p>
-                </div>
-             </div>
-          </div>
 
-          <div class="sovereign-timeline-grid">
-            <div class="executive-timeline-card shadow-premium pulse-active">
-              <div class="deadline-badge-deck">
-                <span class="day-val">24</span>
-                <span class="month-val">MAR</span>
+      <!-- ============================================== -->
+      <!-- DASHBOARD CHARGE DE DOSSIER -->
+      <!-- ============================================== -->        <ng-container *ngIf="isChargeDossier() && !isAdmin()">
+          <div class="stats-grid">
+            <div class="stat-card" [class.loading-shimmer]="statsLoading">
+              <div class="stat-icon green">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
               </div>
-              <div class="timeline-content-deck">
-                <div class="type-tier">AUDIENCE TRIBUNAL</div>
-                <h3 class="subject-val">Palais de Justice - Tunis</h3>
-                <p class="summary-val">Représentation BNA • Instance Correctionnelle • Dossier REF-2024-X</p>
-                <div class="timeline-meta-deck">
-                  <span class="indicator-tag justice">JURIDIQUE</span>
-                  <span class="chronos-sentinel urgent">DEMAIN</span>
-                </div>
+              <div class="stat-content">
+                <div class="label">Total de mes dossiers</div>
+                <div class="value">{{ dynamicStats.total }}</div>
+                <div class="trend positive">Créés par moi</div>
               </div>
             </div>
-
-            <div class="executive-timeline-card shadow-premium">
-              <div class="deadline-badge-deck upcoming">
-                <span class="day-val">02</span>
-                <span class="month-val">AVR</span>
+            <div class="stat-card" [class.loading-shimmer]="statsLoading">
+              <div class="stat-icon info">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
-              <div class="timeline-content-deck">
-                <div class="type-tier">DÉPÔT DOCUMENTAIRE</div>
-                <h3 class="subject-val">Bordereau des Frais</h3>
-                <p class="summary-val">Consolidation des honoraires auxiliaires T1 2024 • Validation N2</p>
-                <div class="timeline-meta-deck">
-                  <span class="indicator-tag finance">FINANCE</span>
-                  <span class="chronos-sentinel">J-8</span>
-                </div>
+              <div class="stat-content">
+                <div class="label">Dossiers en cours</div>
+                <div class="value">{{ dynamicStats.enCours }}</div>
+                <div class="status-indicator">En cours de traitement</div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <div class="stats-grid">
-          <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon green">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            <div class="stat-card" [class.loading-shimmer]="statsLoading">
+              <div class="stat-icon success">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+              <div class="stat-content">
+                <div class="label">Dossiers Validés</div>
+                <div class="value">{{ dynamicStats.valide }}</div>
+                <div class="trend positive">Approuvés</div>
+              </div>
             </div>
-            <div class="stat-content">
-              <div class="label">Mes Dossiers Actifs</div>
-              <div class="value">{{ stats ? stats.openDossiers : '—' }}</div>
-              <div class="trend positive">{{ stats ? stats.totalDossiers + ' total' : 'Chargement...' }}</div>
+            <div class="stat-card" [class.loading-shimmer]="statsLoading">
+              <div class="stat-icon danger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </div>
+              <div class="stat-content">
+                <div class="label">Dossiers Refusés</div>
+                <div class="value">{{ dynamicStats.refuse }}</div>
+                <div class="status-indicator" style="color: #ef4444;">Corrections requises</div>
+              </div>
             </div>
-          </div>
-          <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon info">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            </div>
-            <div class="stat-content">
-              <div class="label">Dossiers Clôturés</div>
-              <div class="value">{{ stats ? stats.closedDossiers : '—' }}</div>
-              <div class="status-indicator">Au total</div>
-            </div>
-          </div>
-          <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon info">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-            </div>
-            <div class="stat-content">
-              <div class="label">Taux de Réussite</div>
-              <div class="value">{{ stats ? (stats.successRate * 100 | number:'1.0-1') + '%' : '—' }}</div>
-              <div class="trend positive">Performance Juridique</div>
+            <div class="stat-card" [class.loading-shimmer]="statsLoading">
+              <div class="stat-icon danger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </div>
+              <div class="stat-content">
+                <div class="label">Dossiers Urgents</div>
+                <div class="value">{{ dynamicStats.urgent }}</div>
+                <div class="status-indicator" style="color: #ef4444;">Priorité haute</div>
+              </div>
             </div>
           </div>
-          <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon warning">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-            </div>
-            <div class="stat-content">
-              <div class="label">Budget Provisionné</div>
-              <div class="value">{{ stats ? (stats.totalBudgetProvisionne | number:'1.0-0') : '—' }} TND</div>
-              <div class="status-indicator">Consolidation globale</div>
-            </div>
-          </div>
-          <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon danger">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            </div>
-            <div class="stat-content">
-              <div class="label">Dossiers Urgents</div>
-              <div class="value">3</div>
-              <div class="status-indicator" style="color: #ef4444;">Délais critiques</div>
-            </div>
-          </div>
-        </div>
 
         <section class="recent-section">
           <div class="section-header">
@@ -163,36 +123,6 @@ Chart.register(...registerables);
       <!-- DASHBOARD PRE-VALIDATEUR -->
       <!-- ============================================== -->
       <ng-container *ngIf="isPreValidateur() && !isAdmin()">
-        <!-- STRATEGIC DEADLINES SECTION (Universal) -->
-        <section class="deadline-premium-section fade-in">
-          <div class="section-header-sovereign">
-             <div class="title-deck">
-                <div class="aura-pulse-emerald"></div>
-                <div><h2 class="executive-title">ÉCHÉANCES CLÉS</h2><p class="executive-subtitle">Priorités opérationnelles et jalons judiciaires de la semaine.</p></div>
-             </div>
-          </div>
-          <div class="sovereign-timeline-grid">
-            <div class="executive-timeline-card shadow-premium pulse-active">
-              <div class="deadline-badge-deck"><span class="day-val">24</span><span class="month-val">MAR</span></div>
-              <div class="timeline-content-deck">
-                <div class="type-tier">AUDIENCE TRIBUNAL</div>
-                <h3 class="subject-val">Palais de Justice - Tunis</h3>
-                <p class="summary-val">Représentation BNA • Instance Correctionnelle • Dossier REF-2024-X</p>
-                <div class="timeline-meta-deck"><span class="indicator-tag justice">JURIDIQUE</span><span class="chronos-sentinel urgent">DEMAIN</span></div>
-              </div>
-            </div>
-            <div class="executive-timeline-card shadow-premium">
-              <div class="deadline-badge-deck upcoming"><span class="day-val">02</span><span class="month-val">AVR</span></div>
-              <div class="timeline-content-deck">
-                <div class="type-tier">DÉPÔT DOCUMENTAIRE</div>
-                <h3 class="subject-val">Bordereau des Frais</h3>
-                <p class="summary-val">Consolidation des honoraires auxiliaires T1 2024 • Validation N2</p>
-                <div class="timeline-meta-deck"><span class="indicator-tag finance">FINANCE</span><span class="chronos-sentinel">J-8</span></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <div class="stats-grid">
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon warning">
@@ -200,28 +130,28 @@ Chart.register(...registerables);
             </div>
             <div class="stat-content">
               <div class="label">Dossiers à Pré-valider</div>
-              <div class="value">{{ stats ? stats.openDossiers : '—' }}</div>
-              <div class="action-needed">Action technique requise</div>
+              <div class="value">{{ dynamicStats.total }}</div>
+              <div class="action-needed">Action requise</div>
             </div>
           </div>
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon warning">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <div class="stat-icon danger">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             </div>
             <div class="stat-content">
-              <div class="label">Frais à Pré-valider</div>
-              <div class="value">{{ stats ? stats.totalFraisPending : '—' }}</div>
-              <div class="action-needed">Vérification bordereau</div>
+              <div class="label">Urgences High-Priority</div>
+              <div class="value">{{ dynamicStats.urgent }}</div>
+              <div class="action-needed">Délai critique</div>
             </div>
           </div>
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon grey">
+            <div class="stat-icon success">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
             </div>
             <div class="stat-content">
-              <div class="label">Dossiers Traités (Mois)</div>
-              <div class="value">{{ stats ? stats.closedDossiers : '—' }}</div>
-              <div class="status-indicator">Performance équipe</div>
+              <div class="label">Mes Pré-validations</div>
+              <div class="value">{{ dynamicStats.valide }}</div>
+              <div class="status-indicator">Déjà traitées</div>
             </div>
           </div>
         </div>
@@ -247,65 +177,35 @@ Chart.register(...registerables);
       <!-- DASHBOARD VALIDATEUR -->
       <!-- ============================================== -->
       <ng-container *ngIf="isValidateur() && !isAdmin()">
-        <!-- STRATEGIC DEADLINES SECTION (Universal) -->
-        <section class="deadline-premium-section fade-in">
-          <div class="section-header-sovereign">
-             <div class="title-deck">
-                <div class="aura-pulse-emerald"></div>
-                <div><h2 class="executive-title">ÉCHÉANCES CLÉS</h2><p class="executive-subtitle">Priorités opérationnelles et jalons judiciaires de la semaine.</p></div>
-             </div>
-          </div>
-          <div class="sovereign-timeline-grid">
-            <div class="executive-timeline-card shadow-premium pulse-active">
-              <div class="deadline-badge-deck"><span class="day-val">24</span><span class="month-val">MAR</span></div>
-              <div class="timeline-content-deck">
-                <div class="type-tier">AUDIENCE TRIBUNAL</div>
-                <h3 class="subject-val">Palais de Justice - Tunis</h3>
-                <p class="summary-val">Représentation BNA • Instance Correctionnelle • Dossier REF-2024-X</p>
-                <div class="timeline-meta-deck"><span class="indicator-tag justice">JURIDIQUE</span><span class="chronos-sentinel urgent">DEMAIN</span></div>
-              </div>
-            </div>
-            <div class="executive-timeline-card shadow-premium">
-              <div class="deadline-badge-deck upcoming"><span class="day-val">02</span><span class="month-val">AVR</span></div>
-              <div class="timeline-content-deck">
-                <div class="type-tier">DÉPÔT DOCUMENTAIRE</div>
-                <h3 class="subject-val">Bordereau des Frais</h3>
-                <p class="summary-val">Consolidation des honoraires auxiliaires T1 2024 • Validation N2</p>
-                <div class="timeline-meta-deck"><span class="indicator-tag finance">FINANCE</span><span class="chronos-sentinel">J-8</span></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <div class="stats-grid">
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon danger">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
             </div>
             <div class="stat-content">
-              <div class="label">Bons à Payer (BAP)</div>
-              <div class="value">{{ stats ? stats.openDossiers : '—' }}</div>
-              <div class="action-needed">Validation finale</div>
+              <div class="label">Dossiers à Valider</div>
+              <div class="value">{{ dynamicStats.total }}</div>
+              <div class="action-needed">Approbation finale</div>
             </div>
           </div>
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon danger">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             </div>
             <div class="stat-content">
-              <div class="label">Montant Total à Valider</div>
-              <div class="value">{{ stats ? (stats.totalFraisAmountPending | number:'1.0-0') : '—' }} TND</div>
-              <div class="action-needed">Engagement financier</div>
+              <div class="label">Urgences Dossiers</div>
+              <div class="value">{{ dynamicStats.urgent }}</div>
+              <div class="action-needed">Décision critique</div>
             </div>
           </div>
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
-            <div class="stat-icon info">
+            <div class="stat-icon success">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             </div>
             <div class="stat-content">
-              <div class="label">Sécurité Système</div>
-              <div class="value">99.9%</div>
-              <div class="status-indicator">Audit conforme</div>
+              <div class="label">Dossiers déjà Validés</div>
+              <div class="value">{{ dynamicStats.valide }}</div>
+              <div class="status-indicator">Historique approuvé</div>
             </div>
           </div>
         </div>
@@ -327,7 +227,7 @@ Chart.register(...registerables);
       <!-- ============================================== -->
       <!-- DASHBOARD ADMINISTRATION & SUPER VALIDATEUR STATS -->
       <!-- ============================================== -->
-      <ng-container *ngIf="isAdmin() || isSuperValidateur()">
+      <ng-container *ngIf="isSuperValidateur() && !isAdmin()">
         <div class="stats-grid">
           <div class="stat-card" [class.loading-shimmer]="statsLoading">
             <div class="stat-icon green">
@@ -372,7 +272,7 @@ Chart.register(...registerables);
         </div>
       </ng-container>
 
-      <ng-container *ngIf="isAdmin() || isSuperValidateur() || isChargeDossier()">
+      <ng-container *ngIf="(isSuperValidateur() || isChargeDossier()) && !isAdmin()">
         <section class="recent-section">
           <div class="section-header">
             <div class="title-with-badge">
@@ -498,7 +398,7 @@ Chart.register(...registerables);
                 <td><strong>{{ d.reference }}</strong></td>
                 <td>{{ d.titre }}</td>
                 <td><span class="badge" [ngClass]="getPrioriteBadge(d.priorite)">{{ d.priorite || '—' }}</span></td>
-                <td><span class="badge" [ngClass]="getBadgeClass(d.statut)">{{ d.statut }}</span></td>
+                <td><span class="badge" [ngClass]="getBadgeClass(d.statut)">{{ getStatusLabel(d.statut) }}</span></td>
                 <td><strong>{{ d.budgetProvisionne != null ? (d.budgetProvisionne | number:'1.2-2') + ' TND' : '—' }}</strong></td>
                 <td>
                   <div class="actions-cell">
@@ -544,7 +444,7 @@ Chart.register(...registerables);
             <div class="grid-2-col">
               <div class="detail-group">
                 <span class="detail-label">Statut</span>
-                <span class="badge" [ngClass]="getBadgeClass(selectedDossier.statut)">{{ selectedDossier.statut }}</span>
+                <span class="badge" [ngClass]="getBadgeClass(selectedDossier.statut)">{{ getStatusLabel(selectedDossier.statut) }}</span>
               </div>
               <div class="detail-group">
                 <span class="detail-label">Priorité</span>
@@ -602,446 +502,31 @@ Chart.register(...registerables);
         </div>
       </div>
 
+      <!-- REFUSAL MODAL -->
+      <div class="modal-overlay" *ngIf="showRefuseModal">
+        <div class="modal-content small" (click)="$event.stopPropagation()">
+          <div class="modal-header danger-border">
+            <h3>❌ Refuser le dossier</h3>
+            <button class="btn-close" (click)="showRefuseModal = false">×</button>
+          </div>
+          <div class="modal-body">
+            <p>Veuillez indiquer le motif du refus (Min. 5 caractères).</p>
+            <div class="form-group">
+              <textarea [(ngModel)]="refusalMotif" placeholder="Expliquez pourquoi..." rows="5" class="form-control"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" (click)="showRefuseModal = false">Annuler</button>
+            <button class="btn-danger" [disabled]="refusalMotif.length < 5" (click)="confirmRefusal()">Confirmer le refus</button>
+          </div>
         </div>
-      </main>
+      </div>
+
     </div>
+  </main>
+</div>
   `,
-  styles: [`
-    :host {
-      --bg-color: transparent;
-      --sidebar-width: 285px;
-      --bna-emerald: #008766;
-      --bna-emerald-light: rgba(0, 135, 102, 0.06);
-      --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
-    }
-
-    .app-layout {
-      font-family: 'Outfit', 'Inter', sans-serif;
-    }
-
-    
-    .nav-section-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      margin: 24px 0 12px 18px;
-    }
-
-    .fav-list { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; }
-    .fav-item { 
-      display: flex; align-items: center; gap: 12px; padding: 10px 14px; 
-      border-radius: 10px; font-size: 14px; color: var(--text-main); font-weight: 500;
-      text-decoration: none; transition: all 0.2s;
-    }
-    .fav-item:hover { background: #f1f5f9; color: var(--bna-green); }
-    .fav-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .fav-dot.green { background: #10b981; }
-    .fav-dot.grey { background: #94a3b8; }
-
-    .btn-action.danger-bg svg { stroke: white; }
-
-    /* ROLE BANNERS */
-    .role-welcome-banner {
-      padding: 32px;
-      border-radius: 24px;
-      margin-bottom: 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: white;
-      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
-    }
-    .role-welcome-banner.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-    .role-welcome-banner.danger { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
-    .role-welcome-banner.bna { background: linear-gradient(135deg, var(--bna-green) 0%, var(--bna-green-dark) 100%); }
-    .role-welcome-banner.info { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
-
-    .banner-content h2 { margin: 0 0 8px 0; font-size: 24px; font-weight: 800; }
-    .banner-content p { margin: 0; opacity: 0.9; font-size: 15px; }
-    .banner-actions { display: flex; gap: 12px; }
-    .btn-primary.white { background: white; color: var(--text-main); border: none; font-weight: 700; }
-    .btn-primary.white:hover { background: #f8fafc; transform: translateY(-2px); }
-
-    .title-with-badge { display: flex; align-items: center; gap: 16px; }
-
-    .deadline-box { display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
-    .deadline-item { 
-      display: flex; align-items: center; gap: 12px; padding: 10px; 
-      background: rgba(255,255,255,0.5); border-radius: 12px; border: 1px solid rgba(0,0,0,0.02);
-    }
-    .deadline-date { 
-      font-size: 11px; font-weight: 800; color: white; background: var(--bna-green); 
-      padding: 4px 6px; border-radius: 6px; min-width: 45px; text-align: center;
-    }
-    .deadline-text { font-size: 12px; font-weight: 600; color: var(--text-main); }
-    .dashboard-content { padding: 48px; max-width: 1600px; margin: 0 auto; display: flex; flex-direction: column; gap: 48px; animation: slideUpFade 0.6s ease-out; }
-
-    /* SOVEREIGN TIMELINE ARCHITECTURE */
-    .deadline-premium-section { animation: fadeIn 0.8s ease-out; }
-    .section-header-sovereign { margin-bottom: 32px; }
-    .title-deck { display: flex; align-items: center; gap: 24px; position: relative; }
-    .aura-pulse-emerald { 
-      width: 12px; height: 12px; border-radius: 50%; background: var(--bna-emerald);
-      box-shadow: 0 0 0 rgba(0, 135, 102, 0.4); animation: pulseAura 2s infinite; 
-    }
-    .executive-title { font-size: 26px; font-weight: 850; color: #0f172a; margin: 0; letter-spacing: -0.8px; }
-    .executive-subtitle { font-size: 15px; color: #64748b; margin: 4px 0 0 0; font-weight: 600; }
-
-    .sovereign-timeline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 32px; }
-    .executive-timeline-card { 
-      background: white; border-radius: 32px; border: 1.5px solid #f1f5f9; 
-      display: flex; gap: 28px; padding: 28px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      position: relative; overflow: hidden;
-    }
-    .executive-timeline-card:hover { transform: translateY(-8px); border-color: var(--bna-emerald); box-shadow: 0 25px 50px rgba(0, 135, 102, 0.08); }
-    
-    .deadline-badge-deck { 
-      min-width: 80px; height: 95px; background: #0f172a; border-radius: 20px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-    .deadline-badge-deck.upcoming { background: #475569; }
-    .day-val { font-size: 32px; font-weight: 900; line-height: 1; }
-    .month-val { font-size: 11px; font-weight: 850; letter-spacing: 1.5px; margin-top: 4px; }
-    
-    .timeline-content-deck { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-    .type-tier { font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 1px; }
-    .subject-val { font-size: 19px; font-weight: 850; color: #1e293b; margin: 0; }
-    .summary-val { font-size: 14px; font-weight: 600; color: #64748b; line-height: 1.5; margin: 0 0 12px 0; }
-    
-    .timeline-meta-deck { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-    .indicator-tag { padding: 5px 12px; border-radius: 10px; font-size: 9px; font-weight: 900; letter-spacing: 0.5px; }
-    .indicator-tag.justice { background: #ecfdf5; color: #059669; }
-    .indicator-tag.finance { background: #eff6ff; color: #2563eb; }
-    .chronos-sentinel { font-size: 12px; font-weight: 850; color: #64748b; }
-    .chronos-sentinel.urgent { color: var(--bna-emerald); }
-
-    .pulse-active { border-color: var(--bna-emerald); border-width: 2px; }
-
-    @keyframes pulseAura {
-      0% { box-shadow: 0 0 0 0 rgba(0, 135, 102, 0.6); }
-      70% { box-shadow: 0 0 0 15px rgba(0, 135, 102, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(0, 135, 102, 0); }
-    }
-
-    @media (max-width: 1024px) {
-      .sovereign-timeline-grid { grid-template-columns: 1fr; }
-      .executive-timeline-card { padding: 24px; gap: 20px; }
-    }
-    
-    .stat-content .trend { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
-    .trend.positive { color: #10b981; }
-    .status-indicator, .action-needed { font-size: 12px; font-weight: 600; color: #64748b; }
-
-    .role-welcome-banner {
-      padding: 40px; border-radius: 32px; margin-bottom: 40px;
-      display: flex; justify-content: space-between; align-items: center;
-      position: relative; overflow: hidden; color: white;
-      box-shadow: 0 20px 40px rgba(0, 135, 102, 0.15);
-    }
-    .role-welcome-banner.bna { background: linear-gradient(135deg, #005641 0%, #008766 100%); }
-    .role-welcome-banner.warning { background: linear-gradient(135deg, #92400e 0%, #d97706 100%); }
-    .role-welcome-banner.danger { background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%); }
-    .role-welcome-banner.info { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
-    
-    .role-welcome-banner::before {
-      content: ''; position: absolute; width: 400px; height: 400px; 
-      background: rgba(255,255,255,0.1); border-radius: 50%;
-      top: -150px; right: -150px;
-    }
-    .banner-content { position: relative; z-index: 1; }
-    .banner-content h2 { margin: 0 0 12px 0; font-size: 32px; font-weight: 800; letter-spacing: -1px; }
-    .banner-content p { margin: 0; font-size: 18px; opacity: 0.9; font-weight: 500; }
-    .banner-actions { position: relative; z-index: 1; display: flex; gap: 16px; }
-
-    .recent-section { margin-top: 48px; }
-    .section-header { 
-      display: flex; justify-content: space-between; align-items: flex-end; 
-      margin-bottom: 32px; padding: 0 8px;
-    }
-    .section-header h2 { font-size: 24px; font-weight: 800; color: #1e293b; letter-spacing: -0.5px; margin: 0; }
-    .title-with-badge { display: flex; align-items: center; gap: 16px; }
-    
-    .table-container { 
-      background: transparent; border-radius: 0; box-shadow: none; 
-      overflow-x: auto; padding-bottom: 20px;
-    }
-    table { width: 100%; border-collapse: separate; border-spacing: 0 16px; margin-top: -16px; min-width: 900px; }
-    th { padding: 16px 24px; color: #94a3b8; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
-    td { 
-      padding: 24px; background: white; border-top: 1px solid rgba(0,0,0,0.03); border-bottom: 1px solid rgba(0,0,0,0.03); 
-      font-size: 15px; color: #334155; transition: all 0.2s ease;
-    }
-    td:first-child { border-left: 1px solid rgba(0,0,0,0.03); border-top-left-radius: 24px; border-bottom-left-radius: 24px; }
-    td:last-child { border-right: 1px solid rgba(0,0,0,0.03); border-top-right-radius: 24px; border-bottom-right-radius: 24px; }
-    
-    tr:hover td { background: #f8fafc; transform: scale(1.002); }
-    tr:hover td:first-child { box-shadow: -10px 0 20px rgba(0,0,0,0.02); }
-    
-    .badge {
-      display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 12px;
-      font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-    }
-    .badge.success { background: #ecfdf5; color: #059669; }
-    .badge.info { background: #eff6ff; color: #2563eb; }
-    .badge.warning { background: #fffbeb; color: #d97706; }
-    .badge.danger { background: #fef2f2; color: #dc2626; }
-
-    .btn-action {
-      width: 44px; height: 44px; border-radius: 14px; background: #f1f5f9;
-      color: #64748b; border: none; cursor: pointer; display: flex;
-      align-items: center; justify-content: center; transition: all 0.2s;
-    }
-    .btn-action:hover { background: #008766; color: white; transform: rotate(8deg) scale(1.1); }
-    .btn-action.warning-bg:hover { background: #d97706; }
-    .btn-action.danger-bg:hover { background: #059669; }
-
-    .btn-primary { 
-      background: linear-gradient(135deg, #008766 0%, #00a87f 100%); 
-      color: white; border: none; padding: 12px 24px; 
-      border-radius: 14px; font-weight: 700; cursor: pointer; 
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-      box-shadow: 0 4px 12px rgba(0, 135, 102, 0.3);
-      display: inline-flex; align-items: center; gap: 10px; font-size: 14px;
-    }
-    .btn-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 24px rgba(0, 135, 102, 0.4); }
-    .btn-primary:active { transform: translateY(-1px) scale(0.98); }
-    
-    .btn-primary.white { background: white; color: #008766; }
-    .btn-primary.white:hover { background: #f8fafc; color: #007256; transform: translateY(-4px); }
-
-    .btn-secondary {
-      background: white; color: #475569; border: 1.5px solid #e2e8f0; padding: 11px 24px;
-      border-radius: 14px; font-weight: 700; cursor: pointer; 
-      transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 10px; font-size: 14px;
-    }
-    .btn-secondary:hover { background: #f8fafc; border-color: #008766; color: #008766; transform: translateY(-2px); }
-    .btn-secondary:active { transform: translateY(0); }
-    .table-container { background: transparent; padding: 0; border: none; box-shadow: none; overflow-x: auto; }
-    table { width: 100%; border-collapse: separate; border-spacing: 0 12px; margin-top: -12px; min-width: 900px; }
-    th { padding: 16px 24px; text-align: left; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; border: none; }
-    td { 
-      padding: 24px; background: white; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; font-size: 15px; color: var(--text-main); transition: background 0.2s ease;
-    }
-    td:first-child { border-left: 1px solid #f1f5f9; border-top-left-radius: 20px; border-bottom-left-radius: 20px; }
-    td:last-child { border-right: 1px solid #f1f5f9; border-top-right-radius: 20px; border-bottom-right-radius: 20px; }
-    tr:hover td { background: #f8fafc; border-color: #e2e8f0; }
-    
-    .badge { padding: 6px 14px; border-radius: 12px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; }
-    .badge.warning { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
-    .badge.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-    .badge.info { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
-    .badge.danger { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-    
-    .actions-cell { display: flex; gap: 12px; justify-content: flex-start; }
-    .btn-action { 
-      background: white; 
-      color: #64748b; 
-      border: 1px solid rgba(0,0,0,0.06); 
-      width: 46px; 
-      height: 46px; 
-      border-radius: 15px; 
-      cursor: pointer; 
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-      display: inline-flex; 
-      align-items: center; 
-      justify-content: center; 
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01);
-    }
-    .btn-action:hover { 
-      color: var(--bna-green); 
-      border-color: rgba(0, 135, 102, 0.2); 
-      transform: translateY(-3px) scale(1.05); 
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.02); 
-      background: white;
-    }
-    .btn-action svg { width: 20px; height: 20px; stroke-width: 2.2px; }
-    
-    .btn-action.warning-bg { color: #d97706; }
-    .btn-action.warning-bg:hover { color: #b45309; border-color: #fcd34d; }
-    .btn-action.danger-bg { color: #059669; }
-    .btn-action.danger-bg:hover { color: #047857; border-color: #6ee7b7; }
-
-    /* CHARTS */
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-top: 24px; }
-    .chart-container-card { 
-      background: white; border-radius: 24px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.03); 
-      height: 400px; display: flex; flex-direction: column;
-    }
-    .chart-container-card h3 { font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 24px; text-align: center; }
-    .chart-container-card canvas { flex: 1; min-height: 0; }
-
-    /* ADMINISTRATION */
-    .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-top: 24px; }
-    .admin-card { background: white; border-radius: 24px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.03); }
-    .admin-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .admin-card-title { font-size: 18px; font-weight: 800; color: #1e293b; }
-    
-    .user-list { display: flex; flex-direction: column; gap: 12px; }
-    .user-row { 
-      display: flex; justify-content: space-between; align-items: center; padding: 16px; 
-      border-radius: 16px; background: #f8fafc; transition: all 0.2s;
-    }
-    .user-row:hover { background: #f1f5f9; transform: translateX(4px); }
-    .user-info-brief { display: flex; align-items: center; gap: 16px; }
-    .user-avatar-small { 
-      width: 40px; height: 40px; border-radius: 12px; background: #008766; color: white;
-      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
-    }
-    .user-name-role { display: flex; flex-direction: column; }
-    .user-name { font-size: 15px; font-weight: 700; color: #1e293b; }
-    .user-role-tag { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-
-    /* MONITORING TOOLS */
-    .monitor-grid { display: grid; grid-template-columns: 1.2fr 1.5fr 1fr; gap: 24px; }
-    .monitor-card { background: white; border-radius: 24px; padding: 24px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.02); display: flex; flex-direction: column; }
-    .monitor-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-    .monitor-header h3 { font-size: 17px; font-weight: 800; color: #1e293b; margin: 0; }
-    .monitor-header p { font-size: 12px; color: #64748b; margin: 4px 0 0 0; }
-    
-    .btn-primary-sm { padding: 6px 12px; background: var(--bna-green-light); color: var(--bna-green); border: none; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
-    .btn-secondary-sm { padding: 6px 12px; background: #f1f5f9; color: #64748b; border: none; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
-
-    .user-item-pro { display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 12px; margin-bottom: 8px; }
-    .user-avatar-text { width: 36px; height: 36px; border-radius: 10px; background: white; color: var(--bna-green); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 1px solid #f1f5f9; }
-    .user-details { flex: 1; display: flex; flex-direction: column; }
-    .user-name { font-size: 14px; font-weight: 700; color: #1e293b; }
-    .user-group-link { font-size: 11px; color: #64748b; }
-    .user-status-dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; }
-    .user-status-dot.active { background: #10b981; }
-
-    .logs-scroll { max-height: 300px; overflow-y: auto; }
-    .log-entry { padding: 8px 0; border-bottom: 1px solid #f8fafc; display: flex; gap: 12px; font-size: 12px; }
-    .log-time { color: #94a3b8; font-weight: 700; min-width: 40px; }
-    .log-user { font-weight: 800; color: var(--bna-green); }
-    .log-action { color: #1e293b; }
-    .log-target { color: #64748b; font-style: italic; }
-
-    .sys-item { margin-bottom: 16px; }
-    .sys-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 6px; }
-    .sys-bar { height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
-    .sys-bar .fill { height: 100%; border-radius: 3px; }
-    .sys-bar .fill.green { background: #10b981; }
-    .sys-bar .fill.blue { background: #3b82f6; }
-
-    .empty-mini { padding: 20px; text-align: center; color: #94a3b8; font-size: 13px; }
-
-    /* MODAL STYLES */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(4px);
-      z-index: 1000; display: flex; align-items: center; justify-content: center;
-      animation: fadeIn 0.2s ease-out;
-    }
-    .modal-content {
-      background: white; border-radius: 24px; width: 100%; max-width: 600px;
-      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2); overflow: hidden;
-      animation: slideUp 0.3s ease-out; margin: 20px;
-    }
-    .modal-header {
-      padding: 24px 32px; border-bottom: 1px solid #f1f5f9;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .modal-header h3 { margin: 0; font-size: 20px; font-weight: 800; color: #1e293b; }
-    .btn-close {
-      background: none; border: none; cursor: pointer; color: #64748b;
-      display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 50%;
-      transition: all 0.2s;
-    }
-    .btn-close:hover { background: #f1f5f9; color: #ef4444; }
-    .modal-body { padding: 32px; display: flex; flex-direction: column; gap: 24px; }
-    .grid-2-col-modal { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .detail-group { display: flex; flex-direction: column; gap: 8px; }
-    .detail-label { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-    .detail-value { font-size: 16px; font-weight: 500; color: #1e293b; }
-    .detail-value.font-mono { font-family: 'Courier New', Courier, monospace; font-weight: 700; color: var(--bna-green); }
-    .detail-desc { font-size: 15px; color: #475569; line-height: 1.6; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; }
-    .modal-footer {
-      padding: 24px 32px; background: #f8fafc; border-top: 1px solid #e2e8f0;
-      display: flex; justify-content: flex-end; gap: 16px;
-    }
-    
-    /* AI STYLES */
-    .ai-section { 
-      margin-top: 8px; padding: 24px; border-radius: 20px; 
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-      border: 1.5px solid #bae6fd;
-    }
-    .ai-header { display: flex; align-items: center; gap: 10px; color: #0369a1; font-weight: 800; font-size: 12px; letter-spacing: 1px; margin-bottom: 16px; }
-    .ai-loader { display: flex; align-items: center; gap: 12px; color: #0369a1; font-weight: 600; font-size: 14px; }
-    .pulse-ring { width: 12px; height: 12px; background: #0ea5e9; border-radius: 50%; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(14, 165, 233, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); } }
-    
-    .ai-result { display: flex; flex-direction: column; gap: 16px; }
-    .ai-summary { font-size: 15px; line-height: 1.6; color: #1e293b; font-weight: 500; }
-    .ai-meta { display: flex; gap: 16px; align-items: center; }
-    .ai-risk { padding: 4px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-    .ai-risk.low { background: #dcfce7; color: #166534; }
-    .ai-risk.medium { background: #fef9c3; color: #854d0e; }
-    .ai-risk.high { background: #fee2e2; color: #991b1b; }
-    .ai-conf { font-size: 12px; color: #64748b; font-weight: 600; }
-    .ai-suggestions { background: white; padding: 16px; border-radius: 12px; border: 1px solid #e0f2fe; }
-    .ai-suggestions strong { display: block; margin-bottom: 8px; font-size: 13px; color: #0369a1; }
-    .ai-suggestions ul { margin: 0; padding-left: 20px; font-size: 14px; color: #475569; }
-    .ai-suggestions li { margin-bottom: 4px; }
-    
-    .btn-ai {
-      background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
-      color: white; border: none; padding: 12px 24px; border-radius: 14px;
-      font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;
-      transition: all 0.3s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    }
-    .btn-ai:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4); }
-    .btn-ai:disabled { opacity: 0.6; cursor: wait; }
-
-    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-    @media (max-width: 1024px) {
-      .main-content { margin-left: 0; width: 100%; }
-      .dashboard-content { padding: 16px; }
-      .stats-grid { grid-template-columns: 1fr; gap: 16px; }
-      .section-header { flex-direction: column; align-items: flex-start; gap: 16px; }
-      .actions-group { width: 100%; display: flex; flex-direction: column; gap: 10px; }
-      .actions-group button { width: 100%; justify-content: center; }
-      .table-container { margin: 0 -16px; border-radius: 0; }
-      table { min-width: 800px; }
-      .modal-content { margin: 10px; max-height: 90vh; overflow-y: auto; }
-      .grid-2-col-modal { grid-template-columns: 1fr; }
-    }
-    
-    @media (max-width: 640px) {
-      .top-header { padding: 0 16px; height: 70px; }
-      .header-search { display: none; } /* Hide search on small mobile to save space */
-      .stat-card { padding: 20px; }
-      .stat-value { font-size: 24px; }
-    }
-      .global-report-btn-container {
-      display: flex;
-      justify-content: flex-end;
-    }
-    .generate-pdf-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 24px;
-      font-weight: 800;
-      box-shadow: 0 4px 15px rgba(0, 135, 102, 0.2);
-    }
-    .loading-spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid white;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  `]
+  styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
   dossierChart: any;
@@ -1071,6 +556,9 @@ export class DashboardComponent implements OnInit {
 
   auditLogs: AuditLogDTO[] = [];
   logsLoading = false;
+  showRefuseModal = false;
+  refusalMotif = '';
+  refusalDossierId: number | null = null;
 
   constructor(
     private dossierService: DossierService,
@@ -1081,10 +569,14 @@ export class DashboardComponent implements OnInit {
     private notificationService: NotificationService,
     private referentielService: ReferentielService,
     private aiService: AIService,
-    private router: Router
+    private confirmService: ConfirmDialogService,
+    private router: Router,
+    public sidebarService: SidebarService
   ) {
     this.currentUser = this.authService.currentUserValue;
   }
+
+  dynamicStats: any = { total: 0, urgent: 0, enCours: 0, valide: 0, refuse: 0 };
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
@@ -1138,8 +630,16 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  loadDynamicStats(): void {
+    this.reportingService.getUserDynamicStats().subscribe({
+      next: (data) => this.dynamicStats = data,
+      error: () => console.error('Failed to load dynamic user stats')
+    });
+  }
+
   loadStats(): void {
     this.statsLoading = true;
+    this.loadDynamicStats();
     this.reportingService.getDashboardStats().subscribe({
       next: (data) => {
         this.stats = data;
@@ -1165,8 +665,8 @@ export class DashboardComponent implements OnInit {
           datasets: [{
             data: [
               this.stats?.openDossiers || 0,
-              12, // Dummy pending
-              5,  // Dummy to validate
+              this.dynamicStats.enCours || 0,
+              this.dynamicStats.total - this.dynamicStats.enCours || 0,
               this.stats?.closedDossiers || 0
             ],
             backgroundColor: ['#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981'],
@@ -1257,7 +757,7 @@ export class DashboardComponent implements OnInit {
 
     switch (type) {
       case 'CHARGE':
-        return this.dossiers.filter(d => d.statut === 'OUVERT' || d.statut === 'EN_COURS' || d.statut === 'EN_ATTENTE_PREVALIDATION');
+        return this.dossiers.filter(d => ['OUVERT', 'EN_COURS', 'EN_ATTENTE_PREVALIDATION', 'EN_ATTENTE_VALIDATION', 'REFUSE'].includes(d.statut || ''));
       case 'PRE_VALIDATOR':
         return this.dossiers.filter(d => d.statut === 'EN_ATTENTE_PREVALIDATION');
       case 'VALIDATOR':
@@ -1267,11 +767,26 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  getStatusLabel(statut: string | undefined): string {
+    switch (statut) {
+      case 'OUVERT': return 'Brouillon';
+      case 'EN_ATTENTE_PREVALIDATION': return 'Soumis';
+      case 'EN_ATTENTE_VALIDATION': return 'Pré-validé';
+      case 'VALIDE': return 'Validé';
+      case 'CLOTURE': return 'Clôturé';
+      case 'REFUSE': return 'Refusé';
+      default: return statut || '—';
+    }
+  }
+
   getBadgeClass(statut: string | undefined): string {
     switch (statut) {
-      case 'CLOTURE': return 'success';
-      case 'EN_COURS': return 'warning';
       case 'OUVERT': return 'info';
+      case 'EN_ATTENTE_PREVALIDATION': return 'warning';
+      case 'EN_ATTENTE_VALIDATION': return 'danger';
+      case 'REFUSE': return 'danger';
+      case 'VALIDE': return 'success';
+      case 'CLOTURE': return 'success';
       default: return 'info';
     }
   }
@@ -1352,30 +867,35 @@ export class DashboardComponent implements OnInit {
     const dossier = this.dossiers.find(d => d.reference === ref);
 
     if ((type === 'Approuver' || type === 'Valider') && dossier && dossier.id) {
-      const nextStatus = type === 'Approuver' ? 'EN_ATTENTE_VALIDATION' : 'CLOTURE';
+      const actionRef = type === 'Approuver' ? 'prevalider' : 'validerFinal';
+      const promptMsg = type === 'Approuver' ? 
+          'Voulez-vous PRÉ-VALIDER ce dossier ? (Oui pour valider, Non pour refuser)' :
+          'Voulez-vous VALIDER ce dossier ? (Oui pour valider, Non pour refuser)';
 
-      this.dossierService.updateStatus(dossier.id, nextStatus as any).subscribe({
-        next: (updated) => {
-          dossier.statut = updated.statut;
-          this.loadStats(); // Refresh stats
-
-          if (type === 'Approuver') {
-            this.notificationService.addNotification(
-              `Dossier ${ref} pré-validé avec succès. Transmis au validateur.`,
-              'ROLE_PRE_VALIDATEUR', 'SUCCESS'
-            );
-          } else {
-            this.notificationService.addNotification(
-              `Dossier ${ref} validé et clôturé avec succès.`,
-              'ROLE_VALIDATEUR', 'SUCCESS'
-            );
-          }
-        },
-        error: () => {
-          this.notificationService.addNotification(
-            `Erreur lors de la mise à jour du dossier ${ref}.`,
-            'ROLE_ADMIN', 'WARNING'
-          );
+      this.confirmService.open({
+        title: 'Validation de Dossier',
+        message: promptMsg,
+        confirmLabel: 'Oui, Valider',
+        cancelLabel: 'Non, Refuser'
+      }).subscribe((confirmed: boolean) => {
+        if (confirmed) {
+          this.dossierService[actionRef](dossier.id!).subscribe({
+            next: (updated) => {
+              dossier.statut = updated.statut;
+              this.loadStats();
+              this.loadDossiers();
+              this.notificationService.addNotification(
+                `Dossier ${ref} ${type === 'Approuver' ? 'pré-validé' : 'validé'} avec succès.`,
+                'ROLE_ADMIN', 'SUCCESS'
+              );
+            },
+            error: (err) => alert(err.error?.message || "Erreur lors de la validation")
+          });
+        } else {
+          // Trigger refusal workflow
+          this.refusalDossierId = dossier.id!;
+          this.refusalMotif = '';
+          this.showRefuseModal = true;
         }
       });
     } else if (type === 'Soumettre' && dossier && dossier.id) {
@@ -1484,6 +1004,19 @@ export class DashboardComponent implements OnInit {
           'ROLE_VALIDATEUR', 'WARNING'
         );
       }
+    });
+  }
+
+  confirmRefusal(): void {
+    if (!this.refusalDossierId || this.refusalMotif.length < 5) return;
+    this.dossierService.refuser(this.refusalDossierId, this.refusalMotif).subscribe({
+      next: () => {
+        this.showRefuseModal = false;
+        this.notificationService.addNotification("Dossier refusé.", "ROLE_ADMIN", "SUCCESS");
+        this.loadDossiers();
+        this.loadStats();
+      },
+      error: (err: any) => alert(err.error?.message || "Erreur serveur lors du refus.")
     });
   }
 }

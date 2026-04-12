@@ -61,24 +61,32 @@ public class DossierController {
         }
     }
 
+    @GetMapping("/{id}/history")
+    @PreAuthorize("@permissionService.canAccessDossier(authentication, #id) or hasRole('ADMIN')")
+    public ResponseEntity<List<com.bna.defense.entity.AuditLog>> getDossierHistory(@PathVariable Long id) {
+        return ResponseEntity.ok(dossierService.getDossierHistory(id));
+    }
+
     @GetMapping("/recent")
     public List<Dossier> getRecent(Principal principal) {
         return historyService.getRecentDossiers(principal.getName());
     }
 
     @GetMapping("/search")
-    public List<Dossier> searchDossiers(
-            @RequestParam(name = "q", required = false) String q,
-            @RequestParam(name = "query", required = false) String query) {
-        String searchQuery = (q != null) ? q : query;
-        if (searchQuery == null) return List.of();
-        return dossierService.searchDossiers(searchQuery);
+    public List<Dossier> searchDossiers(@RequestParam String query) {
+        return dossierService.searchDossiers(query);
     }
 
     @PutMapping("/{id}/statut")
     @PreAuthorize("@permissionService.canAccessDossier(authentication, #id) or hasRole('ADMIN')")
     public Dossier updateStatut(@PathVariable Long id, @RequestParam Dossier.StatutDossier statut) {
         return dossierService.updateStatut(id, statut);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("@permissionService.canAccessDossier(authentication, #id) or hasRole('ADMIN')")
+    public Dossier updateDossier(@PathVariable Long id, @RequestBody Dossier dossier, Principal principal) {
+        return dossierService.updateDossier(id, dossier, principal.getName());
     }
 
     // ─────────────────────────────────────────────────
@@ -143,9 +151,10 @@ public class DossierController {
         try {
             Dossier result = dossierService.refuser(id, motif, principal.getName());
             return ResponseEntity.ok(result);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
             Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
+            error.put("message", e.getMessage() != null ? e.getMessage() : "Une erreur imprévue est survenue.");
             return ResponseEntity.badRequest().body(error);
         }
     }
@@ -231,4 +240,12 @@ public class DossierController {
 
         return ResponseEntity.ok(summary);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> archiverDossier(@PathVariable Long id) {
+        dossierService.archiveDossier(id);
+        return ResponseEntity.noContent().build();
+    }
 }
+
+

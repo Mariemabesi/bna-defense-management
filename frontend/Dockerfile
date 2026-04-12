@@ -7,12 +7,15 @@ RUN npm ci
 COPY . .
 # Angular 17+ with browser-esbuild builder
 # Move files if they are in a 'browser' subfolder to ensure consistency
-RUN npm run build -- --configuration production
+RUN npx ng build --configuration production && \
+    if [ -d "dist/bna-defense-frontend/browser" ]; then \
+        cp -r dist/bna-defense-frontend/browser/* dist/bna-defense-frontend/; \
+    fi
 
 # Run stage
 FROM nginx:alpine
-# In Angular 17, artifacts are created in dist/[name]/browser
-COPY --from=build /app/dist/bna-defense-frontend/browser /usr/share/nginx/html
+# Copy from the normalized directory
+COPY --from=build /app/dist/bna-defense-frontend /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

@@ -19,6 +19,10 @@ export class DossierService {
         return this.http.post<Dossier>(this.apiUrl, dossier);
     }
 
+    updateDossier(id: number, dossier: Dossier): Observable<Dossier> {
+        return this.http.put<Dossier>(`${this.apiUrl}/${id}`, dossier);
+    }
+
     getDossierById(id: number): Observable<Dossier> {
         return this.http.get<Dossier>(`${this.apiUrl}/${id}`);
     }
@@ -80,4 +84,20 @@ export class DossierService {
     getFraisSummary(id: number): Observable<any> {
         return this.http.get<any>(`${this.apiUrl}/${id}/frais/summary`);
     }
+
+    getHistory(id: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/${id}/history`);
+    }
+
+    downloadDossiers(format: 'pdf' | 'excel'): Observable<Blob> {
+        return this.http.get(`/api/reports/dossiers/export/${format}`, {
+            responseType: 'blob'
+        });
+    }
+
+    archiveDossier(id: number): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    }
 }
+
+
