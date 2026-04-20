@@ -24,6 +24,7 @@ public class AffaireController {
 
     @GetMapping
     public List<Affaire> getAll(java.security.Principal principal) {
+        if (principal == null) return java.util.Collections.emptyList();
         com.bna.defense.entity.User user = userService.findByUsername(principal.getName());
         if (user == null) user = userService.findByEmail(principal.getName());
         return affaireService.getAll(user);

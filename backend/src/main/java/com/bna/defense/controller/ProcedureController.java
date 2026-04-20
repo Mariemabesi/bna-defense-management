@@ -1,11 +1,14 @@
 package com.bna.defense.controller;
 
+import com.bna.defense.entity.Affaire;
 import com.bna.defense.entity.ProcedureJudiciaire;
+import com.bna.defense.repository.AffaireRepository;
 import com.bna.defense.repository.ProcedureJudiciaireRepository;
 import com.bna.defense.service.ProcedureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -17,6 +20,9 @@ public class ProcedureController {
     private ProcedureJudiciaireRepository procedureRepository;
 
     @Autowired
+    private AffaireRepository affaireRepository;
+
+    @Autowired
     private ProcedureService procedureService;
 
     @GetMapping
@@ -25,8 +31,19 @@ public class ProcedureController {
     }
 
     @PostMapping
-    public ProcedureJudiciaire createProcedure(@RequestBody ProcedureJudiciaire procedure) {
-        return procedureRepository.save(procedure);
+    public ResponseEntity<?> createProcedure(@RequestBody ProcedureJudiciaire procedure) {
+        // The frontend sends affaireId as a transient field — resolve it to the entity
+        Long affaireId = procedure.getAffaireId();
+        if (affaireId == null) {
+            return ResponseEntity.badRequest().body("affaireId is required");
+        }
+        Affaire affaire = affaireRepository.findById(affaireId)
+                .orElse(null);
+        if (affaire == null) {
+            return ResponseEntity.badRequest().body("Affaire with id " + affaireId + " not found");
+        }
+        procedure.setAffaire(affaire);
+        return ResponseEntity.ok(procedureRepository.save(procedure));
     }
 
     @GetMapping("/{id}")
@@ -37,7 +54,8 @@ public class ProcedureController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProcedureJudiciaire> updateProcedure(@PathVariable Long id, @RequestBody ProcedureJudiciaire details) {
+    public ResponseEntity<ProcedureJudiciaire> updateProcedure(@PathVariable Long id,
+                                                                @RequestBody ProcedureJudiciaire details) {
         return procedureRepository.findById(id).map(procedure -> {
             procedure.setTitre(details.getTitre());
             procedure.setType(details.getType());

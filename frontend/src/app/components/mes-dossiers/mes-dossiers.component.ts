@@ -106,8 +106,7 @@ import { FormsModule } from '@angular/forms';
                     <span class="badge" [ngClass]="getBadgeClass(d.statut)">
                       {{ getStatusLabel(d.statut) }}
                     </span>
-                  </td>
-                   <td>
+                     <td>
                     <div class="finance-cell">
                       <div class="budget-row"><span class="label">P:</span> {{ d.budgetProvisionne != null ? (d.budgetProvisionne | number:'1.2-2') : '—' }}</div>
                       <div class="reel-row" *ngIf="d.fraisReel" [class.danger-text]="d.depassement && d.depassement > 0">
@@ -117,7 +116,9 @@ import { FormsModule } from '@angular/forms';
                         </span>
                       </div>
                     </div>
+                  </td>
                   <td>
+                    <div class="actions-cell">
                       <button class="btn-action view-btn" title="Détails" (click)="$event.stopPropagation(); onViewDossier(d)">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                       </button>
@@ -142,10 +143,29 @@ import { FormsModule } from '@angular/forms';
                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                        </button>
 
+                       <!-- Démarrer (En cours) -->
+                       <button class="btn-action approve-btn" title="Démarrer (En cours)" *ngIf="isChargeDossier() && d.statut === 'OUVERT'" (click)="$event.stopPropagation(); executeWorkflow('en-cours', d.id!)" style="background: #e0f2fe; color: #0369a1; border-color: #bae6fd;">
+                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                       </button>
+
+                       <!-- Demander clôture -->
+                       <button class="btn-action view-btn" title="Demander la clôture" *ngIf="isChargeDossier() && (d.statut === 'OUVERT' || d.statut === 'EN_COURS')" (click)="$event.stopPropagation(); executeWorkflow('cloturer', d.id!)" style="border-color: #94a3b8;">
+                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                       </button>
+
+                       <!-- Pré-valider clôture -->
+                        <button class="btn-action approve-btn" title="Pré-valider la clôture" *ngIf="isPreValidateur() && $any(d).statut === 'EN_ATTENTE_PREVALIDATION_CLOTURE'" (click)="$event.stopPropagation(); executeWorkflow('prevalider-cloture', d.id!)" style="background: #fef3c7; color: #92400e; border-color: #fcd34d;">
+                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                       </button>
+
+                       <!-- Valider clôture -->
+                        <button class="btn-action approve-btn" title="Valider la clôture" *ngIf="isValidateur() && $any(d).statut === 'EN_ATTENTE_VALIDATION_CLOTURE'" (click)="$event.stopPropagation(); executeWorkflow('valider-cloture', d.id!)" style="background: #fef3c7; color: #92400e; border-color: #fcd34d;">
+                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                       </button>
+
                        <button class="btn-action delete-btn" title="Supprimer" *ngIf="isAdmin() || isValidateur() || isPreValidateur() || (isChargeDossier() && d.statut === 'OUVERT')" (click)="$event.stopPropagation(); deleteDossier(d.id!)">
                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                        </button>
-
                      </div>
                   </td>
                 </tr>
@@ -324,6 +344,12 @@ import { FormsModule } from '@angular/forms';
                   {{ aiLoading ? 'Analyse...' : 'Analyse IA Profonde' }}
                 </button>
                 <button class="btn-secondary" (click)="closeDossierModal()">Fermer</button>
+                <button class="btn-primary" *ngIf="isChargeDossier() && selectedDossier.statut === 'OUVERT'" (click)="executeWorkflow('en-cours', selectedDossier.id!)" style="background: #0369a1;">
+                  Démarrer le dossier
+                </button>
+                <button class="btn-primary" *ngIf="isChargeDossier() && (selectedDossier.statut === 'OUVERT' || selectedDossier.statut === 'EN_COURS')" (click)="executeWorkflow('cloturer', selectedDossier.id!)" style="background: #475569;">
+                  Clôturer le dossier
+                </button>
                 <button class="btn-primary" *ngIf="isChargeDossier() || isAdmin()" [routerLink]="['/modifier-dossier', selectedDossier.reference]">
                   Modifier ce dossier
                 </button>
@@ -807,6 +833,23 @@ import { FormsModule } from '@angular/forms';
     }
     .depassement-alert-banner .highlight { font-weight: 800; text-decoration: underline; }
     
+    .refusal-box {
+      background: #fef2f2;
+      border: 2px solid #ef4444;
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: 16px;
+      animation: slideIn 0.3s ease-out;
+    }
+    .refusal-reason {
+      color: #991b1b;
+      font-weight: 600;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+    .danger-text { color: #dc2626; font-weight: 800; }
+    
     .refusal-area { 
       width: 100%; border-radius: 12px; border: 2px solid #fee2e2; background: #fef2f2; 
       padding: 16px; font-weight: 500; font-family: inherit; color: #991b1b;
@@ -1023,34 +1066,51 @@ export class MesDossiersComponent implements OnInit {
     });
   }
 
-   executeWorkflow(action: 'soumettre' | 'prevalider' | 'validerFinal' | 'refuser', id: number): void {
+  executeWorkflow(action: 'soumettre' | 'prevalider' | 'validerFinal' | 'refuser' | 'en-cours' | 'cloturer' | 'prevalider-cloture' | 'valider-cloture', id: number): void {
     if (action === 'refuser') {
       this.refusalDossierId = id;
       this.refusalMotif = '';
       this.showRefuseModal = true;
     } else {
-      const messages = {
+      const messages: any = {
         'soumettre': 'Soumettre ce dossier pour pré-validation ?',
         'prevalider': 'Voulez-vous PRÉ-VALIDER ce dossier ? (Oui pour valider, Non pour refuser)',
         'validerFinal': 'Voulez-vous VALIDER ce dossier ? (Oui pour valider, Non pour refuser)',
+        'en-cours': 'Marquer ce dossier comme "En cours" ?',
+        'cloturer': 'Soumettre une demande de CLOTURE pour ce dossier ?',
+        'prevalider-cloture': 'Voulez-vous PRÉ-VALIDER la clôture de ce dossier ?',
+        'valider-cloture': 'Voulez-vous VALIDER DEFINITIVEMENT la clôture ?',
         'refuser': ''
       };
 
       this.confirmService.open({
         title: 'Validation de Dossier',
         message: messages[action],
-        confirmLabel: action === 'soumettre' ? 'Oui, Soumettre' : 'Oui, Valider',
+        confirmLabel: action === 'soumettre' ? 'Oui, Soumettre' : 'Oui, Confirmer',
         cancelLabel: action === 'soumettre' ? 'Annuler' : 'Non, Refuser'
       }).subscribe(confirmed => {
         if (confirmed) {
-          this.dossierService[action](id).subscribe({
+          // Map action name to service method
+          const methodMap: any = {
+            'soumettre': 'soumettre',
+            'prevalider': 'prevalider',
+            'validerFinal': 'validerFinal',
+            'en-cours': 'setEnCours',
+            'cloturer': 'cloturer',
+            'prevalider-cloture': 'prevaliderCloture',
+            'valider-cloture': 'validerCloture'
+          };
+
+          const serviceMethod = methodMap[action];
+          (this.dossierService as any)[serviceMethod](id).subscribe({
             next: () => {
               this.notificationService.addNotification(`Action réussie.`, "ROLE_ADMIN", "SUCCESS");
               this.loadDossiers();
+              if (this.selectedDossier) this.closeDossierModal();
             },
-            error: (err) => alert(err.error?.message || `Erreur lors de l'action`)
+            error: (err: any) => alert(err.error?.message || `Erreur lors de l'action`)
           });
-        } else if (action === 'prevalider' || action === 'validerFinal') {
+        } else if (action === 'prevalider' || action === 'validerFinal' || action === 'prevalider-cloture' || action === 'valider-cloture') {
           // If "No" was clicked for a validation step, trigger the refusal workflow
           this.executeWorkflow('refuser', id);
         }
@@ -1099,10 +1159,13 @@ export class MesDossiersComponent implements OnInit {
 
   getStatusLabel(statut: string): string {
     switch (statut) {
-      case 'OUVERT': return 'Brouillon';
-      case 'EN_ATTENTE_PREVALIDATION': return 'Soumis';
-      case 'EN_ATTENTE_VALIDATION': return 'Pré-validé';
+      case 'OUVERT': return 'Ouvert';
+      case 'EN_COURS': return 'En cours';
+      case 'EN_ATTENTE_PREVALIDATION': return 'En attente Pré-val';
+      case 'EN_ATTENTE_VALIDATION': return 'En attente Validation';
       case 'VALIDE': return 'Validé';
+      case 'EN_ATTENTE_PREVALIDATION_CLOTURE': return 'Clôture (Attente Pré-val)';
+      case 'EN_ATTENTE_VALIDATION_CLOTURE': return 'Clôture (Attente Validation)';
       case 'CLOTURE': return 'Clôturé';
       case 'REFUSE': return 'Refusé';
       default: return statut;
@@ -1112,8 +1175,11 @@ export class MesDossiersComponent implements OnInit {
   getBadgeClass(statut: string): string {
     switch (statut) {
       case 'OUVERT': return 'info';
+      case 'EN_COURS': return 'info';
       case 'EN_ATTENTE_PREVALIDATION': return 'warning';
-      case 'EN_ATTENTE_VALIDATION': return 'danger';
+      case 'EN_ATTENTE_VALIDATION': return 'warning';
+      case 'EN_ATTENTE_PREVALIDATION_CLOTURE': return 'warning';
+      case 'EN_ATTENTE_VALIDATION_CLOTURE': return 'warning';
       case 'REFUSE': return 'danger';
       case 'VALIDE': return 'success';
       case 'CLOTURE': return 'success';

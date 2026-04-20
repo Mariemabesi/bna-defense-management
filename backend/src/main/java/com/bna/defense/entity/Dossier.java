@@ -155,16 +155,20 @@ public class Dossier extends BaseEntity {
 
     /**
      * Full status workflow:
-     * OUVERT → EN_ATTENTE_PREVALIDATION (Chargé submits) →
-     * EN_ATTENTE_VALIDATION (Pré-val approves) →
-     * CLOTURE (Validateur validates) | REFUSE (rejected at any stage)
+     * OUVERT → EN_ATTENTE_PREVALIDATION → EN_ATTENTE_VALIDATION → OUVERT (retour Chargé)
+     * OUVERT/EN_COURS → EN_ATTENTE_PREVALIDATION_CLOTURE → EN_ATTENTE_VALIDATION_CLOTURE → CLOTURE
+     * REFUSE (rejected at any stage)
      */
     public enum StatutDossier {
         OUVERT,
         EN_COURS,
+        // Workflow ouverture
         EN_ATTENTE_PREVALIDATION,
         EN_ATTENTE_VALIDATION,
         VALIDE,
+        // Workflow clôture
+        EN_ATTENTE_PREVALIDATION_CLOTURE,
+        EN_ATTENTE_VALIDATION_CLOTURE,
         CLOTURE,
         REFUSE,
         // Legacy aliases kept for backward-compat

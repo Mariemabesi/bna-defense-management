@@ -27,17 +27,11 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
     @Query("SELECT DISTINCT d FROM Dossier d " +
            "LEFT JOIN d.assignedCharge ac " +
            "LEFT JOIN ac.manager m " +
-           "LEFT JOIN m.manager mm " +
            "WHERE d.archived = false AND (" +
            "(:isSuper = true) " +
            "OR (:isCharge = true AND (d.createdBy = :username OR ac.username = :username)) " +
            "OR (:isPreVal = true AND ac IS NOT NULL AND m = :user) " +
-           "OR (:isValidateur = true AND (" +
-           "    d.statut = 'EN_ATTENTE_VALIDATION' " +
-           "    OR d.statut = 'VALIDE' " +
-           "    OR d.statut = 'REFUSE' " +
-           "    OR d.statut = 'CLOTURE'" +
-           "))" +
+           "OR (:isValidateur = true AND d.statut IN :allowedStatuses)" +
            ")")
     Page<Dossier> findAllWithRBAC(
         @Param("user") User user,
@@ -46,30 +40,31 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
         @Param("isCharge") boolean isCharge,
         @Param("isPreVal") boolean isPreVal,
         @Param("isValidateur") boolean isValidateur,
+        @Param("allowedStatuses") List<Dossier.StatutDossier> allowedStatuses,
         Pageable pageable
     );
 
+    boolean existsByReference(String reference);
 
-
-
-
-
-
-    /**
-     * Pre-validateur specific: dossiers waiting for pre-validation from their own Chargés
-     */
     @Query("SELECT d FROM Dossier d LEFT JOIN FETCH d.assignedCharge ac " +
            "WHERE ac.manager = :preValidateur " +
-           "AND d.statut = StatutDossier.EN_ATTENTE_PREVALIDATION")
-    List<Dossier> findPendingForPreValidateur(@Param("preValidateur") User preValidateur);
+           "AND d.statut = :status")
+    List<Dossier> findPendingForPreValidateur(@Param("preValidateur") User preValidateur, @Param("status") Dossier.StatutDossier status);
 
-    /**
-     * Validateur specific: dossiers waiting for final validation in their hierarchy
-     */
+    @Query("SELECT d FROM Dossier d LEFT JOIN FETCH d.assignedCharge ac " +
+           "WHERE ac.manager = :preValidateur " +
+           "AND d.statut = :status")
+    List<Dossier> findPendingClosureForPreValidateur(@Param("preValidateur") User preValidateur, @Param("status") Dossier.StatutDossier status);
+
     @Query("SELECT d FROM Dossier d LEFT JOIN FETCH d.assignedCharge ac " +
            "WHERE (ac.manager = :validateur OR ac.manager.manager = :validateur) " +
-           "AND d.statut = StatutDossier.EN_ATTENTE_VALIDATION")
-    List<Dossier> findPendingForValidateur(@Param("validateur") User validateur);
+           "AND d.statut = :status")
+    List<Dossier> findPendingForValidateur(@Param("validateur") User validateur, @Param("status") Dossier.StatutDossier status);
+
+    @Query("SELECT d FROM Dossier d LEFT JOIN FETCH d.assignedCharge ac " +
+           "WHERE (ac.manager = :validateur OR ac.manager.manager = :validateur) " +
+           "AND d.statut = :status")
+    List<Dossier> findPendingClosureForValidateur(@Param("validateur") User validateur, @Param("status") Dossier.StatutDossier status);
 
     @Query("SELECT DISTINCT d FROM Dossier d LEFT JOIN d.affaires a LEFT JOIN a.avocat aux " +
            "WHERE UPPER(d.reference) LIKE UPPER(CONCAT('%', :q, '%')) " +

@@ -78,7 +78,9 @@ public class Affaire extends BaseEntity {
     public void setStatut(StatutAffaire statut) { this.statut = statut; }
 
     public enum TypeAffaire {
-        CIVIL, PENAL, PRUDHOMME, PATRIMOINE_IMMOBILIER, CREDIT, LITIGE, GARANTIE
+        CIVIL, PENAL, PRUDHOMME, PATRIMOINE_IMMOBILIER, CREDIT, LITIGE, GARANTIE,
+        // Legacy values stored in the database (kept for backward compatibility)
+        IMM, COMM, TRAV, ADM
     }
 
     public enum StatutAffaire {

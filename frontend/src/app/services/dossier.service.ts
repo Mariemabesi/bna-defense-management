@@ -15,6 +15,10 @@ export class DossierService {
         return this.http.get<any>(`${this.apiUrl}?page=${page}&size=${size}`);
     }
 
+    getMyDossiers(page: number = 0, size: number = 10): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/mine?page=${page}&size=${size}`);
+    }
+
     createDossier(dossier: Dossier): Observable<Dossier> {
         return this.http.post<Dossier>(this.apiUrl, dossier);
     }
@@ -35,16 +39,8 @@ export class DossierService {
         return this.http.put<Dossier>(`${this.apiUrl}/${id}/statut?statut=${status}`, {});
     }
 
-    cloturerDossier(id: number): Observable<Dossier> {
-        return this.http.post<Dossier>(`${this.apiUrl}/${id}/cloturer`, {});
-    }
-
     searchDossiers(query: string): Observable<Dossier[]> {
         return this.http.get<Dossier[]>(`${this.apiUrl}/search?q=${query}`);
-    }
-
-    searchDossiersSimple(query: string): Observable<Dossier[]> {
-        return this.searchDossiers(query);
     }
 
     // Workflow Endpoints (Point 9)
@@ -62,6 +58,22 @@ export class DossierService {
 
     refuser(id: number, motif: string): Observable<Dossier> {
         return this.http.put<Dossier>(`${this.apiUrl}/${id}/refuser`, { motif });
+    }
+
+    setEnCours(id: number): Observable<Dossier> {
+        return this.http.put<Dossier>(`${this.apiUrl}/${id}/en-cours`, {});
+    }
+
+    cloturer(id: number): Observable<Dossier> {
+        return this.http.put<Dossier>(`${this.apiUrl}/${id}/cloturer`, {});
+    }
+
+    prevaliderCloture(id: number): Observable<Dossier> {
+        return this.http.put<Dossier>(`${this.apiUrl}/${id}/prevalider-cloture`, {});
+    }
+
+    validerCloture(id: number): Observable<Dossier> {
+        return this.http.put<Dossier>(`${this.apiUrl}/${id}/valider-cloture`, {});
     }
 
     getPendingForPreValidateur(): Observable<Dossier[]> {

@@ -11,9 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-@Service
-@Transactional
-public class GenericReferentielService<T, ID> {
+public abstract class GenericReferentielService<T, ID> {
 
     public Page<T> findAll(JpaSpecificationExecutor<T> repository, Specification<T> spec, Pageable pageable) {
         return repository.findAll(spec, pageable);

@@ -1,6 +1,7 @@
 package com.bna.defense.service;
 
 import com.bna.defense.entity.Affaire;
+import com.bna.defense.entity.Dossier;
 import com.bna.defense.repository.AffaireRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,22 +18,48 @@ public class AffaireService {
     @Autowired
     private com.bna.defense.repository.DossierRepository dossierRepository;
 
+    @Transactional(readOnly = true)
     public List<Affaire> getAll(com.bna.defense.entity.User currentUser) {
-        List<Affaire> all = affaireRepository.findAll();
         if (currentUser == null) return java.util.Collections.emptyList();
+        
+        List<Affaire> all = affaireRepository.findAll();
+        if (all == null) return java.util.Collections.emptyList();
 
-        boolean isSuper = currentUser.isSuperValidateur() || currentUser.getRoles().stream()
-                .anyMatch(r -> r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_ADMIN || 
-                               r.getName() == com.bna.defense.entity.Role.RoleType.ROLE_SUPER_VALIDATEUR);
+        // Safe role check
+        boolean isSuper = currentUser.isSuperValidateur();
+        if (!isSuper && currentUser.getRoles() != null) {
+            isSuper = currentUser.getRoles().stream()
+                .filter(r -> r != null && r.getName() != null)
+                .anyMatch(r -> r.getName().name().equals("ROLE_ADMIN") || 
+                               r.getName().name().equals("ROLE_SUPER_VALIDATEUR"));
+        }
 
         if (isSuper) return all;
 
+        final String uname = currentUser.getUsername();
+        final String umail = currentUser.getEmail();
+
         return all.stream()
-            .filter(a -> a.getDossier() != null && (
-                (a.getDossier().getAssignedCharge() != null && a.getDossier().getAssignedCharge().getUsername().equalsIgnoreCase(currentUser.getUsername())) ||
-                (a.getDossier().getCreatedBy() != null && a.getDossier().getCreatedBy().equalsIgnoreCase(currentUser.getUsername())) ||
-                (a.getDossier().getCreatedBy() != null && a.getDossier().getCreatedBy().equalsIgnoreCase(currentUser.getEmail()))
-            ))
+            .filter(a -> a != null && a.getDossier() != null)
+            .filter(a -> {
+                Dossier d = a.getDossier();
+                String creator = d.getCreatedBy();
+                
+                boolean isCreator = (creator != null && (
+                                     creator.equalsIgnoreCase(uname) || 
+                                     (umail != null && creator.equalsIgnoreCase(umail))
+                                   ));
+                                   
+                boolean isAssigned = false;
+                if (d.getAssignedCharge() != null) {
+                    String assignedUname = d.getAssignedCharge().getUsername();
+                    if (assignedUname != null && assignedUname.equalsIgnoreCase(uname)) {
+                        isAssigned = true;
+                    }
+                }
+                
+                return isCreator || isAssigned;
+            })
             .collect(java.util.stream.Collectors.toList());
     }
 

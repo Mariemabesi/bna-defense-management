@@ -301,8 +301,8 @@ export class HeaderComponent implements OnInit {
   onAiSearch() {
     if (!this.searchQuery.trim()) return;
     this.notificationService.addNotification("Lancement d'une recherche sémantique IA...", "ROLE_ADMIN", "INFO");
-    this.dossierService.searchDossiersSimple(this.searchQuery).subscribe({
-      next: (results) => {
+    this.dossierService.searchDossiers(this.searchQuery).subscribe({
+      next: (results: any[]) => {
         // AI search normally returns a specialized list or highlights. 
         // For now, let's just use the shared search layout.
         this.searchResults = results.slice(0, 5);

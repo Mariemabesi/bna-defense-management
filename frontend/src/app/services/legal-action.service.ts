@@ -50,6 +50,14 @@ export class LegalActionService {
     return this.http.post<Procedure>(`${this.apiUrl}/procedures/${id}/validate`, {});
   }
 
+  updateProcedure(id: number, procedure: Partial<Procedure>): Observable<Procedure> {
+    return this.http.put<Procedure>(`${this.apiUrl}/procedures/${id}`, procedure);
+  }
+
+  deleteProcedure(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/procedures/${id}`);
+  }
+
   // Audiences
   createAudience(audience: any): Observable<Audience> {
     return this.http.post<Audience>(`${this.apiUrl}/audiences`, audience);

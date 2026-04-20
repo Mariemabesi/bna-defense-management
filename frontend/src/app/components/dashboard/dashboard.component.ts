@@ -460,6 +460,15 @@ Chart.register(...registerables);
                   <div class="detail-desc">{{ selectedDossier.description }}</div>
                 </div>
 
+                <!-- REFUSAL REASON IF ANY -->
+                <div class="refusal-box dashboard-refusal" *ngIf="selectedDossier.statut === 'REFUSE' && selectedDossier.motifRefus">
+                  <div class="refusal-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span>MOTIF DU REFUS</span>
+                  </div>
+                  <div class="refusal-reason">{{ selectedDossier.motifRefus }}</div>
+                </div>
+
                 <!-- AI ANALYSIS SECTION -->
                 <div class="ai-section" *ngIf="aiAnalysis || aiLoading">
                   <div class="ai-header">
@@ -769,10 +778,13 @@ export class DashboardComponent implements OnInit {
 
   getStatusLabel(statut: string | undefined): string {
     switch (statut) {
-      case 'OUVERT': return 'Brouillon';
-      case 'EN_ATTENTE_PREVALIDATION': return 'Soumis';
-      case 'EN_ATTENTE_VALIDATION': return 'Pré-validé';
+      case 'OUVERT': return 'Ouvert';
+      case 'EN_COURS': return 'En cours';
+      case 'EN_ATTENTE_PREVALIDATION': return 'En attente Pré-val';
+      case 'EN_ATTENTE_VALIDATION': return 'En attente Validation';
       case 'VALIDE': return 'Validé';
+      case 'EN_ATTENTE_PREVALIDATION_CLOTURE': return 'Clôture (Attente Pré-val)';
+      case 'EN_ATTENTE_VALIDATION_CLOTURE': return 'Clôture (Attente Validation)';
       case 'CLOTURE': return 'Clôturé';
       case 'REFUSE': return 'Refusé';
       default: return statut || '—';
@@ -782,8 +794,11 @@ export class DashboardComponent implements OnInit {
   getBadgeClass(statut: string | undefined): string {
     switch (statut) {
       case 'OUVERT': return 'info';
+      case 'EN_COURS': return 'info';
       case 'EN_ATTENTE_PREVALIDATION': return 'warning';
-      case 'EN_ATTENTE_VALIDATION': return 'danger';
+      case 'EN_ATTENTE_VALIDATION': return 'warning';
+      case 'EN_ATTENTE_PREVALIDATION_CLOTURE': return 'warning';
+      case 'EN_ATTENTE_VALIDATION_CLOTURE': return 'warning';
       case 'REFUSE': return 'danger';
       case 'VALIDE': return 'success';
       case 'CLOTURE': return 'success';

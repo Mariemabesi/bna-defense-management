@@ -98,4 +98,56 @@ public class NotificationService {
         );
         create(charge, msg, "REFUS", dossier);
     }
+
+    /**
+     * Notify chargé de dossier that their dossier was validated and is now open
+     */
+    @Transactional
+    public void notifyValidated(User charge, Dossier dossier, String validateurUsername) {
+        String msg = String.format(
+            "🎈 Le dossier %s a été validé par %s et est maintenant OUVERT pour traitement.",
+            dossier.getReference(),
+            validateurUsername
+        );
+        create(charge, msg, "VALIDATION_SUCCES", dossier);
+    }
+
+    /**
+     * Notify pré-validateur that a dossier closure request has been submitted
+     */
+    @Transactional
+    public void notifyClotureSubmitted(User preValidateur, Dossier dossier, String chargeUsername) {
+        String msg = String.format(
+            "🔒 Le Chargé %s a demandé la clôture du dossier %s. Veuillez vérifier et valider.",
+            chargeUsername,
+            dossier.getReference()
+        );
+        create(preValidateur, msg, "CLOTURE_PREVALIDATION_REQUIRED", dossier);
+    }
+
+    /**
+     * Notify validateur that a dossier closure has passed pre-validation
+     */
+    @Transactional
+    public void notifyCloturePreValidated(User validateur, Dossier dossier, String preValUsername) {
+        String msg = String.format(
+            "🔒 La demande de clôture du dossier %s a été pré-validée par %s. Votre validation finale est requise.",
+            dossier.getReference(),
+            preValUsername
+        );
+        create(validateur, msg, "CLOTURE_VALIDATION_REQUIRED", dossier);
+    }
+
+    /**
+     * Notify chargé that dossier was definitively closed
+     */
+    @Transactional
+    public void notifyClotureDefinitive(User charge, Dossier dossier, String validateurUsername) {
+        String msg = String.format(
+            "✅ Le dossier %s a été définitivement CLÔTURÉ par %s.",
+            dossier.getReference(),
+            validateurUsername
+        );
+        create(charge, msg, "CLOTURE_DEFINITIVE", dossier);
+    }
 }

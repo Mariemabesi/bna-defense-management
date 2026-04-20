@@ -18,6 +18,9 @@ public class ProcedureJudiciaire extends BaseEntity {
     @JsonBackReference
     private Affaire affaire;
 
+    @Transient
+    private Long affaireId; // used by the frontend to pass the affaire ID
+
     @Column(nullable = false)
     private String titre;
 
@@ -41,6 +44,8 @@ public class ProcedureJudiciaire extends BaseEntity {
 
     public Affaire getAffaire() { return affaire; }
     public void setAffaire(Affaire affaire) { this.affaire = affaire; }
+    public Long getAffaireId() { return affaireId; }
+    public void setAffaireId(Long affaireId) { this.affaireId = affaireId; }
     public String getTitre() { return titre; }
     public void setTitre(String titre) { this.titre = titre; }
     public TypeProcedure getType() { return type; }

@@ -361,3 +361,32 @@ tr:hover td:first-child { box-shadow: -10px 0 20px rgba(0,0,0,0.02); }
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* REFUSAL BOX STYLES */
+.refusal-box {
+  background: #fef2f2;
+  border: 2px solid #ef4444;
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 16px;
+  animation: slideIn 0.3s ease-out;
+}
+.refusal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #dc2626;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+.refusal-reason {
+  color: #991b1b;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.dashboard-refusal {
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+}

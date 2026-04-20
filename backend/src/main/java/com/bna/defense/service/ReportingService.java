@@ -279,6 +279,7 @@ public class ReportingService {
                         dossiers = dossierRepository.findAllWithRBAC(
                             currentUser, currentUser.getUsername(),
                             false, isCharge, isPreVal, isValidateur,
+                            java.util.Arrays.asList(Dossier.StatutDossier.values()),
                             org.springframework.data.domain.Pageable.unpaged()
                         ).getContent();
                 } else {

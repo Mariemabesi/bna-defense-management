@@ -44,6 +44,15 @@ public class DossierController {
         return dossierService.getAllDossiers(user, org.springframework.data.domain.PageRequest.of(page, size));
     }
 
+    @GetMapping("/mine")
+    public org.springframework.data.domain.Page<Dossier> getMyDossiers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Principal principal) {
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+        return dossierService.getMyDossiers(user, org.springframework.data.domain.PageRequest.of(page, size));
+    }
+
     @PostMapping
     public Dossier createDossier(@RequestBody Dossier dossier, Principal principal) {
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
@@ -139,6 +148,60 @@ public class DossierController {
     }
 
     /**
+     * Chargé marks dossier as EN_COURS
+     */
+    @PutMapping("/{id}/en-cours")
+    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN')")
+    public ResponseEntity<Dossier> setEnCours(@PathVariable Long id) {
+        return ResponseEntity.ok(dossierService.updateStatut(id, Dossier.StatutDossier.EN_COURS));
+    }
+
+    /**
+     * Chargé requests closure of the dossier → sent to Pré-validateur for approval
+     */
+    @PutMapping("/{id}/cloturer")
+    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN')")
+    public ResponseEntity<?> demanderCloture(@PathVariable Long id, Principal principal) {
+        try {
+            return ResponseEntity.ok(dossierService.demanderCloture(id, principal.getName()));
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Pré-validateur approves the closure request → routes to Validateur
+     */
+    @PutMapping("/{id}/prevalider-cloture")
+    @PreAuthorize("hasRole('PRE_VALIDATEUR') or hasRole('ADMIN')")
+    public ResponseEntity<?> prevaliderCloture(@PathVariable Long id, Principal principal) {
+        try {
+            return ResponseEntity.ok(dossierService.prevaliderCloture(id, principal.getName()));
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Validateur gives final approval of closure → dossier is definitively CLOSED
+     */
+    @PutMapping("/{id}/valider-cloture")
+    @PreAuthorize("hasRole('VALIDATEUR') or hasRole('SUPER_VALIDATEUR') or hasRole('ADMIN')")
+    public ResponseEntity<?> validerCloture(@PathVariable Long id, Principal principal) {
+        try {
+            return ResponseEntity.ok(dossierService.validerCloture(id, principal.getName()));
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
      * Pré-validateur or Validateur rejects dossier with a mandatory motif (>=20 chars)
      */
     @PutMapping("/{id}/refuser")
@@ -175,6 +238,20 @@ public class DossierController {
     public List<Dossier> getPendingForValidateur(Principal principal) {
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
         return dossierService.getPendingForValidateur(user);
+    }
+
+    @GetMapping("/pending/prevalider-cloture")
+    @PreAuthorize("hasRole('PRE_VALIDATEUR') or hasRole('ADMIN')")
+    public List<Dossier> getPendingClosureForPreValidateur(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+        return dossierService.getPendingClosureForPreValidateur(user);
+    }
+
+    @GetMapping("/pending/valider-cloture")
+    @PreAuthorize("hasRole('VALIDATEUR') or hasRole('SUPER_VALIDATEUR') or hasRole('ADMIN')")
+    public List<Dossier> getPendingClosureForValidateur(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+        return dossierService.getPendingClosureForValidateur(user);
     }
 
     // ─────────────────────────────────────────────────
