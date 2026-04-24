@@ -13,6 +13,7 @@ public class User extends BaseEntity {
     private String username;
 
     @Column(nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
     @Column(nullable = false)
@@ -39,6 +40,7 @@ public class User extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private User manager;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -78,4 +80,16 @@ public class User extends BaseEntity {
 
     public User getManager() { return manager; }
     public void setManager(User manager) { this.manager = manager; }
+
+    public boolean isAdmin() {
+        return roles != null && roles.stream().anyMatch(r -> r.getName() != null && r.getName().name().equals("ROLE_ADMIN"));
+    }
+
+    public boolean hasRole(String roleName) {
+        return roles != null && roles.stream().anyMatch(r -> r.getName() != null && r.getName().name().equals(roleName));
+    }
+
+    public boolean isChargeDossier() {
+        return hasRole("ROLE_CHARGE_DOSSIER");
+    }
 }

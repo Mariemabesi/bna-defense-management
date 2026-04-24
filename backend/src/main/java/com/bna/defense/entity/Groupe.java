@@ -15,6 +15,7 @@ public class Groupe extends BaseEntity {
     private User validateur;
 
     @OneToMany(mappedBy = "groupe", fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<User> membres = new ArrayList<>();
 
     public Groupe() {}

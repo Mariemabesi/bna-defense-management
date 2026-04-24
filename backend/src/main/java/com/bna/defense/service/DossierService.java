@@ -37,6 +37,7 @@ public class DossierService {
     @Autowired private AuditLogService auditLogService;
     @Autowired private NotificationService notificationService;
     @Autowired private AuditLogRepository auditLogRepository;
+    @Autowired private com.bna.defense.repository.ProcedureJudiciaireRepository procedureJudiciaireRepository;
 
 
     private boolean hasRole(User user, Role.RoleType roleType) {
@@ -77,7 +78,6 @@ public class DossierService {
             isCharge,
             isPreVal,
             isValidateur,
-            allowedStatuses,
             sortedPageable
         );
     }
@@ -96,7 +96,6 @@ public class DossierService {
             true,  // isCharge (force charge behavior)
             false, // isPreVal
             false, // isValidateur
-            java.util.Collections.emptyList(),
             sortedPageable
         );
     }
@@ -153,45 +152,23 @@ public class DossierService {
         }
         if (dossier.getFraisReel() == null)  dossier.setFraisReel(BigDecimal.ZERO);
         if (dossier.getFraisInitial() == null) dossier.setFraisInitial(BigDecimal.ZERO);
-
+ 
         // Auto-assign chargé
         if (dossier.getAssignedCharge() == null && hasRole(creator, Role.RoleType.ROLE_CHARGE_DOSSIER)) {
             dossier.setAssignedCharge(creator);
         }
-
+ 
         Dossier saved = dossierRepository.save(dossier);
-
+ 
         // Audit log (Point 9 + User Request)
         auditLogService.log(creator.getUsername(), "CREATION_DOSSIER", "Dossier", saved.getId(),
             "Dossier " + saved.getReference() + " créé par " + creator.getUsername());
-
-        // Auto-create initial affaire with referential inheritance
-        if (saved.getAffaires() == null || saved.getAffaires().isEmpty()) {
-            Affaire defaultAffaire = new Affaire();
-            defaultAffaire.setDossier(saved);
-            defaultAffaire.setReferenceJudiciaire("JUD-" + saved.getReference());
-            defaultAffaire.setType(Affaire.TypeAffaire.CIVIL);
-            defaultAffaire.setStatut(Affaire.StatutAffaire.EN_COURS);
-            defaultAffaire.setDateOuverture(LocalDate.now());
-            // ─── Propagate referential from Dossier ───────────────────────
-            if (saved.getAvocat()      != null) defaultAffaire.setAvocat(saved.getAvocat());
-            if (saved.getPartieLitige()!= null) defaultAffaire.setAdversaire(saved.getPartieLitige());
-            // ─────────────────────────────────────────────────────────────
-            affaireRepository.save(defaultAffaire);
-
-            // Notify pré-validateur (manager of chargé)
-            if (creator.getManager() != null) {
-                notificationService.notifySubmitted(creator.getManager(), saved, creator.getUsername());
-            }
-
-            return dossierRepository.findById(saved.getId()).orElse(saved);
-        }
-
+ 
         // Notify pré-validateur (manager of chargé)
         if (creator.getManager() != null) {
             notificationService.notifySubmitted(creator.getManager(), saved, creator.getUsername());
         }
-
+ 
         return saved;
     }
 
@@ -404,6 +381,16 @@ public class DossierService {
             dossier.getStatut() != StatutDossier.EN_COURS) {
             throw new RuntimeException("Seuls les dossiers OUVERT ou EN_COURS peuvent être soumis à clôture.");
         }
+
+        // Business Rule: Un dossier ne peut être clôturé que s'il contient au moins une Affaire
+        List<Affaire> affaires = affaireRepository.findByDossier_Id(id);
+        if (affaires == null || affaires.isEmpty()) {
+            throw new RuntimeException(
+                "Impossible de clôturer le dossier '" + dossier.getReference() +
+                "' : il doit contenir au moins une affaire judiciaire avant d'être clôturé."
+            );
+        }
+
         dossier.setStatut(StatutDossier.EN_ATTENTE_PREVALIDATION_CLOTURE);
         Dossier saved = dossierRepository.save(dossier);
 
@@ -414,7 +401,8 @@ public class DossierService {
         }
 
         auditLogService.log(chargeUsername, "DEMANDE_CLOTURE", "Dossier", id,
-            "Demande de clôture du dossier " + saved.getReference() + " par " + chargeUsername);
+            "Demande de clôture du dossier " + saved.getReference() + " par " + chargeUsername +
+            ". Affaires liées: " + affaires.size());
         return saved;
     }
 
@@ -512,6 +500,31 @@ public class DossierService {
             .orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
         dossier.setArchived(true);
         dossierRepository.save(dossier);
+    }
+ 
+    @Transactional(readOnly = true)
+    public List<Dossier> getByNature(Long natureId) {
+        return dossierRepository.findByNatureAffaire_Id(natureId);
+    }
+ 
+    @Transactional(readOnly = true)
+    public List<Dossier> getByPhase(Long phaseId) {
+        return dossierRepository.findByCurrentPhase_Id(phaseId);
+    }
+ 
+    @Transactional(readOnly = true)
+    public List<Dossier> getByAvocat(Long avocatId) {
+        return dossierRepository.findByAvocat_Id(avocatId);
+    }
+ 
+    @Transactional(readOnly = true)
+    public List<Dossier> getByHuissier(Long huissierId) {
+        return dossierRepository.findByHuissier_Id(huissierId);
+    }
+ 
+    @Transactional(readOnly = true)
+    public List<Dossier> getByExpert(Long expertId) {
+        return dossierRepository.findByExpert_Id(expertId);
     }
 }
 

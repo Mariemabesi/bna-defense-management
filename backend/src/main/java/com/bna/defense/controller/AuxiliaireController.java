@@ -35,7 +35,7 @@ public class AuxiliaireController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL') or hasRole('CHARGE_DOSSIER')")
     public ResponseEntity<Auxiliaire> create(@RequestBody Auxiliaire auxiliaire) {
         if (auxiliaire.getType() == null) {
             return ResponseEntity.badRequest().build();

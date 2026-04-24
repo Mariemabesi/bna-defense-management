@@ -38,7 +38,15 @@ public class Affaire extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "avocat_id")
     private Auxiliaire avocat;
-
+ 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "huissier_id")
+    private Auxiliaire huissier;
+ 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "expert_id")
+    private Auxiliaire expert;
+ 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tribunal_id")
     private Tribunal tribunal;
@@ -47,7 +55,7 @@ public class Affaire extends BaseEntity {
     private StatutAffaire statut;
 
     @OneToMany(mappedBy = "affaire", cascade = CascadeType.ALL, orphanRemoval = true)
-    @com.fasterxml.jackson.annotation.JsonManagedReference
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private java.util.List<ProcedureJudiciaire> procedures = new java.util.ArrayList<>();
 
     // --- MANUAL GETTERS & SETTERS ---
@@ -72,6 +80,10 @@ public class Affaire extends BaseEntity {
     public void setAdversaire(PartieLitige adversaire) { this.adversaire = adversaire; }
     public Auxiliaire getAvocat() { return avocat; }
     public void setAvocat(Auxiliaire avocat) { this.avocat = avocat; }
+    public Auxiliaire getHuissier() { return huissier; }
+    public void setHuissier(Auxiliaire huissier) { this.huissier = huissier; }
+    public Auxiliaire getExpert() { return expert; }
+    public void setExpert(Auxiliaire expert) { this.expert = expert; }
     public Tribunal getTribunal() { return tribunal; }
     public void setTribunal(Tribunal tribunal) { this.tribunal = tribunal; }
     public StatutAffaire getStatut() { return statut; }

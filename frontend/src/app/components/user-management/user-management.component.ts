@@ -344,7 +344,10 @@ export class UserManagementComponent implements OnInit {
         if (ok) {
             this.http.put(`/api/admin/users/${u.id}/toggle-status`, {}).subscribe({
                 next: () => this.loadUsers(),
-                error: (err) => alert('Erreur lors du changement de statut: ' + (err.error?.message || 'Problème serveur'))
+                error: (err) => {
+                    console.error('Status toggle error:', err);
+                    alert('Erreur lors du changement de statut: ' + (err.error?.message || err.message));
+                }
             });
         }
     });
@@ -398,7 +401,10 @@ export class UserManagementComponent implements OnInit {
         this.showEditModal = false;
         this.loadUsers();
       },
-      error: (err) => alert(err.error?.message || 'Erreur lors de la mise à jour')
+      error: (err) => {
+        console.error('Update error:', err);
+        alert(err.error?.message || 'Erreur lors de la mise à jour: ' + err.message);
+      }
     });
   }
 }

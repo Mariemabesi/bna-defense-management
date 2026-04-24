@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LegalActionService, Procedure } from '../../services/legal-action.service';
+import { AuthService } from '../../services/auth.service';
 import { AffaireService, Affaire } from '../../services/affaire.service';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
@@ -42,7 +43,7 @@ import { SidebarService } from '../../services/sidebar.service';
                   <span class="mini-lbl">En cours</span>
                 </div>
               </div>
-              <button class="btn-primary" (click)="openCreateModal()">
+              <button class="btn-primary" (click)="openCreateModal()" *ngIf="canManage()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 Nouvelle Procédure
               </button>
@@ -125,13 +126,13 @@ import { SidebarService } from '../../services/sidebar.service';
                   </td>
                   <td>
                     <div class="actions-cell">
-                      <button class="btn-icon" (click)="onEditProcedure(p)" title="Modifier">
+                      <button class="btn-icon" (click)="onEditProcedure(p)" title="Modifier" *ngIf="canManage()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                       </button>
-                      <button class="btn-icon success" *ngIf="p.statut !== 'VALIDEE'" (click)="onValidate(p.id!)" title="Valider">
+                      <button class="btn-icon success" *ngIf="p.statut !== 'VALIDEE' && canManage()" (click)="onValidate(p.id!)" title="Valider">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                       </button>
-                      <button class="btn-icon danger" (click)="onDelete(p.id!)" title="Supprimer">
+                      <button class="btn-icon danger" (click)="onDelete(p.id!)" title="Supprimer" *ngIf="canManage()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                       </button>
                     </div>
@@ -142,7 +143,7 @@ import { SidebarService } from '../../services/sidebar.service';
                     <div class="empty-state-inline">
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                       <p>Aucune procédure trouvée.</p>
-                      <button class="btn-primary" (click)="openCreateModal()">Créer une procédure</button>
+                      <button class="btn-primary" (click)="openCreateModal()" *ngIf="canManage()">Créer une procédure</button>
                     </div>
                   </td>
                 </tr>
@@ -506,9 +507,14 @@ export class LegalActionComponent implements OnInit {
   constructor(
     private legalService: LegalActionService,
     private affaireService: AffaireService,
+    private authService: AuthService,
     private confirmService: ConfirmDialogService,
     public sidebarService: SidebarService
   ) {}
+
+  canManage(): boolean {
+    return this.authService.hasRole('ROLE_ADMIN') || this.authService.hasRole('ROLE_CHARGE_DOSSIER');
+  }
 
   ngOnInit(): void {
     this.loadData();

@@ -62,8 +62,28 @@ public class AffaireController {
     }
 
     @PutMapping("/{id}/statut")
-    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN') or hasRole('VALIDATEUR') or hasRole('PRE_VALIDATEUR') or hasRole('SUPER_VALIDATEUR')")
+    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN')")
     public ResponseEntity<Affaire> updateStatut(@PathVariable Long id, @RequestParam Affaire.StatutAffaire statut) {
         return ResponseEntity.ok(affaireService.updateStatut(id, statut));
+    }
+ 
+    @GetMapping("/by-tribunal/{tribunalId}")
+    public List<Affaire> getByTribunal(@PathVariable Long tribunalId) {
+        return affaireService.getByTribunal(tribunalId);
+    }
+ 
+    @GetMapping("/by-avocat/{avocatId}")
+    public List<Affaire> getByAvocat(@PathVariable Long avocatId) {
+        return affaireService.getByAvocat(avocatId);
+    }
+ 
+    @GetMapping("/by-huissier/{huissierId}")
+    public List<Affaire> getByHuissier(@PathVariable Long huissierId) {
+        return affaireService.getByHuissier(huissierId);
+    }
+ 
+    @GetMapping("/by-expert/{expertId}")
+    public List<Affaire> getByExpert(@PathVariable Long expertId) {
+        return affaireService.getByExpert(expertId);
     }
 }

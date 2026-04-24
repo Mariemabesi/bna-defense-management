@@ -36,7 +36,13 @@ public class DatabaseMigrationRunner implements CommandLineRunner {
 
             jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS notifications (" +
                 "id SERIAL PRIMARY KEY, user_id INTEGER, message TEXT, type VARCHAR(50), " +
-                "read BOOLEAN DEFAULT FALSE, dossier_id INTEGER, created_at TIMESTAMP DEFAULT NOW())");
+                "read BOOLEAN DEFAULT FALSE, dossier_id INTEGER, created_at TIMESTAMP DEFAULT NOW(), " +
+                "updated_at TIMESTAMP DEFAULT NOW(), created_by VARCHAR(100), last_modified_by VARCHAR(100))");
+
+            // Ensure columns exist if table was already created
+            jdbcTemplate.execute("ALTER TABLE notifications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()");
+            jdbcTemplate.execute("ALTER TABLE notifications ADD COLUMN IF NOT EXISTS created_by VARCHAR(100)");
+            jdbcTemplate.execute("ALTER TABLE notifications ADD COLUMN IF NOT EXISTS last_modified_by VARCHAR(100)");
 
             System.out.println("--- AI Migration: Successfully updated schema ---");
         } catch (Exception e) {

@@ -31,7 +31,7 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
            "(:isSuper = true) " +
            "OR (:isCharge = true AND (d.createdBy = :username OR ac.username = :username)) " +
            "OR (:isPreVal = true AND ac IS NOT NULL AND m = :user) " +
-           "OR (:isValidateur = true AND d.statut IN :allowedStatuses)" +
+           "OR (:isValidateur = true)" +
            ")")
     Page<Dossier> findAllWithRBAC(
         @Param("user") User user,
@@ -40,7 +40,6 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
         @Param("isCharge") boolean isCharge,
         @Param("isPreVal") boolean isPreVal,
         @Param("isValidateur") boolean isValidateur,
-        @Param("allowedStatuses") List<Dossier.StatutDossier> allowedStatuses,
         Pageable pageable
     );
 
@@ -73,4 +72,18 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
            "OR UPPER(d.clientName) LIKE UPPER(CONCAT('%', :q, '%')) " +
            "OR UPPER(aux.nom) LIKE UPPER(CONCAT('%', :q, '%'))")
     List<Dossier> searchDossiers(@Param("q") String query);
+
+    List<Dossier> findByNatureAffaire_Id(Long id);
+    List<Dossier> findByCurrentPhase_Id(Long id);
+    List<Dossier> findByAvocat_Id(Long id);
+    List<Dossier> findByHuissier_Id(Long id);
+    List<Dossier> findByExpert_Id(Long id);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE Dossier d SET d.assignedCharge = null WHERE d.assignedCharge.id = :userId")
+    void clearUserLinksForAssignedCharge(@Param("userId") Long userId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE Dossier d SET d.groupValidateur = null WHERE d.groupValidateur.id = :userId")
+    void clearUserLinksForGroupValidateur(@Param("userId") Long userId);
 }

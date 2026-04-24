@@ -54,6 +54,7 @@ public class DossierController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN')")
     public Dossier createDossier(@RequestBody Dossier dossier, Principal principal) {
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
         return dossierService.createDossier(dossier, user);
@@ -319,9 +320,39 @@ public class DossierController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN')")
     public ResponseEntity<Void> archiverDossier(@PathVariable Long id) {
         dossierService.archiveDossier(id);
         return ResponseEntity.noContent().build();
+    }
+ 
+    // ─────────────────────────────────────────────────
+    // REFERENTIEL LINK ENDPOINTS
+    // ─────────────────────────────────────────────────
+ 
+    @GetMapping("/by-nature/{natureId}")
+    public List<Dossier> getByNature(@PathVariable Long natureId) {
+        return dossierService.getByNature(natureId);
+    }
+ 
+    @GetMapping("/by-phase/{phaseId}")
+    public List<Dossier> getByPhase(@PathVariable Long phaseId) {
+        return dossierService.getByPhase(phaseId);
+    }
+ 
+    @GetMapping("/by-avocat/{avocatId}")
+    public List<Dossier> getByAvocat(@PathVariable Long avocatId) {
+        return dossierService.getByAvocat(avocatId);
+    }
+ 
+    @GetMapping("/by-huissier/{huissierId}")
+    public List<Dossier> getByHuissier(@PathVariable Long huissierId) {
+        return dossierService.getByHuissier(huissierId);
+    }
+ 
+    @GetMapping("/by-expert/{expertId}")
+    public List<Dossier> getByExpert(@PathVariable Long expertId) {
+        return dossierService.getByExpert(expertId);
     }
 }
 

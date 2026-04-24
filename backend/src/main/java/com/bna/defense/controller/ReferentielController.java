@@ -29,7 +29,7 @@ public class ReferentielController {
     public List<Greffier> getAllGreffiers() { return greffierRepository.findAll(); }
 
     @PostMapping("/greffiers")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL') or hasRole('CHARGE_DOSSIER')")
     public Greffier createGreffier(@RequestBody Greffier item) { return greffierRepository.save(item); }
 
     // --- NOTAIRES ---
@@ -37,7 +37,7 @@ public class ReferentielController {
     public List<Notaire> getAllNotaires() { return notaireRepository.findAll(); }
 
     @PostMapping("/notaires")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL') or hasRole('CHARGE_DOSSIER')")
     public Notaire createNotaire(@RequestBody Notaire item) { return notaireRepository.save(item); }
 
     // --- MANDATAIRES ---
@@ -45,7 +45,7 @@ public class ReferentielController {
     public List<Mandataire> getAllMandataires() { return mandataireRepository.findAll(); }
 
     @PostMapping("/mandataires")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL') or hasRole('CHARGE_DOSSIER')")
     public Mandataire createMandataire(@RequestBody Mandataire item) { return mandataireRepository.save(item); }
 
     // --- GROUPES ---

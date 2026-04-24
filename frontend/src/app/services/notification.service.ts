@@ -9,6 +9,10 @@ export interface Notification {
     type: 'INFO' | 'SUCCESS' | 'WARNING';
     timestamp: string;
     read: boolean;
+    dossier?: {
+        id: number;
+        reference: string;
+    };
 }
 
 @Injectable({

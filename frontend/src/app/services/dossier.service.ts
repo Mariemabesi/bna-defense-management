@@ -110,6 +110,26 @@ export class DossierService {
     archiveDossier(id: number): Observable<void> {
         return this.http.delete<void>(`${this.apiUrl}/${id}`);
     }
+ 
+    getByNature(id: number): Observable<Dossier[]> {
+        return this.http.get<Dossier[]>(`${this.apiUrl}/by-nature/${id}`);
+    }
+ 
+    getByPhase(id: number): Observable<Dossier[]> {
+        return this.http.get<Dossier[]>(`${this.apiUrl}/by-phase/${id}`);
+    }
+ 
+    getByAvocat(id: number): Observable<Dossier[]> {
+        return this.http.get<Dossier[]>(`${this.apiUrl}/by-avocat/${id}`);
+    }
+ 
+    getByHuissier(id: number): Observable<Dossier[]> {
+        return this.http.get<Dossier[]>(`${this.apiUrl}/by-huissier/${id}`);
+    }
+ 
+    getByExpert(id: number): Observable<Dossier[]> {
+        return this.http.get<Dossier[]>(`${this.apiUrl}/by-expert/${id}`);
+    }
 }
 
 

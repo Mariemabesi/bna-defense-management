@@ -10,4 +10,8 @@ public interface AffaireRepository extends JpaRepository<Affaire, Long> {
     List<Affaire> findAll();
 
     List<Affaire> findByDossier_Id(Long dossierId);
+    List<Affaire> findByTribunal_Id(Long tribunalId);
+    List<Affaire> findByAvocat_Id(Long avocatId);
+    List<Affaire> findByHuissier_Id(Long huissierId);
+    List<Affaire> findByExpert_Id(Long expertId);
 }

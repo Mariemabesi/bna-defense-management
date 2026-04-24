@@ -38,7 +38,8 @@ public class UserService {
                 roles.add(role);
             });
         }
-        user.setRoles(roles);
+        user.getRoles().clear();
+        user.getRoles().addAll(roles);
     }
 
     public User createUser(User user, Set<Role.RoleType> roleTypes) {

@@ -29,10 +29,10 @@ export const routes: Routes = [
     { path: 'forgot-password', loadComponent: () => import('./components/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent) },
     { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
     { path: 'mes-dossiers', component: MesDossiersComponent, canActivate: [authGuard] },
-    { path: 'nouveau-dossier', component: DossierFormComponent, canActivate: [authGuard] },
-    { path: 'nouvelle-affaire', loadComponent: () => import('./components/affaire-form/affaire-form.component').then(m => m.AffaireFormComponent), canActivate: [authGuard] },
+    { path: 'nouveau-dossier', component: DossierFormComponent, canActivate: [() => roleGuard(['ROLE_CHARGE_DOSSIER', 'ROLE_ADMIN'])] },
+    { path: 'nouvelle-affaire', loadComponent: () => import('./components/affaire-form/affaire-form.component').then(m => m.AffaireFormComponent), canActivate: [() => roleGuard(['ROLE_CHARGE_DOSSIER', 'ROLE_ADMIN'])] },
     { path: 'affaires', loadComponent: () => import('./components/affaire-list/affaire-list.component').then(m => m.AffaireListComponent), canActivate: [authGuard] },
-    { path: 'modifier-dossier/:id', component: DossierFormComponent, canActivate: [authGuard] },
+    { path: 'modifier-dossier/:id', component: DossierFormComponent, canActivate: [() => roleGuard(['ROLE_CHARGE_DOSSIER', 'ROLE_ADMIN'])] },
     { path: 'nouvelle-demande-frais', component: FraisFormComponent, canActivate: [authGuard] },
     { path: 'mes-frais', loadComponent: () => import('./components/mes-frais/mes-frais.component').then(m => m.MesFraisComponent), canActivate: [authGuard] },
     // ⚖️ RÉFÉRENTIEL MODULE (Static Hub & Dynamic Engine)

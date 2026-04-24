@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -71,6 +72,46 @@ public class NotificationController {
         if (user != null) {
             notificationService.markAllAsRead(user);
         }
-        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createNotification(@RequestBody NotificationRequest request) {
+        try {
+            // Find users by role name
+            List<User> recipients;
+            if (request.getRole() != null) {
+                recipients = userRepository.findAll().stream()
+                    .filter(u -> u.getRoles().stream()
+                        .anyMatch(r -> r.getName().name().equals(request.getRole())))
+                    .collect(Collectors.toList());
+            } else {
+                // Default to ADMIN if no role specified
+                recipients = userRepository.findAll().stream()
+                    .filter(u -> u.getRoles().stream()
+                        .anyMatch(r -> r.getName().name().equals("ROLE_ADMIN")))
+                    .collect(Collectors.toList());
+            }
+
+            for (User recipient : recipients) {
+                notificationService.create(recipient, request.getMessage(), request.getType(), null);
+            }
+            
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error creating notification: " + e.getMessage());
+        }
+    }
+
+    public static class NotificationRequest {
+        private String message;
+        private String role;
+        private String type;
+
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+        public String getRole() { return role; }
+        public void setRole(String role) { this.role = role; }
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
     }
 }

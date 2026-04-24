@@ -40,6 +40,10 @@ public class ProcedureJudiciaire extends BaseEntity {
     @OneToOne(mappedBy = "procedure", cascade = CascadeType.ALL)
     private Jugement jugement;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator_id")
+    private User creator;
+
     public ProcedureJudiciaire() {}
 
     public Affaire getAffaire() { return affaire; }
@@ -58,6 +62,8 @@ public class ProcedureJudiciaire extends BaseEntity {
     public void setAudiences(List<Audience> audiences) { this.audiences = audiences; }
     public Jugement getJugement() { return jugement; }
     public void setJugement(Jugement jugement) { this.jugement = jugement; }
+    public User getCreator() { return creator; }
+    public void setCreator(User creator) { this.creator = creator; }
 
     public enum TypeProcedure {
         ASSIGNATION, REQUETE, APPEL, CASSATION, REFERE, AUTRE

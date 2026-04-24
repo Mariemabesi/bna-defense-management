@@ -8,8 +8,11 @@ import { NotificationService } from '../../services/notification.service';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
 import { ConfirmDialogService } from '../shared/confirm-dialog/confirm-dialog.service';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, forkJoin, of } from 'rxjs';
+import { takeUntil, finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { SidebarService } from '../../services/sidebar.service';
+import { DossierService } from '../../services/dossier.service';
+import { AffaireService } from '../../services/affaire.service';
 
 interface Column {
   key: string;
@@ -63,7 +66,7 @@ interface RefConfig {
                 <span class="sum-label">DERNIÈRE MAJ</span>
                 <span class="sum-val">AUJOURD'HUI</span>
              </div>
-             <button class="btn-primary-mini" *ngIf="isAdmin()" (click)="openAddModal()">
+             <button class="btn-primary-mini" *ngIf="canManage()" (click)="openAddModal()">
                 + Ajouter {{ config.title }}
              </button>
           </div>
@@ -95,7 +98,7 @@ interface RefConfig {
                       <th *ngFor="let col of config.columns">{{ col.label }}</th>
                       <th class="badge-th">Dossiers Traités</th>
                       <th class="rating-th">Rating</th>
-                      <th *ngIf="isAdmin()" class="actions-th">Voir</th>
+                      <th *ngIf="canManage()" class="actions-th">Voir</th>
                    </tr>
                 </thead>
                 <tbody>
@@ -120,7 +123,7 @@ interface RefConfig {
                       <span class="star gold" *ngFor="let s of [1,2,3,4,5]">★</span>
                    </div>
                 </td>
-                <td *ngIf="isAdmin()" class="actions-td">
+                <td *ngIf="canManage()" class="actions-td">
                          <button class="btn-admin-review">Voir</button>
                       </td>
                    </tr>
@@ -182,13 +185,45 @@ interface RefConfig {
                     <span class="m-lbl">Score Global ⭐</span>
                  </div>
               </div>
+ 
+              <!-- LINKED ITEMS SECTION -->
+              <div class="rs-links-section">
+                <div class="rs-section-header">
+                  <h3>Dossiers & Affaires Liés 🔗</h3>
+                </div>
+                
+                <div *ngIf="loadingLinks" class="rs-loader-mini">Chargement des liens...</div>
+                
+                <div class="rs-links-list" *ngIf="!loadingLinks">
+                  <div class="rs-link-group" *ngIf="linkedDossiers.length > 0">
+                    <label>Dossiers ({{ linkedDossiers.length }})</label>
+                    <div class="rs-link-card" *ngFor="let d of linkedDossiers" [routerLink]="['/mes-dossiers']" [queryParams]="{highlight: d.reference}">
+                      <span class="l-ref">{{ d.reference }}</span>
+                      <span class="l-titre">{{ d.titre }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="rs-link-group" *ngIf="linkedAffaires.length > 0">
+                    <label>Affaires ({{ linkedAffaires.length }})</label>
+                    <div class="rs-link-card" *ngFor="let a of linkedAffaires">
+                      <span class="l-ref">{{ a.referenceJudiciaire }}</span>
+                      <span class="l-type">{{ a.type }}</span>
+                      <span class="l-statut" [ngClass]="a.statut.toLowerCase()">{{ a.statut }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="rs-empty-links" *ngIf="linkedDossiers.length === 0 && linkedAffaires.length === 0">
+                    Aucun dossier ou affaire lié.
+                  </div>
+                </div>
+              </div>
 
               <div class="rs-actions-hub">
-                 <button class="btn-rs-primary" *ngIf="isAdmin()" (click)="onEdit(selectedItem)">
+                 <button class="btn-rs-primary" *ngIf="canManage()" (click)="onEdit(selectedItem)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path></svg>
                     Mettre à jour
                  </button>
-                 <button class="btn-rs-danger" *ngIf="isAdmin()" (click)="onDelete(selectedItem)">
+                 <button class="btn-rs-danger" *ngIf="canManage()" (click)="onDelete(selectedItem)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path></svg>
                     Supprimer
                  </button>
@@ -333,6 +368,27 @@ interface RefConfig {
     .perf-metric { display: flex; flex-direction: column; align-items: center; }
     .m-val { font-size: 18px; font-weight: 800; color: #1e293b; }
     .m-lbl { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 4px; }
+ 
+    /* LINKED ITEMS SIDEBAR STYLES */
+    .rs-links-section { margin-top: 8px; }
+    .rs-section-header h3 { font-size: 14px; font-weight: 800; color: #1e293b; margin-bottom: 16px; }
+    .rs-links-list { display: flex; flex-direction: column; gap: 20px; }
+    .rs-link-group { display: flex; flex-direction: column; gap: 8px; }
+    .rs-link-group label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .rs-link-card { 
+      background: #f8fafc; border: 1.5px solid #f1f5f9; border-radius: 14px; padding: 12px 16px; 
+      display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: all 0.2s;
+    }
+    .rs-link-card:hover { border-color: #008766; background: white; transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .l-ref { font-size: 13px; font-weight: 800; color: #008766; font-family: monospace; }
+    .l-titre, .l-type { font-size: 12px; font-weight: 600; color: #475569; }
+    .l-statut { font-size: 9px; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; width: fit-content; margin-top: 4px; }
+    .l-statut.en_cours { background: #e0f2fe; color: #0369a1; }
+    .l-statut.gagne { background: #dcfce7; color: #15803d; }
+    .l-statut.perdu { background: #fee2e2; color: #b91c1c; }
+    
+    .rs-loader-mini { font-size: 12px; color: #94a3b8; font-style: italic; }
+    .rs-empty-links { font-size: 13px; color: #94a3b8; font-style: italic; background: #f8fafc; padding: 16px; border-radius: 12px; text-align: center; border: 1.5px dashed #e2e8f0; }
   `]
 })
 export class ReferentielListComponent implements OnInit, OnDestroy {
@@ -350,6 +406,10 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
   selectedItem: any = null; // REVIEW PANEL STATE
   editData: any = {};
   currentId: number | null = null;
+  
+  linkedDossiers: any[] = [];
+  linkedAffaires: any[] = [];
+  loadingLinks: boolean = false;
   
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
@@ -409,6 +469,34 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
           { key: 'telephone', label: 'Téléphone', type: 'text' }
         ]
     },
+    'nature-affaire': {
+        title: 'Natures d\'Affaires',
+        subtitle: 'Classification des types de litiges.',
+        path: 'nature-affaire',
+        columns: [
+          { key: 'code', label: 'Code' },
+          { key: 'libelle', label: 'Libellé' }
+        ],
+        filters: [],
+        formFields: [
+          { key: 'code', label: 'Code', type: 'text' },
+          { key: 'libelle', label: 'Libellé', type: 'text' }
+        ]
+    },
+    'phase-procedure': {
+        title: 'Phases de Procédure',
+        subtitle: 'Étapes du cycle de vie juridique.',
+        path: 'phase-procedure',
+        columns: [
+          { key: 'code', label: 'Code' },
+          { key: 'libelle', label: 'Libellé' }
+        ],
+        filters: [],
+        formFields: [
+          { key: 'code', label: 'Code', type: 'text' },
+          { key: 'libelle', label: 'Libellé', type: 'text' }
+        ]
+    },
     'tribunaux': {
       title: 'Tribunaux',
       subtitle: 'Référentiel des juridictions.',
@@ -439,7 +527,9 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private notificationService: NotificationService,
     private confirmService: ConfirmDialogService,
-    public sidebarService: SidebarService
+    public sidebarService: SidebarService,
+    private dossierService: DossierService,
+    private affaireService: AffaireService
   ) {}
 
   ngOnInit(): void {
@@ -507,13 +597,61 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
 
   goToPage(p: number) { this.page = p; this.loadData(); }
 
-  onSelectItem(item: any) { this.selectedItem = item; }
+  onSelectItem(item: any) { 
+    this.selectedItem = item; 
+    this.fetchLinks(item);
+  }
+
+  fetchLinks(item: any) {
+    if (!item.id) return;
+    this.loadingLinks = true;
+    this.linkedDossiers = [];
+    this.linkedAffaires = [];
+
+    const requests: any = {};
+
+    if (this.type === 'avocats' || this.type === 'huissiers' || this.type === 'experts') {
+      const method = this.type === 'avocats' ? 'getByAvocat' : 
+                     (this.type === 'huissiers' ? 'getByHuissier' : 'getByExpert');
+      
+      requests.dossiers = (this.dossierService as any)[method](item.id);
+      requests.affaires = (this.affaireService as any)[method](item.id);
+    } else if (this.type === 'nature-affaire') {
+      requests.dossiers = this.dossierService.getByNature(item.id);
+    } else if (this.type === 'phase-procedure') {
+      requests.dossiers = this.dossierService.getByPhase(item.id);
+    } else if (this.type === 'tribunaux') {
+      requests.affaires = this.affaireService.getByTribunal(item.id);
+    }
+
+    if (Object.keys(requests).length === 0) {
+      this.loadingLinks = false;
+      return;
+    }
+
+    forkJoin(requests).pipe(
+      finalize(() => this.loadingLinks = false)
+    ).subscribe({
+      next: (res: any) => {
+        this.linkedDossiers = res.dossiers || [];
+        this.linkedAffaires = res.affaires || [];
+      },
+      error: (err) => {
+        console.error('Error fetching links:', err);
+        this.linkedDossiers = [];
+        this.linkedAffaires = [];
+      }
+    });
+  }
 
   resolvePath(obj: any, path: string): any {
     return path.split('.').reduce((acc, part) => acc && acc[part], obj);
   }
 
-  isAdmin(): boolean { return this.authService.hasRole('ROLE_ADMIN'); }
+  canManage(): boolean { 
+    return this.authService.hasRole('ROLE_ADMIN') || 
+           this.authService.hasRole('ROLE_CHARGE_DOSSIER'); 
+  }
 
   openAddModal() { this.currentId = null; this.editData = {}; this.showModal = true; }
 

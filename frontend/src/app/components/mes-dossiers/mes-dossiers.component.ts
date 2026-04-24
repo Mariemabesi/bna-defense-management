@@ -163,7 +163,7 @@ import { FormsModule } from '@angular/forms';
                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
                        </button>
 
-                       <button class="btn-action delete-btn" title="Supprimer" *ngIf="isAdmin() || isValidateur() || isPreValidateur() || (isChargeDossier() && d.statut === 'OUVERT')" (click)="$event.stopPropagation(); deleteDossier(d.id!)">
+                       <button class="btn-action delete-btn" title="Supprimer" *ngIf="isAdmin() || (isChargeDossier() && d.statut === 'OUVERT')" (click)="$event.stopPropagation(); deleteDossier(d.id!)">
                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                        </button>
                      </div>
@@ -246,6 +246,40 @@ import { FormsModule } from '@angular/forms';
                   <span class="detail-label">Description / Notes</span>
                   <div class="detail-desc">{{ selectedDossier.description }}</div>
                 </div>
+ 
+                <!-- PARTICIPANTS SECTION -->
+                <div class="participants-section">
+                  <div class="section-subtitle">PARTICIPANTS & AUXILIAIRES</div>
+                  <div class="participants-grid">
+                    <div class="participant-card" *ngIf="selectedDossier.avocat">
+                      <div class="p-icon avocat">⚖️</div>
+                      <div class="p-info">
+                        <span class="p-role">Avocat</span>
+                        <span class="p-name">{{ selectedDossier.avocat.nom }}</span>
+                        <span class="p-contact" *ngIf="selectedDossier.avocat.telephone">{{ selectedDossier.avocat.telephone }}</span>
+                      </div>
+                    </div>
+                    <div class="participant-card" *ngIf="selectedDossier.huissier">
+                      <div class="p-icon huissier">📜</div>
+                      <div class="p-info">
+                        <span class="p-role">Huissier</span>
+                        <span class="p-name">{{ selectedDossier.huissier.nom }}</span>
+                        <span class="p-contact" *ngIf="selectedDossier.huissier.telephone">{{ selectedDossier.huissier.telephone }}</span>
+                      </div>
+                    </div>
+                    <div class="participant-card" *ngIf="selectedDossier.expert">
+                      <div class="p-icon expert">🔍</div>
+                      <div class="p-info">
+                        <span class="p-role">Expert</span>
+                        <span class="p-name">{{ selectedDossier.expert.nom }}</span>
+                        <span class="p-contact" *ngIf="selectedDossier.expert.telephone">{{ selectedDossier.expert.telephone }}</span>
+                      </div>
+                    </div>
+                    <div class="no-data" *ngIf="!selectedDossier.avocat && !selectedDossier.huissier && !selectedDossier.expert">
+                      Aucun auxiliaire assigné à ce dossier.
+                    </div>
+                  </div>
+                </div>
 
                 <!-- REFUSAL REASON IF ANY -->
                 <div class="detail-group refusal-box" *ngIf="selectedDossier.statut === 'REFUSE' && selectedDossier.motifRefus">
@@ -280,14 +314,17 @@ import { FormsModule } from '@angular/forms';
                         <span class="aff-ref">{{ aff.referenceJudiciaire }}</span>
                         <span class="aff-type">{{ aff.type }}</span>
                       </div>
-                      <div class="aff-status">
-                        <select [value]="aff.statut" (change)="updateAffaireStatut(aff, $any($event.target).value)" 
+                      <div class="aff-actions">
+                        <select [value]="aff.statut" (change)="updateAffaireStatut(aff, $any($event.target).value)"
                                 class="aff-select" [ngClass]="aff.statut.toLowerCase()">
                           <option value="EN_COURS">EN COURS</option>
                           <option value="GAGNE">GAGNE</option>
                           <option value="PERDU">PERDU</option>
                           <option value="CLASSE">CLASSE</option>
                         </select>
+                        <button class="btn-aff-detail" (click)="viewAffaireDetail(aff)" title="Voir les détails">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -353,6 +390,123 @@ import { FormsModule } from '@angular/forms';
                 <button class="btn-primary" *ngIf="isChargeDossier() || isAdmin()" [routerLink]="['/modifier-dossier', selectedDossier.reference]">
                   Modifier ce dossier
                 </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- AFFAIRE DETAIL SUB-MODAL -->
+          <div class="modal-overlay affaire-sub-overlay" *ngIf="selectedAffaireDetail" (click)="closeAffaireDetail()">
+            <div class="modal-content affaire-detail-modal slideUp" (click)="$event.stopPropagation()">
+              <div class="modal-header">
+                <div class="aff-modal-title">
+                  <span class="aff-type-badge">{{ selectedAffaireDetail.type }}</span>
+                  <h3>{{ selectedAffaireDetail.referenceJudiciaire }}</h3>
+                </div>
+                <button class="btn-close" (click)="closeAffaireDetail()">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+
+              <div class="modal-body aff-detail-body">
+                <!-- Main info grid -->
+                <div class="aff-detail-grid">
+                  <div class="aff-detail-item full">
+                    <label>Titre / Objet</label>
+                    <div class="aff-detail-val title">{{ selectedAffaireDetail.titre || '—' }}</div>
+                  </div>
+                  <div class="aff-detail-item">
+                    <label>Référence Judiciaire</label>
+                    <div class="aff-detail-val mono">{{ selectedAffaireDetail.referenceJudiciaire }}</div>
+                  </div>
+                  <div class="aff-detail-item">
+                    <label>Statut</label>
+                    <span class="status-pill-aff" [ngClass]="selectedAffaireDetail.statut">{{ selectedAffaireDetail.statut }}</span>
+                  </div>
+                  <div class="aff-detail-item">
+                    <label>Type de Procédure</label>
+                    <div class="aff-detail-val">{{ selectedAffaireDetail.type }}</div>
+                  </div>
+                  <div class="aff-detail-item">
+                    <label>Date d'Ouverture</label>
+                    <div class="aff-detail-val">{{ selectedAffaireDetail.dateOuverture | date:'dd MMMM yyyy' }}</div>
+                  </div>
+                  <div class="aff-detail-item full" *ngIf="selectedAffaireDetail.description">
+                    <label>Description</label>
+                    <div class="aff-detail-desc">{{ selectedAffaireDetail.description }}</div>
+                  </div>
+                </div>
+ 
+                <!-- Affaire Participants -->
+                <div class="aff-participants-section">
+                  <div class="aff-proc-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    ACTEURS ET AUXILIAIRES
+                  </div>
+                  <div class="aff-participants-list">
+                    <div class="aff-part-item" *ngIf="selectedAffaireDetail.tribunal">
+                      <div class="aff-part-icon tribunal">🏛️</div>
+                      <div class="aff-part-info">
+                        <span class="aff-part-role">Tribunal</span>
+                        <span class="aff-part-name">{{ selectedAffaireDetail.tribunal.nom }}</span>
+                      </div>
+                    </div>
+                    <div class="aff-part-item" *ngIf="selectedAffaireDetail.avocat">
+                      <div class="aff-part-icon avocat">⚖️</div>
+                      <div class="aff-part-info">
+                        <span class="aff-part-role">Avocat</span>
+                        <span class="aff-part-name">{{ selectedAffaireDetail.avocat.nom }}</span>
+                      </div>
+                    </div>
+                    <div class="aff-part-item" *ngIf="selectedAffaireDetail.huissier">
+                      <div class="aff-part-icon huissier">📜</div>
+                      <div class="aff-part-info">
+                        <span class="aff-part-role">Huissier</span>
+                        <span class="aff-part-name">{{ selectedAffaireDetail.huissier.nom }}</span>
+                      </div>
+                    </div>
+                    <div class="aff-part-item" *ngIf="selectedAffaireDetail.expert">
+                      <div class="aff-part-icon expert">🔍</div>
+                      <div class="aff-part-info">
+                        <span class="aff-part-role">Expert</span>
+                        <span class="aff-part-name">{{ selectedAffaireDetail.expert.nom }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Procedures section -->
+                <div class="aff-proc-section">
+                  <div class="aff-proc-header">
+                    <div class="aff-proc-title">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                      PROCÉDURES JUDICIAIRES
+                    </div>
+                    <span class="aff-proc-count">{{ selectedAffaireProcedures.length }} procédure(s)</span>
+                  </div>
+
+                  <div *ngIf="loadingAffaireProcs" class="aff-proc-loading">
+                    <div class="mini-spinner"></div> Chargement...
+                  </div>
+
+                  <div *ngIf="!loadingAffaireProcs && selectedAffaireProcedures.length === 0" class="aff-proc-empty">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    <p>Aucune procédure pour cette affaire.</p>
+                  </div>
+
+                  <div class="aff-proc-list" *ngIf="!loadingAffaireProcs && selectedAffaireProcedures.length > 0">
+                    <div class="aff-proc-row" *ngFor="let p of selectedAffaireProcedures">
+                      <div class="proc-row-left">
+                        <span class="proc-row-titre">{{ p.titre }}</span>
+                        <span class="proc-row-type">{{ p.type }}</span>
+                      </div>
+                      <span class="proc-row-pill" [ngClass]="p.statut.toLowerCase()">{{ p.statut }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button class="btn-secondary" (click)="closeAffaireDetail()">Fermer</button>
               </div>
             </div>
           </div>
@@ -785,6 +939,98 @@ import { FormsModule } from '@angular/forms';
     .aff-select.perdu { background: #fef2f2; color: #991b1b; }
     .aff-select.classe { background: #f1f5f9; color: #475569; }
 
+    .aff-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-aff-detail {
+      width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid #e2e8f0;
+      background: white; color: #64748b; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+    }
+    .btn-aff-detail:hover { border-color: #008766; color: #008766; background: rgba(0,135,102,0.06); transform: scale(1.1); }
+
+    /* AFFAIRE DETAIL SUB-MODAL */
+    .affaire-sub-overlay { z-index: 2100; }
+    .affaire-detail-modal {
+      max-width: 680px; border-radius: 28px;
+      box-shadow: 0 32px 64px -12px rgba(0,0,0,0.3);
+    }
+    .aff-modal-title { display: flex; flex-direction: column; gap: 6px; }
+    .aff-modal-title h3 { margin: 0; font-size: 20px; font-weight: 800; color: #1e293b; }
+    .aff-type-badge {
+      background: #008766; color: white; padding: 3px 10px; border-radius: 6px;
+      font-size: 10px; font-weight: 800; text-transform: uppercase; width: fit-content;
+    }
+
+    .aff-detail-body { padding: 32px; max-height: 65vh; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+    .aff-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .aff-detail-item.full { grid-column: span 2; }
+    .aff-detail-item label {
+      display: block; font-size: 10px; font-weight: 800; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+    }
+    .aff-detail-val { font-size: 15px; font-weight: 600; color: #1e293b; }
+    .aff-detail-val.title { font-size: 18px; font-weight: 800; color: #008766; }
+    .aff-detail-val.mono { font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+    .aff-detail-desc {
+      background: #f8fafc; padding: 16px; border-radius: 12px;
+      border: 1px solid #f1f5f9; font-size: 14px; color: #475569; line-height: 1.6;
+    }
+    .status-pill-aff {
+      display: inline-flex; padding: 4px 12px; border-radius: 50px;
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+    }
+    .status-pill-aff.EN_COURS { background: #e0f2fe; color: #0369a1; }
+    .status-pill-aff.GAGNE    { background: #dcfce7; color: #15803d; }
+    .status-pill-aff.PERDU    { background: #fee2e2; color: #b91c1c; }
+    .status-pill-aff.CLASSE   { background: #f1f5f9; color: #64748b; }
+
+    /* Procedures inside affaire detail modal */
+    .aff-proc-section { border-top: 2px solid #f1f5f9; padding-top: 20px; }
+    .aff-proc-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+    }
+    .aff-proc-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px;
+    }
+    .aff-proc-count {
+      font-size: 11px; font-weight: 700; background: rgba(0,135,102,0.08);
+      color: #008766; padding: 2px 10px; border-radius: 50px;
+    }
+    .aff-proc-loading { display: flex; align-items: center; gap: 10px; color: #64748b; font-size: 13px; }
+    .mini-spinner {
+      width: 14px; height: 14px; border: 2px solid #e2e8f0; border-top-color: #008766;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .aff-proc-empty {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 20px; background: #f8fafc; border-radius: 12px; border: 1.5px dashed #e2e8f0;
+      color: #94a3b8; text-align: center;
+    }
+    .aff-proc-empty p { margin: 0; font-size: 13px; font-weight: 600; }
+    .aff-proc-list { display: flex; flex-direction: column; gap: 8px; }
+    .aff-proc-row {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 12px 16px;
+      transition: all 0.2s;
+    }
+    .aff-proc-row:hover { background: white; border-color: #008766; }
+    .proc-row-left { display: flex; flex-direction: column; gap: 3px; }
+    .proc-row-titre { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .proc-row-type {
+      font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase;
+      background: #f1f5f9; padding: 2px 6px; border-radius: 4px; width: fit-content;
+    }
+    .proc-row-pill {
+      padding: 4px 10px; border-radius: 50px; font-size: 10px; font-weight: 800; text-transform: uppercase;
+    }
+    .proc-row-pill.brouillon { background: #f1f5f9; color: #64748b; }
+    .proc-row-pill.en_cours  { background: #dbeafe; color: #1d4ed8; }
+    .proc-row-pill.validee   { background: #dcfce7; color: #166534; }
+    .proc-row-pill.terminee  { background: #f0fdf4; color: #15803d; }
+    .proc-row-pill.annulee   { background: #fee2e2; color: #b91c1c; }
+
+
     .pagination-controls {
       display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding: 0 8px;
     }
@@ -877,6 +1123,40 @@ import { FormsModule } from '@angular/forms';
     .timeline-content .time { font-size: 11px; font-weight: 800; color: #64748b; display: block; margin-bottom: 4px; opacity: 0.8; }
     .timeline-content .user { font-size: 14px; font-weight: 800; color: #1e293b; display: block; }
     .timeline-content .action { margin: 6px 0 0 0; font-size: 14px; color: #64748b; font-weight: 500; line-height: 1.5; }
+ 
+    /* PARTICIPANTS & AUXILIAIRES STYLES */
+    .participants-section { margin-top: 24px; padding-top: 24px; border-top: 1.5px solid #f1f5f9; }
+    .participants-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 12px; }
+    .participant-card { 
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; 
+      padding: 16px; display: flex; align-items: center; gap: 16px; transition: all 0.2s;
+    }
+    .participant-card:hover { border-color: var(--bna-green); background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .p-icon { 
+      width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .p-icon.avocat { background: #ecfdf5; }
+    .p-icon.huissier { background: #eff6ff; }
+    .p-icon.expert { background: #fff7ed; }
+    .p-info { display: flex; flex-direction: column; gap: 2px; }
+    .p-role { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+    .p-name { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .p-contact { font-size: 12px; color: #64748b; font-weight: 500; }
+ 
+    .aff-participants-section { margin-top: 8px; margin-bottom: 24px; }
+    .aff-participants-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 12px; }
+    .aff-part-item { 
+      display: flex; align-items: center; gap: 12px; background: #f8fafc; 
+      padding: 10px 16px; border-radius: 12px; border: 1px solid #f1f5f9; 
+    }
+    .aff-part-icon { font-size: 16px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+    .aff-part-icon.tribunal { background: #f1f5f9; }
+    .aff-part-icon.avocat { background: #ecfdf5; }
+    .aff-part-icon.huissier { background: #eff6ff; }
+    .aff-part-icon.expert { background: #fff7ed; }
+    .aff-part-info { display: flex; flex-direction: column; }
+    .aff-part-role { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+    .aff-part-name { font-size: 13px; font-weight: 700; color: #1e293b; }
 
     @media (max-width: 1024px) {
       .top-header { padding: 0 24px; }
@@ -904,6 +1184,11 @@ export class MesDossiersComponent implements OnInit {
 
   // Affaires
   affaires: Affaire[] = [];
+
+  // Affaire Detail Sub-Modal
+  selectedAffaireDetail: Affaire | null = null;
+  selectedAffaireProcedures: any[] = [];
+  loadingAffaireProcs = false;
 
   // Workflow
   workflowHistory: any[] = [];
@@ -958,16 +1243,26 @@ export class MesDossiersComponent implements OnInit {
       }
       if (params['highlight']) {
         const ref = params['highlight'];
-        const checkExist = setInterval(() => {
-          if (this.dossiers.length > 0) {
-            const d = this.dossiers.find(d => d.reference === ref);
-            if (d) {
-              this.onViewDossier(d);
-              clearInterval(checkExist);
-            }
-          }
-        }, 300);
-        setTimeout(() => clearInterval(checkExist), 5000);
+        this.highlightDossier(ref);
+      }
+    });
+  }
+
+  highlightDossier(ref: string): void {
+    // 1. Try to find in current list
+    const d = this.dossiers.find(d => d.reference === ref);
+    if (d) {
+      this.onViewDossier(d);
+      return;
+    }
+
+    // 2. If not found (e.g. on another page), fetch it specifically
+    this.dossierService.searchDossiers(ref).subscribe({
+      next: (results: any[]) => {
+        const found = results.find(r => r.reference === ref);
+        if (found) {
+          this.onViewDossier(found);
+        }
       }
     });
   }
@@ -1035,6 +1330,30 @@ export class MesDossiersComponent implements OnInit {
         this.notificationService.addNotification("Erreur lors de la mise à jour de l'affaire.", "ROLE_ADMIN", "WARNING");
       }
     });
+  }
+
+  viewAffaireDetail(aff: Affaire): void {
+    this.selectedAffaireDetail = aff;
+    this.selectedAffaireProcedures = [];
+    if (aff.id) {
+      this.loadingAffaireProcs = true;
+      this.affaireService.getProceduresByAffaire(aff.id).subscribe({
+        next: (procs) => {
+          this.selectedAffaireProcedures = procs;
+          this.loadingAffaireProcs = false;
+        },
+        error: () => {
+          this.selectedAffaireProcedures = [];
+          this.loadingAffaireProcs = false;
+        }
+      });
+    }
+  }
+
+  closeAffaireDetail(): void {
+    this.selectedAffaireDetail = null;
+    this.selectedAffaireProcedures = [];
+    this.loadingAffaireProcs = false;
   }
 
   closeDossierModal(): void {

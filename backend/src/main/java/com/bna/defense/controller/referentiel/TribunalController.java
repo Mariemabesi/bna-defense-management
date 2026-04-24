@@ -46,13 +46,13 @@ public class TribunalController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CHARGE_DOSSIER') or hasRole('REFERENTIEL')")
     public ResponseEntity<Tribunal> create(@RequestBody Tribunal entity) {
         return ResponseEntity.ok(service.save(repository, entity));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CHARGE_DOSSIER') or hasRole('REFERENTIEL')")
     public ResponseEntity<Tribunal> update(@PathVariable Long id, @RequestBody Tribunal entity) {
         if (!repository.existsById(id)) return ResponseEntity.notFound().build();
         entity.setId(id);

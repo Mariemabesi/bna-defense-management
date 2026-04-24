@@ -18,6 +18,9 @@ public class AffaireService {
     @Autowired
     private com.bna.defense.repository.DossierRepository dossierRepository;
 
+    @Autowired
+    private com.bna.defense.repository.ProcedureJudiciaireRepository procedureRepository;
+
     @Transactional(readOnly = true)
     public List<Affaire> getAll(com.bna.defense.entity.User currentUser) {
         if (currentUser == null) return java.util.Collections.emptyList();
@@ -25,44 +28,42 @@ public class AffaireService {
         List<Affaire> all = affaireRepository.findAll();
         if (all == null) return java.util.Collections.emptyList();
 
-        // Safe role check
-        boolean isSuper = currentUser.isSuperValidateur();
-        if (!isSuper && currentUser.getRoles() != null) {
-            isSuper = currentUser.getRoles().stream()
-                .filter(r -> r != null && r.getName() != null)
-                .anyMatch(r -> r.getName().name().equals("ROLE_ADMIN") || 
-                               r.getName().name().equals("ROLE_SUPER_VALIDATEUR"));
-        }
+        // Check for Admin or Validateur (Global Read)
+        boolean isGlobalRead = currentUser.isAdmin() || 
+                              currentUser.hasRole("ROLE_VALIDATEUR") || 
+                              currentUser.hasRole("ROLE_SUPER_VALIDATEUR");
+        
+        if (isGlobalRead) return all;
 
-        if (isSuper) return all;
-
+        boolean isPreVal = currentUser.hasRole("ROLE_PRE_VALIDATEUR");
         final String uname = currentUser.getUsername();
-        final String umail = currentUser.getEmail();
 
         return all.stream()
             .filter(a -> a != null && a.getDossier() != null)
             .filter(a -> {
                 Dossier d = a.getDossier();
-                String creator = d.getCreatedBy();
                 
-                boolean isCreator = (creator != null && (
-                                     creator.equalsIgnoreCase(uname) || 
-                                     (umail != null && creator.equalsIgnoreCase(umail))
-                                   ));
-                                   
-                boolean isAssigned = false;
-                if (d.getAssignedCharge() != null) {
-                    String assignedUname = d.getAssignedCharge().getUsername();
-                    if (assignedUname != null && assignedUname.equalsIgnoreCase(uname)) {
-                        isAssigned = true;
-                    }
+                // Charge check: own dossiers
+                boolean isChargeOwn = (d.getCreatedBy() != null && d.getCreatedBy().equalsIgnoreCase(uname)) ||
+                                      (d.getAssignedCharge() != null && d.getAssignedCharge().getUsername().equalsIgnoreCase(uname));
+                
+                if (isChargeOwn) return true;
+
+                // Pre-validateur check: dossiers managed by their charges
+                if (isPreVal && d.getAssignedCharge() != null && d.getAssignedCharge().getManager() != null) {
+                    return d.getAssignedCharge().getManager().getId().equals(currentUser.getId());
                 }
-                
-                return isCreator || isAssigned;
+
+                return false;
             })
             .collect(java.util.stream.Collectors.toList());
     }
 
+
+    public Affaire getAffaireById(Long id) {
+        return affaireRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Affaire non trouvée avec l'id: " + id));
+    }
 
     public List<Affaire> getAffairesByDossierId(Long dossierId) {
         return affaireRepository.findByDossier_Id(dossierId);
@@ -70,11 +71,13 @@ public class AffaireService {
 
     @Transactional
     public Affaire createAffaire(Affaire affaire) {
-        if (affaire.getDossierId() != null) {
-            com.bna.defense.entity.Dossier dossier = dossierRepository.findById(affaire.getDossierId())
-                    .orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
-            affaire.setDossier(dossier);
+        // Business Rule: Une Affaire doit obligatoirement appartenir à un Dossier
+        if (affaire.getDossierId() == null) {
+            throw new RuntimeException("Une affaire doit être obligatoirement liée à un dossier.");
         }
+        com.bna.defense.entity.Dossier dossier = dossierRepository.findById(affaire.getDossierId())
+                .orElseThrow(() -> new RuntimeException("Dossier non trouvé avec l'id: " + affaire.getDossierId()));
+        affaire.setDossier(dossier);
         affaire.setStatut(Affaire.StatutAffaire.EN_COURS);
         return affaireRepository.save(affaire);
     }
@@ -85,5 +88,25 @@ public class AffaireService {
                 .orElseThrow(() -> new RuntimeException("Affaire non trouvée"));
         affaire.setStatut(statut);
         return affaireRepository.save(affaire);
+    }
+ 
+    @Transactional(readOnly = true)
+    public List<Affaire> getByTribunal(Long tribunalId) {
+        return affaireRepository.findByTribunal_Id(tribunalId);
+    }
+ 
+    @Transactional(readOnly = true)
+    public List<Affaire> getByAvocat(Long avocatId) {
+        return affaireRepository.findByAvocat_Id(avocatId);
+    }
+ 
+    @Transactional(readOnly = true)
+    public List<Affaire> getByHuissier(Long huissierId) {
+        return affaireRepository.findByHuissier_Id(huissierId);
+    }
+ 
+    @Transactional(readOnly = true)
+    public List<Affaire> getByExpert(Long expertId) {
+        return affaireRepository.findByExpert_Id(expertId);
     }
 }

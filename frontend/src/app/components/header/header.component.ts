@@ -18,66 +18,26 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
   template: `
     <header class="top-header">
       <div class="header-left">
-        <button class="manual-sidebar-toggle" (click)="toggleSidebar()" title="Afficher/Masquer le menu">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle>
-          </svg>
+        <button class="manual-sidebar-toggle" (click)="toggleSidebar()" title="Toggle Menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
-        <div class="header-search">
-           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" placeholder="Rechercher par référence, titre..." 
-                   [(ngModel)]="searchQuery" (input)="onSearch($event)" (keyup.enter)="goToDossiers()">
-            <button class="btn-ai-search" (click)="onAiSearch()" title="Recherche Intelligente (IA)">
-               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
-               IA
-            </button>
-           
-           <!-- SEARCH RESULTS DROPDOWN -->
-           <div class="search-results-dropdown" *ngIf="searchResults.length > 0 && searchQuery">
-             <div class="search-result-item" *ngFor="let result of searchResults" 
-                  (click)="viewDossier(result)">
-               <div class="result-details">
-                 <span class="result-ref">{{ result.reference }}</span>
-                 <span class="result-title">{{ result.titre }}</span>
-               </div>
-               <span class="result-status" [ngClass]="result.statut.toLowerCase()">{{ result.statut }}</span>
-             </div>
-           </div>
-        </div>
+      </div>
+
+      <div class="header-center">
+        <h1 class="page-title">{{ title === 'Action en Défense' ? 'Action en Défense BNA V2' : title }}</h1>
       </div>
       
-      <div class="header-actions">
+      <div class="header-right">
+        <div class="header-search">
+           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" placeholder="Rechercher..." 
+                   [(ngModel)]="searchQuery" (input)="onSearch($event)" (keyup.enter)="goToDossiers()">
+        </div>
+
         <button class="notification-btn" (click)="toggleNotifications()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           <span class="badge-dot" *ngIf="unreadCount > 0"></span>
         </button>
-        
-        <!-- NOTIFICATIONS DROPDOWN -->
-        <div class="notif-dropdown" *ngIf="showDropdown">
-          <div class="notif-header">
-            <h3>Notifications</h3>
-            <button class="btn-clear" (click)="clearAll()">Tout effacer</button>
-          </div>
-          <div class="notif-list">
-            <!-- CHAT NOTIFICATION ITEM -->
-            <div class="notif-item unread chat-notif" *ngIf="chatUnreadCount > 0">
-               <div class="notif-body">
-                 <p class="notif-msg">Vous avez {{ chatUnreadCount }} nouveaux messages chat</p>
-                 <span class="notif-time">Maintenant</span>
-               </div>
-            </div>
-            
-            <div class="notif-item" *ngFor="let n of roleNotifications" [class.unread]="!n.read" (click)="markRead(n)">
-              <div class="notif-body">
-                <p class="notif-msg">{{ n.message }}</p>
-                <span class="notif-time">{{ n.timestamp | date:'shortTime' }}</span>
-              </div>
-            </div>
-            <div class="notif-empty" *ngIf="roleNotifications.length === 0">
-              Aucune notification
-            </div>
-          </div>
-        </div>
         
         <div class="profile-container">
           <div class="user-profile" (click)="toggleProfileMenu()">
@@ -85,154 +45,363 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
               <img *ngIf="currentUser?.avatarUrl" [src]="getFullUrl(currentUser.avatarUrl)" class="header-avatar-img">
               <span *ngIf="!currentUser?.avatarUrl">{{ getInitials() }}</span>
             </div>
-            <div class="user-info">
-              <span class="user-email">{{ currentUser?.username }}</span>
-              <span class="user-role">{{ formatRoles() }}</span>
-            </div>
-          </div>
-
-          <div class="profile-dropdown" *ngIf="showProfileDropdown">
-            <div class="dropdown-header">
-              <strong>{{ currentUser?.fullName || currentUser?.username }}</strong>
-              <span>{{ formatRoles() }}</span>
-            </div>
-            <div class="divider"></div>
-            <button class="dropdown-item" (click)="openProfile()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              Mon Profil
-            </button>
-            <button class="dropdown-item logout-inline" (click)="logout()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-              Déconnexion
-            </button>
           </div>
         </div>
       </div>
 
-      <!-- Change Password Modal Removed - using Profile page -->
+      <!-- NOTIFICATION DROPDOWN -->
+      <div class="notif-dropdown" *ngIf="showDropdown">
+        <div class="dropdown-header">
+          <h3>Notifications</h3>
+          <button class="text-btn" (click)="clearAll()">Tout marquer lu</button>
+        </div>
+        <div class="dropdown-body">
+          <div *ngIf="roleNotifications.length === 0" class="empty-state">
+            Aucune nouvelle notification
+          </div>
+          <div class="notif-item" *ngFor="let n of roleNotifications" (click)="markRead(n)">
+            <div class="notif-icon" [ngClass]="n.type.toLowerCase()"></div>
+            <div class="notif-content">
+              <p class="notif-message">{{ n.message }}</p>
+              <span class="notif-time">{{ n.timestamp | date:'shortTime' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE DROPDOWN -->
+      <div class="profile-dropdown" *ngIf="showProfileDropdown">
+        <div class="dropdown-user-info">
+          <div class="user-avatar-lg">{{ getInitials() }}</div>
+          <div class="user-text">
+            <span class="name">{{ currentUser?.fullName || currentUser?.username }}</span>
+            <span class="role">{{ formatRoles() }}</span>
+          </div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item" (click)="openProfile()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Mon Profil
+        </button>
+        <button class="dropdown-item danger" (click)="logout()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          Déconnexion
+        </button>
+      </div>
     </header>
   `,
   styles: [`
     .top-header {
-      height: 90px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(12px);
-      display: flex;
-      justify-content: space-between;
+      height: var(--header-height);
+      background: transparent;
+      display: grid;
+      grid-template-columns: 1fr 2fr 1fr;
       align-items: center;
-      padding: 0 48px;
+      padding: 0 40px;
       position: sticky;
       top: 0;
       z-index: 100;
-      margin: 0;
-      letter-spacing: -0.5px;
-      border-bottom: 1px solid rgba(0,0,0,0.03);
-    }
- 
-    /* MOBILE HEADER RESPONSIVENESS */
-    @media (max-width: 1024px) {
-      .top-header { padding: 0 20px; }
-      .header-search { width: 100%; margin-left: 12px; }
-      .header-search:focus-within { width: 100%; }
-    }
- 
-    @media (max-width: 768px) {
-      .user-info { display: none; }
-      .header-search { display: none; }
-      .top-header { height: 75px; }
     }
 
-    .header-actions {
+    .header-center {
+      text-align: center;
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin: 0;
+    }
+
+    .header-right {
       display: flex;
       align-items: center;
-      gap: 24px;
+      justify-content: flex-end;
+      gap: 20px;
+    }
+
+    .header-search {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #ffffff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      width: 240px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--soft-shadow);
+      border: 1px solid var(--border-color);
+    }
+
+    .header-search:focus-within {
+      width: 320px;
+      box-shadow: var(--premium-shadow);
+      border-color: var(--bna-green);
+    }
+
+    .header-search input {
+      border: none;
+      outline: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      width: 100%;
+      background: transparent;
+    }
+
+    .header-search svg {
+      color: var(--text-light);
     }
 
     .notification-btn {
-      background: white; border: 1px solid rgba(0,0,0,0.05); border-radius: 12px;
-      color: #64748b; cursor: pointer; position: relative; padding: 10px;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all 0.2s;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--soft-shadow);
+      transition: all 0.2s;
     }
     
-    .notification-btn:hover { color: #008766; border-color: rgba(0, 135, 102, 0.08); background: rgba(0, 135, 102, 0.08); }
+    .notification-btn:hover {
+      color: var(--bna-green);
+      transform: translateY(-2px);
+      box-shadow: var(--premium-shadow);
+    }
 
-    .badge-dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; border: 2px solid white; }
+    .badge-dot {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 8px;
+      height: 8px;
+      background-color: #ef4444;
+      border-radius: 50%;
+      border: 2px solid white;
+    }
 
-    .header-search { display: flex; align-items: center; gap: 12px; background: white; padding: 10px 18px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.05); width: 400px; margin-left: 24px; transition: all 0.3s; position: relative; }
-    .header-search:focus-within { width: 480px; border-color: #008766; box-shadow: 0 4px 12px rgba(0,135,102,0.05); }
-    .header-search svg { color: #94a3b8; }
-    .header-search input { border: none; outline: none; font-size: 14px; font-weight: 500; color: #1e293b; width: 100%; background: transparent; }
-    .btn-ai-search { background: linear-gradient(135deg, #0ea5e9, #2563eb); color: white; border: none; border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.2s; white-space: nowrap; }
-    .btn-ai-search:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3); }
+    .user-profile {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
 
-    .search-results-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border-radius: 16px; margin-top: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); z-index: 1000; max-height: 400px; overflow-y: auto; padding: 8px; }
+    .user-profile:hover {
+      transform: scale(1.05);
+    }
 
-    .notif-item.chat-notif { border-left: 4px solid #008766; background: rgba(0, 135, 102, 0.03); }
-    .notif-item { display: flex; align-items: center; gap: 16px; padding: 12px 16px; transition: all 0.2s; cursor: pointer; }
-    .result-ref { font-size: 13px; font-weight: 800; color: #008766; }
-    .result-status { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; }
-    .result-status.ouvert { background: #dcfce7; color: #166534; }
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--bna-green) 0%, var(--bna-green-accent) 100%);
+      border-radius: 50%;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+      box-shadow: var(--premium-shadow);
+      overflow: hidden;
+      border: 2px solid #ffffff;
+    }
 
-    .user-profile { display: flex; align-items: center; gap: 16px; padding: 8px 16px; background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.03); cursor: pointer; border: 1px solid rgba(0,0,0,0.02); margin-left: 12px; }
-    .user-info { text-align: right; }
-    .user-email { display: block; font-size: 14px; font-weight: 700; color: #1e293b; }
-    .user-role { display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
-    .user-avatar { width: 44px; height: 44px; background: linear-gradient(135deg, #008766 0%, #10b981 100%); border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; box-shadow: 0 4px 10px rgba(0,135,102,0.2); overflow: hidden; }
     .header-avatar-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    .notif-dropdown { position: absolute; top: 80px; right: 48px; width: 320px; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); z-index: 100; overflow: hidden; }
-    .notif-header { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-    .notif-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: #1e293b; }
-    .btn-clear { background: none; border: none; color: #64748b; font-size: 12px; cursor: pointer; }
+    .manual-sidebar-toggle {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      transition: all 0.2s;
+    }
 
-    .profile-dropdown { position: absolute; top: calc(100% + 12px); right: 0; width: 240px; background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15); border: 1px solid rgba(0,0,0,0.05); padding: 12px; z-index: 110; animation: slideIn 0.2s ease-out; }
-    .dropdown-header { padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; }
-    .dropdown-header strong { font-size: 15px; color: #1e293b; font-weight: 800; }
-    .dropdown-header span { font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase; }
-    .divider { height: 1px; background: #f1f5f9; margin: 8px 0; }
-    
-    .dropdown-item { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: none; background: none; color: #475569; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 12px; transition: all 0.2s; }
-    .dropdown-item:hover { background: #f8fafc; color: #008766; transform: translateX(5px); }
-    .dropdown-item.logout-inline { color: #ef4444; }
-    .dropdown-item.logout-inline:hover { background: #fef2f2; color: #dc2626; }
+    .manual-sidebar-toggle:hover {
+      color: var(--bna-green);
+      transform: scale(1.1);
+    }
 
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 2000; transition: 0.3s; }
-    .modal-content { background: white; border-radius: 28px; width: 100%; max-width: 440px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; animation: zoomIn 0.3s ease-out; }
-    .modal-header { padding: 24px 32px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
-    .modal-header h3 { margin: 0; font-size: 18px; font-weight: 800; color: #1e293b; }
-    .btn-close { background: none; border: none; cursor: pointer; color: #94a3b8; transition: 0.2s; }
-    .btn-close:hover { color: #ef4444; transform: rotate(90deg); }
-    
-    .modal-body { padding: 32px; display: flex; flex-direction: column; gap: 20px; }
-    .form-group { display: flex; flex-direction: column; gap: 10px; }
-    .form-group label { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-    .form-control { padding: 12px 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 15px; font-weight: 500; background: #f8fafc; transition: 0.2s; }
-    .form-control:focus { border-color: #008766; background: white; outline: none; box-shadow: 0 0 0 4px rgba(0,135,102,0.1); }
-    
-    .password-strength-meter { margin-top: 8px; display: flex; align-items: center; gap: 12px; }
-    .strength-bar { height: 6px; border-radius: 3px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: #e2e8f0; width: 100px; overflow: hidden; }
-    .strength-bar.weak { background: #ef4444; }
-    .strength-bar.good { background: #f59e0b; }
-    .strength-bar.strong { background: #10b981; }
-    .strength-label { font-size: 12px; font-weight: 800; color: #64748b; }
+    /* DROPDOWNS RE-STYLED */
+    .profile-dropdown, .notif-dropdown {
+      position: absolute;
+      top: 75px;
+      right: 40px;
+      background: #ffffff;
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+      border: 1px solid var(--border-color);
+      z-index: 1000;
+      padding: 0;
+      width: 320px;
+      overflow: hidden;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-    .error-msg { color: #ef4444; font-size: 13px; font-weight: 700; text-align: center; background: #fef2f2; padding: 10px; border-radius: 10px; }
-    .modal-footer { padding: 24px 32px; background: #fafafa; border-top: 1px solid #f1f5f9; display: flex; gap: 16px; }
-    .btn-primary { flex: 1; background: #008766; color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,135,102,0.2); }
-    .btn-secondary { flex: 1; background: white; color: #64748b; border: 2px solid #e2e8f0; padding: 14px; border-radius: 14px; font-weight: 800; cursor: pointer; transition: 0.2s; }
-    .btn-primary:hover { background: #007256; transform: translateY(-2px); }
-    .btn-secondary:hover { background: #f1f5f9; transform: translateY(-2px); }
+    .dropdown-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+    }
 
-    .manual-sidebar-toggle { display: flex; background: none; border: none; color: #64748b; cursor: pointer; align-items: center; justify-content: center; padding: 8px; transition: 0.2s; }
-    .manual-sidebar-toggle:hover { color: #008766; transform: scale(1.1); }
+    .dropdown-header h3 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
 
-    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .text-btn {
+      background: none;
+      border: none;
+      color: var(--bna-green);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .dropdown-body {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .empty-state {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .notif-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .notif-item:hover {
+      background: #f1f5f9;
+    }
+
+    .notif-icon {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .notif-icon.info { background: #3b82f6; }
+    .notif-icon.success { background: #10b981; }
+    .notif-icon.warning { background: #f59e0b; }
+
+    .notif-message {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    .notif-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .dropdown-user-info {
+      padding: 24px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(to bottom, #f8fafc, #ffffff);
+    }
+
+    .user-avatar-lg {
+      width: 56px;
+      height: 56px;
+      background: var(--bna-green);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(0, 135, 102, 0.2);
+    }
+
+    .user-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-text .name {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .user-text .role {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border-color);
+    }
+
+    .dropdown-item {
+      width: 100%;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: none;
+      border: none;
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .dropdown-item:hover {
+      background: #f1f5f9;
+      color: var(--bna-green);
+    }
+
+    .dropdown-item.danger:hover {
+      color: #ef4444;
+      background: #fef2f2;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
   `]
 })
 export class HeaderComponent implements OnInit {
@@ -335,6 +504,10 @@ export class HeaderComponent implements OnInit {
 
   markRead(n: Notification) {
     this.notificationService.markAsRead(n.id).subscribe();
+    if (n.dossier && n.dossier.reference) {
+      this.showDropdown = false;
+      this.router.navigate(['/mes-dossiers'], { queryParams: { highlight: n.dossier.reference } });
+    }
   }
 
   clearAll() {
