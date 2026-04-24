@@ -11,8 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -78,9 +77,9 @@ public class ChatController {
         
         // Partners from chat history
         List<ChatMessage> messages = chatMessageRepository.findParticipatedMessages(currentUser);
-        java.util.Set<User> partners = messages.stream()
+        Set<User> partners = messages.stream()
             .map(m -> m.getSender().getId().equals(currentUser.getId()) ? m.getReceiver() : m.getSender())
-            .collect(java.util.stream.Collectors.toSet());
+            .collect(Collectors.toSet());
             
         // Partners from accepted invitations (friends)
         List<ChatInvitation> friendInvitations = chatInvitationRepository.findAllFriends(currentUser);
@@ -141,6 +140,7 @@ public class ChatController {
         chatInvitationRepository.save(ci);
         return ResponseEntity.ok(Map.of("message", "Invitation acceptée"));
     }
+
     @GetMapping("/unread-count")
     public ResponseEntity<?> getUnreadCount() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -205,7 +205,7 @@ public class ChatController {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(username).orElseThrow();
         
-        java.util.List<Map<String, Object>> suggestions = new java.util.ArrayList<>();
+        List<Map<String, Object>> suggestions = new ArrayList<>();
         
         // Suggest Validator if user is in a group
         if (currentUser.getGroupe() != null && currentUser.getGroupe().getValidateur() != null) {

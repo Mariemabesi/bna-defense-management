@@ -4,27 +4,28 @@ import com.bna.defense.entity.Role;
 import com.bna.defense.entity.User;
 import com.bna.defense.repository.RoleRepository;
 import com.bna.defense.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private RoleRepository roleRepository;
+    public UserService(UserRepository userRepository,
+                       RoleRepository roleRepository,
+                       PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
+    @Transactional
     public void updateUserRoles(User user, Set<Role.RoleType> roleTypes) {
         Set<Role> roles = new HashSet<>();
         if (roleTypes == null || roleTypes.isEmpty()) {
@@ -40,8 +41,10 @@ public class UserService {
         }
         user.getRoles().clear();
         user.getRoles().addAll(roles);
+        userRepository.save(user);
     }
 
+    @Transactional
     public User createUser(User user, Set<Role.RoleType> roleTypes) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         Set<Role> roles = new HashSet<>();
@@ -62,11 +65,28 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
+    public void updateProfile(User user, String email, String firstName, String lastName) {
+        user.setEmail(email);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setFullName(firstName + " " + lastName);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void changePassword(User user, String oldPassword, String newPassword) {
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("L'ancien mot de passe est incorrect.");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
     public String generateResetToken(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec cet e-mail."));
         
-        // Generate 6-digit OTP
         String token = String.format("%06d", new Random().nextInt(999999));
         user.setResetToken(token);
         user.setTokenExpiry(LocalDateTime.now().plusMinutes(15));
@@ -78,19 +98,17 @@ public class UserService {
         User user = userRepository.findByEmail(email).orElse(null);
         if (user == null || user.getResetToken() == null) return null;
         
-        // 6-digit OTP verification
         if (user.getResetToken().equals(token) && user.getTokenExpiry().isAfter(LocalDateTime.now())) {
-            // Once OTP is verified, replace it with a secure UUID for the next step (Point 13 Step 2)
-            String uuidToken = java.util.UUID.randomUUID().toString();
+            String uuidToken = UUID.randomUUID().toString();
             user.setResetToken(uuidToken);
-            user.setTokenExpiry(LocalDateTime.now().plusMinutes(10)); // UUID valid for 10 mins
+            user.setTokenExpiry(LocalDateTime.now().plusMinutes(10));
             userRepository.save(user);
             return uuidToken;
         }
         return null;
     }
 
-
+    @Transactional
     public void updatePassword(String email, String resetToken, String newPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé."));
@@ -107,7 +125,6 @@ public class UserService {
         user.setTokenExpiry(null);
         userRepository.save(user);
     }
-
 
     public List<User> getAllUsers() {
         return userRepository.findAll();

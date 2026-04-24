@@ -1,24 +1,48 @@
 package com.bna.defense.controller;
 
+import com.bna.defense.dto.DashboardStatsDTO;
+import com.bna.defense.entity.Dossier;
+import com.bna.defense.entity.User;
+import com.bna.defense.repository.UserRepository;
+import com.bna.defense.service.DossierService;
+import com.bna.defense.service.ExportService;
 import com.bna.defense.service.ReportingService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/reports")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ReportingController {
 
-    @Autowired
-    private ReportingService reportingService;
+    private final ReportingService reportingService;
+    private final UserRepository userRepository;
+    private final ExportService exportService;
+    private final DossierService dossierService;
 
-    @Autowired
-    private com.bna.defense.repository.UserRepository userRepository;
+    public ReportingController(ReportingService reportingService,
+                               UserRepository userRepository,
+                               ExportService exportService,
+                               DossierService dossierService) {
+        this.reportingService = reportingService;
+        this.userRepository = userRepository;
+        this.exportService = exportService;
+        this.dossierService = dossierService;
+    }
 
     @GetMapping("/dashboard/export/pdf")
-    public ResponseEntity<byte[]> exportDashboardStatsPdf(java.security.Principal principal) {
-        com.bna.defense.entity.User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+    public ResponseEntity<byte[]> exportDashboardStatsPdf(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
         byte[] data = reportingService.exportDashboardStatsToPdf(user);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
@@ -28,8 +52,8 @@ public class ReportingController {
 
     @GetMapping("/frais/export/pdf")
     public ResponseEntity<byte[]> exportPdf(
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate start,
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate end,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
             @RequestParam(required = false) Long groupeId) {
         byte[] data = reportingService.exportFraisToPdf(start, end, groupeId);
         HttpHeaders headers = new HttpHeaders();
@@ -40,8 +64,8 @@ public class ReportingController {
 
     @GetMapping("/frais/export/excel")
     public ResponseEntity<byte[]> exportExcel(
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate start,
-            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate end,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
             @RequestParam(required = false) Long groupeId) {
         byte[] data = reportingService.exportFraisToExcel(start, end, groupeId);
         HttpHeaders headers = new HttpHeaders();
@@ -51,21 +75,16 @@ public class ReportingController {
     }
 
     @GetMapping("/dashboard-stats")
-    public com.bna.defense.dto.DashboardStatsDTO getStats(java.security.Principal principal) {
-        com.bna.defense.entity.User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+    public DashboardStatsDTO getStats(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
         return reportingService.getDashboardStats(user);
     }
 
-    // ── Dossier Exports (Point 9) ──
-    @Autowired private com.bna.defense.service.ExportService exportService;
-    @Autowired private com.bna.defense.service.DossierService dossierService;
-
     @GetMapping("/dossiers/export/pdf")
-    public ResponseEntity<byte[]> exportDossiersPdf(java.security.Principal principal) {
+    public ResponseEntity<byte[]> exportDossiersPdf(Principal principal) {
         try {
-            com.bna.defense.entity.User user = userRepository.findByUsername(principal.getName()).orElseThrow();
-            java.util.List<com.bna.defense.entity.Dossier> dossiers =
-                dossierService.getAllDossiers(user, org.springframework.data.domain.PageRequest.of(0, 500)).getContent();
+            User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+            List<Dossier> dossiers = dossierService.getAllDossiers(user, PageRequest.of(0, 500)).getContent();
             byte[] data = exportService.exportDossiersPdf(user, dossiers);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -77,11 +96,10 @@ public class ReportingController {
     }
 
     @GetMapping("/dossiers/export/excel")
-    public ResponseEntity<byte[]> exportDossiersExcel(java.security.Principal principal) {
+    public ResponseEntity<byte[]> exportDossiersExcel(Principal principal) {
         try {
-            com.bna.defense.entity.User user = userRepository.findByUsername(principal.getName()).orElseThrow();
-            java.util.List<com.bna.defense.entity.Dossier> dossiers =
-                dossierService.getAllDossiers(user, org.springframework.data.domain.PageRequest.of(0, 500)).getContent();
+            User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+            List<Dossier> dossiers = dossierService.getAllDossiers(user, PageRequest.of(0, 500)).getContent();
             byte[] data = exportService.exportDossiersExcel(user, dossiers);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
@@ -92,4 +110,3 @@ public class ReportingController {
         }
     }
 }
-

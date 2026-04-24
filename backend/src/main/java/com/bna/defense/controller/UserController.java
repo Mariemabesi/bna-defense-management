@@ -1,7 +1,8 @@
 package com.bna.defense.controller;
 
+import com.bna.defense.dto.auth.SignupRequest;
+import com.bna.defense.dto.auth.MessageResponse;
 import com.bna.defense.entity.User;
-import com.bna.defense.entity.Role;
 import com.bna.defense.entity.Role.RoleType;
 import com.bna.defense.entity.AuditLog;
 import com.bna.defense.entity.Auxiliaire;
@@ -9,8 +10,6 @@ import com.bna.defense.service.UserService;
 import com.bna.defense.service.AuditLogService;
 import com.bna.defense.repository.UserRepository;
 import com.bna.defense.repository.DossierRepository;
-import com.bna.defense.controller.AuthController.SignupRequest;
-import com.bna.defense.controller.AuthController.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,17 +28,20 @@ import java.util.stream.Collectors;
 @PreAuthorize("hasRole('ADMIN')")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
-    
-    @Autowired
-    private AuditLogService auditLogService;
+    private final UserService userService;
+    private final AuditLogService auditLogService;
+    private final UserRepository userRepository;
+    private final DossierRepository dossierRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private DossierRepository dossierRepository;
+    public UserController(UserService userService,
+                          AuditLogService auditLogService,
+                          UserRepository userRepository,
+                          DossierRepository dossierRepository) {
+        this.userService = userService;
+        this.auditLogService = auditLogService;
+        this.userRepository = userRepository;
+        this.dossierRepository = dossierRepository;
+    }
 
     @GetMapping("/users")
     public List<UserDTO> getAllUsers() {
@@ -60,14 +62,10 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         User user = userRepository.findById(id).orElseThrow();
         
-        // 1. Cleanup manager links (Subordinates)
         userRepository.clearManagerLinksForSubordinates(id);
-
-        // 2. Cleanup dossier links (RBAC assignments)
         dossierRepository.clearUserLinksForAssignedCharge(id);
         dossierRepository.clearUserLinksForGroupValidateur(id);
 
-        // 3. Perform final deletion
         userRepository.delete(user);
         return ResponseEntity.ok(new MessageResponse("Utilisateur supprimé avec succès"));
     }
@@ -133,7 +131,6 @@ public class UserController {
         try {
             User user = userRepository.findById(id).orElseThrow();
             
-            // Prevent self-assignment as manager
             if (updateRequest.getManagerId() != null && updateRequest.getManagerId().equals(id)) {
                 return ResponseEntity.badRequest().body(new MessageResponse("Un utilisateur ne peut pas être son propre responsable"));
             }
@@ -165,9 +162,7 @@ public class UserController {
     public static class UpdateUserRequest {
         private List<String> role;
         private Long managerId;
-
-        public UpdateUserRequest() {} // Required for Jackson
-
+        public UpdateUserRequest() {}
         public List<String> getRole() { return role; }
         public void setRole(List<String> role) { this.role = role; }
         public Long getManagerId() { return managerId; }
