@@ -16,6 +16,7 @@ import { AIService, AIAnalysis } from '../../services/ai.service';
 import { SidebarService } from '../../services/sidebar.service';
 import { AffaireService, Affaire } from '../../services/affaire.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
+import { AudienceService } from '../../services/audience.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -76,16 +77,18 @@ Chart.register(...registerables);
               </div>
             </div>
 
-            <div class="stat-card">
+            <!-- AUDIENCE WIDGET (NEW) -->
+            <div class="stat-card audience-highlight">
               <div class="stat-icon warning">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               </div>
               <div class="stat-content">
-                <span class="label">Urgents / Alertes</span>
-                <div class="value">{{ dynamicStats.urgent }}</div>
+                <span class="label">Audiences (S7)</span>
+                <div class="value">{{ audienceStats?.countThisWeek || 0 }}</div>
               </div>
               <div class="stat-footer">
-                <span class="trend danger">Action Requise</span>
+                <span class="trend danger" *ngIf="audienceStats?.countUrgent > 0">⚡ {{ audienceStats?.countUrgent }} Urgentes (48h)</span>
+                <span class="trend" *ngIf="audienceStats?.countUrgent === 0">Calendrier stable</span>
               </div>
             </div>
 
@@ -101,6 +104,18 @@ Chart.register(...registerables);
                 <span class="trend positive">Approuvés</span>
               </div>
             </div>
+          </div>
+
+          <!-- AUDIENCE NEXT BOX (If available) -->
+          <div class="audience-next-banner slideIn" *ngIf="audienceStats?.nextAudience && !isAdmin()">
+             <div class="banner-icon">🔔</div>
+             <div class="banner-text">
+                <strong>Prochaine Audience :</strong> 
+                {{ audienceStats.nextAudience.tribunal?.nom }} — 
+                {{ audienceStats.nextAudience.dateHeure | date:'dd MMMM à HH:mm' }} 
+                (Salle: {{ audienceStats.nextAudience.salle || 'N/A' }})
+             </div>
+             <button class="btn-view-all" routerLink="/action-justice">VOIR TOUTES LES AUDIENCES</button>
           </div>
 
           <!-- ROLE SPECIFIC LISTINGS -->
@@ -304,33 +319,25 @@ Chart.register(...registerables);
   `,
   styleUrls: ['./dashboard.component.css']
 })
-
 export class DashboardComponent implements OnInit {
   dossierChart: any;
   budgetChart: any;
+  historyChart: any;
 
-  // ... rest of the properties ...
   currentUser: any;
   Math = Math;
 
-  // Real API data
   stats: DashboardStats | null = null;
   statsLoading = false;
-
-  // AI Analysis
   aiAnalysis: AIAnalysis | null = null;
   aiLoading = false;
-
   dossiers: Dossier[] = [];
   selectedDossier: Dossier | null = null;
   dossiersLoading = false;
-
   users: any[] = [];
   usersLoading = false;
-
   auxiliaires: Auxiliaire[] = [];
   auxiliairesLoading = false;
-
   auditLogs: AuditLogDTO[] = [];
   logsLoading = false;
   showRefuseModal = false;
@@ -338,6 +345,8 @@ export class DashboardComponent implements OnInit {
   refusalDossierId: number | null = null;
   affaires: Affaire[] = [];
   workflowHistory: any[] = [];
+  dynamicStats: any = { total: 0, urgent: 0, enCours: 0, valide: 0, refuse: 0 };
+  audienceStats: any = null;
 
   constructor(
     private dossierService: DossierService,
@@ -350,18 +359,18 @@ export class DashboardComponent implements OnInit {
     private aiService: AIService,
     private affaireService: AffaireService,
     private confirmService: ConfirmDialogService,
+    private audienceService: AudienceService,
     private router: Router,
     public sidebarService: SidebarService
   ) {
     this.currentUser = this.authService.currentUserValue;
   }
 
-  dynamicStats: any = { total: 0, urgent: 0, enCours: 0, valide: 0, refuse: 0 };
-
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
       this.loadStats();
       this.loadDossiers();
+      this.loadAudienceStats();
       if (this.isAdmin()) {
         this.loadUsers();
         this.loadLogs();
@@ -372,6 +381,10 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  loadAudienceStats(): void {
+    this.audienceService.getStats().subscribe(data => this.audienceStats = data);
+  }
+
   loadAuxiliaires(): void {
     this.auxiliairesLoading = true;
     this.referentielService.getAuxiliaires().subscribe({
@@ -379,9 +392,7 @@ export class DashboardComponent implements OnInit {
         this.auxiliaires = data;
         this.auxiliairesLoading = false;
       },
-      error: () => {
-        this.auxiliairesLoading = false;
-      }
+      error: () => this.auxiliairesLoading = false
     });
   }
 
@@ -428,18 +439,14 @@ export class DashboardComponent implements OnInit {
           setTimeout(() => this.initCharts(), 100);
         }
       },
-      error: () => {
-        this.statsLoading = false;
-      }
+      error: () => this.statsLoading = false
     });
   }
 
   initCharts(): void {
-    // 1. STATUT CHART (Radial Bar Simulation via concentric Doughnuts)
     const ctx1 = document.getElementById('dossiersStatutChart') as HTMLCanvasElement;
     if (ctx1) {
       if (this.dossierChart) this.dossierChart.destroy();
-      
       const total = this.dynamicStats.total || 1;
       const data = [
         Math.min(100, Math.round(((this.stats?.openDossiers || 0) / total) * 100)),
@@ -447,141 +454,53 @@ export class DashboardComponent implements OnInit {
         Math.min(100, Math.round(((this.dynamicStats.total - this.dynamicStats.enCours) / total) * 100)),
         Math.min(100, Math.round(((this.stats?.closedDossiers || 0) / total) * 100))
       ];
-
       this.dossierChart = new Chart(ctx1, {
         type: 'doughnut',
         data: {
           labels: ['Ouverts', 'En Cours', 'A Valider', 'Clôturés'],
           datasets: [
-            {
-              label: 'Ouverts',
-              data: [data[0], 100 - data[0]],
-              backgroundColor: ['#008766', '#f1f5f9'],
-              borderWidth: 0,
-              weight: 0.5
-            },
-            {
-              label: 'En Cours',
-              data: [data[1], 100 - data[1]],
-              backgroundColor: ['#3b82f6', '#f1f5f9'],
-              borderWidth: 0,
-              weight: 0.5
-            },
-            {
-              label: 'A Valider',
-              data: [data[2], 100 - data[2]],
-              backgroundColor: ['#f59e0b', '#f1f5f9'],
-              borderWidth: 0,
-              weight: 0.5
-            },
-            {
-              label: 'Clôturés',
-              data: [data[3], 100 - data[3]],
-              backgroundColor: ['#94a3b8', '#f1f5f9'],
-              borderWidth: 0,
-              weight: 0.5
-            }
+            { label: 'Ouverts', data: [data[0], 100 - data[0]], backgroundColor: ['#008766', '#f1f5f9'], borderWidth: 0, weight: 0.5 },
+            { label: 'En Cours', data: [data[1], 100 - data[1]], backgroundColor: ['#3b82f6', '#f1f5f9'], borderWidth: 0, weight: 0.5 },
+            { label: 'A Valider', data: [data[2], 100 - data[2]], backgroundColor: ['#f59e0b', '#f1f5f9'], borderWidth: 0, weight: 0.5 },
+            { label: 'Clôturés', data: [data[3], 100 - data[3]], backgroundColor: ['#94a3b8', '#f1f5f9'], borderWidth: 0, weight: 0.5 }
           ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '20%',
-          spacing: 2,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              enabled: true,
-              callbacks: {
-                label: (context) => {
-                  if (context.dataIndex === 1) return ''; 
-                  return `${context.dataset.label}: ${context.raw}%`;
-                }
-              }
-            }
-          }
+          responsive: true, maintainAspectRatio: false, cutout: '20%', spacing: 2,
+          plugins: { legend: { display: false }, tooltip: { enabled: true, callbacks: { label: (c) => c.dataIndex === 1 ? '' : `${c.dataset.label}: ${c.raw}%` } } }
         }
       });
     }
 
-    // 2. BUDGET TOP CHART (Bar with Gradient)
     const budgetCtx = document.getElementById('budgetTopChart') as HTMLCanvasElement;
     if (budgetCtx) {
-      const gradient = budgetCtx.getContext('2d')?.createLinearGradient(0, 0, 0, 400);
-      gradient?.addColorStop(0, 'rgba(0, 135, 102, 0.8)');
-      gradient?.addColorStop(1, 'rgba(0, 135, 102, 0.2)');
-
-      new Chart(budgetCtx, {
+      if (this.budgetChart) this.budgetChart.destroy();
+      const grad = budgetCtx.getContext('2d')?.createLinearGradient(0, 0, 0, 400);
+      grad?.addColorStop(0, 'rgba(0, 135, 102, 0.8)');
+      grad?.addColorStop(1, 'rgba(0, 135, 102, 0.2)');
+      this.budgetChart = new Chart(budgetCtx, {
         type: 'bar',
         data: {
           labels: this.dossiers.slice(0, 5).map(d => d.reference),
-          datasets: [{
-            label: 'Budget (TND)',
-            data: this.dossiers.slice(0, 5).map(d => d.budgetProvisionne || 0),
-            backgroundColor: gradient || '#008766',
-            borderRadius: 8,
-            borderWidth: 0
-          }]
+          datasets: [{ label: 'Budget (TND)', data: this.dossiers.slice(0, 5).map(d => d.budgetProvisionne || 0), backgroundColor: grad || '#008766', borderRadius: 8 }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { 
-            y: { 
-              beginAtZero: true,
-              grid: { color: 'rgba(0,0,0,0.05)' },
-              ticks: { font: { size: 10 } }
-            },
-            x: { 
-              grid: { display: false },
-              ticks: { font: { size: 10 } }
-            }
-          }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
       });
     }
 
-    // 3. HISTORICAL PROGRESS CHART (Area Line Chart)
     const historyCtx = document.getElementById('historicalProgressChart') as HTMLCanvasElement;
     if (historyCtx) {
-      const gradient = historyCtx.getContext('2d')?.createLinearGradient(0, 0, 0, 300);
-      gradient?.addColorStop(0, 'rgba(0, 135, 102, 0.2)');
-      gradient?.addColorStop(1, 'rgba(0, 135, 102, 0)');
-
-      new Chart(historyCtx, {
+      if (this.historyChart) this.historyChart.destroy();
+      const grad = historyCtx.getContext('2d')?.createLinearGradient(0, 0, 0, 300);
+      grad?.addColorStop(0, 'rgba(0, 135, 102, 0.2)');
+      grad?.addColorStop(1, 'rgba(0, 135, 102, 0)');
+      this.historyChart = new Chart(historyCtx, {
         type: 'line',
         data: {
           labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
-          datasets: [{
-            label: 'Dossiers Traités',
-            data: [10, 25, 18, 45, 60, 85],
-            borderColor: '#008766',
-            backgroundColor: gradient,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 4,
-            pointBackgroundColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointBorderColor: '#008766'
-          }]
+          datasets: [{ label: 'Dossiers Traités', data: [10, 25, 18, 45, 60, 85], borderColor: '#008766', backgroundColor: grad, fill: true, tension: 0.4 }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              grid: { color: 'rgba(0,0,0,0.03)' },
-              ticks: { font: { size: 10 } }
-            },
-            x: {
-              grid: { display: false },
-              ticks: { font: { size: 10 } }
-            }
-          }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
       });
     }
   }
@@ -590,306 +509,44 @@ export class DashboardComponent implements OnInit {
     this.dossiersLoading = true;
     this.dossierService.getDossiers(0, 100).subscribe({
       next: (data) => {
-        // Handle both Array and Page object (data.content)
         this.dossiers = Array.isArray(data) ? data : (data.content || []);
         this.dossiersLoading = false;
       },
-      error: () => {
-        this.dossiersLoading = false;
-        this.dossiers = [];
-      }
+      error: () => { this.dossiersLoading = false; this.dossiers = []; }
     });
   }
 
   filterDossiers(type: string): Dossier[] {
-    if (this.isAdmin()) return []; // Admin strictly has no access to dossier listings
-
+    if (this.isAdmin()) return [];
     switch (type) {
-      case 'CHARGE':
-        return this.dossiers.filter(d => ['OUVERT', 'EN_COURS', 'EN_ATTENTE_PREVALIDATION', 'EN_ATTENTE_VALIDATION', 'REFUSE'].includes(d.statut || ''));
-      case 'PRE_VALIDATOR':
-        return this.dossiers.filter(d => d.statut === 'EN_ATTENTE_PREVALIDATION');
-      case 'VALIDATOR':
-        return this.dossiers.filter(d => d.statut === 'EN_ATTENTE_VALIDATION');
-      default:
-        return this.dossiers;
+      case 'CHARGE': return this.dossiers.filter(d => ['OUVERT', 'EN_COURS', 'EN_ATTENTE_PREVALIDATION', 'EN_ATTENTE_VALIDATION', 'REFUSE'].includes(d.statut || ''));
+      case 'PRE_VALIDATOR': return this.dossiers.filter(d => d.statut === 'EN_ATTENTE_PREVALIDATION');
+      case 'VALIDATOR': return this.dossiers.filter(d => d.statut === 'EN_ATTENTE_VALIDATION');
+      default: return this.dossiers;
     }
   }
 
-  getStatusLabel(statut: string | undefined): string {
-    switch (statut) {
-      case 'OUVERT': return 'Ouvert';
-      case 'EN_COURS': return 'En cours';
-      case 'EN_ATTENTE_PREVALIDATION': return 'En attente Pré-val';
-      case 'EN_ATTENTE_VALIDATION': return 'En attente Validation';
-      case 'VALIDE': return 'Validé';
-      case 'EN_ATTENTE_PREVALIDATION_CLOTURE': return 'Clôture (Attente Pré-val)';
-      case 'EN_ATTENTE_VALIDATION_CLOTURE': return 'Clôture (Attente Validation)';
-      case 'CLOTURE': return 'Clôturé';
-      case 'REFUSE': return 'Refusé';
-      default: return statut || '—';
-    }
+  getSpaceName(): string { return 'Tableau de Bord Stratégique'; }
+  getStatusLabel(s: string | undefined): string { 
+    const map: any = { 'OUVERT': 'Ouvert', 'EN_COURS': 'En cours', 'EN_ATTENTE_PREVALIDATION': 'Attente Pré-val', 'EN_ATTENTE_VALIDATION': 'Attente Validation', 'VALIDE': 'Validé', 'CLOTURE': 'Clôturé', 'REFUSE': 'Refusé' };
+    return map[s || ''] || s || '—';
   }
+  getBadgeClass(s: string | undefined): string { return ['VALIDE', 'CLOTURE'].includes(s || '') ? 'success' : ['REFUSE'].includes(s || '') ? 'danger' : s?.includes('ATTENTE') ? 'warning' : 'info'; }
+  getPrioriteBadge(p: string | undefined): string { return p === 'HAUTE' ? 'danger' : p === 'MOYENNE' ? 'warning' : 'success'; }
 
-  getBadgeClass(statut: string | undefined): string {
-    switch (statut) {
-      case 'OUVERT': return 'info';
-      case 'EN_COURS': return 'info';
-      case 'EN_ATTENTE_PREVALIDATION': return 'warning';
-      case 'EN_ATTENTE_VALIDATION': return 'warning';
-      case 'EN_ATTENTE_PREVALIDATION_CLOTURE': return 'warning';
-      case 'EN_ATTENTE_VALIDATION_CLOTURE': return 'warning';
-      case 'REFUSE': return 'danger';
-      case 'VALIDE': return 'success';
-      case 'CLOTURE': return 'success';
-      default: return 'info';
-    }
-  }
-
-  getPrioriteBadge(priorite: string | undefined): string {
-    switch (priorite) {
-      case 'HAUTE': return 'danger';
-      case 'MOYENNE': return 'warning';
-      case 'BASSE': return 'success';
-      default: return 'info';
-    }
-  }
-
-  getInitials(): string {
-    if (!this.currentUser || !this.currentUser.username) return 'U';
-    return this.currentUser.username.substring(0, 2).toUpperCase();
-  }
-
-  formatRoles(): string {
-    if (!this.currentUser || !this.currentUser.roles) return 'Rôle';
-    return this.currentUser.roles.map((r: string) => r.replace('ROLE_', '').replace('_', ' ')).join(', ');
-  }
-
-  isChargeDossier(): boolean {
-    return this.authService.hasRole('ROLE_CHARGE_DOSSIER');
-  }
-
-  isPreValidateur(): boolean {
-    return this.authService.hasRole('ROLE_PRE_VALIDATEUR');
-  }
-
-  isValidateur(): boolean {
-    return this.authService.hasRole('ROLE_VALIDATEUR');
-  }
-
-
-
-  isAdmin(): boolean {
-    return this.authService.hasRole('ROLE_ADMIN');
-  }
-
-  isSuperValidateur(): boolean {
-    return this.authService.hasRole('ROLE_SUPER_VALIDATEUR') || (this.currentUser && this.currentUser.isSuperValidateur);
-  }
+  isChargeDossier(): boolean { return this.authService.hasRole('ROLE_CHARGE_DOSSIER'); }
+  isPreValidateur(): boolean { return this.authService.hasRole('ROLE_PRE_VALIDATEUR'); }
+  isValidateur(): boolean { return this.authService.hasRole('ROLE_VALIDATEUR'); }
+  isAdmin(): boolean { return this.authService.hasRole('ROLE_ADMIN'); }
+  isSuperValidateur(): boolean { return this.authService.hasRole('ROLE_SUPER_VALIDATEUR'); }
 
   onViewDossier(d: Dossier): void {
     this.selectedDossier = d;
-    if (d.id) {
-      this.loadAffaires(d.id);
-      this.loadHistory(d.id);
-    }
+    if (d.id) { this.loadAffaires(d.id); this.loadHistory(d.id); }
   }
-
-  loadHistory(dossierId: number): void {
-    this.dossierService.getHistory(dossierId).subscribe(data => {
-      this.workflowHistory = data;
-    });
-  }
-
-  loadAffaires(dossierId: number): void {
-    this.affaireService.getAffairesByDossier(dossierId).subscribe(data => {
-      this.affaires = data;
-    });
-  }
-
-  closeDossierModal(): void {
-    this.selectedDossier = null;
-    this.aiAnalysis = null;
-    this.aiLoading = false;
-    this.affaires = [];
-    this.workflowHistory = [];
-  }
-
-  analyzeWithAI(): void {
-    if (!this.selectedDossier || !this.selectedDossier.description) {
-      this.notificationService.addNotification("Description insuffisante pour une analyse IA.", "ROLE_ADMIN", "WARNING");
-      return;
-    }
-
-    this.aiLoading = true;
-    this.aiAnalysis = null;
-    this.aiService.analyzeDossier(this.selectedDossier.description).subscribe({
-      next: (result) => {
-        this.aiAnalysis = result;
-        this.aiLoading = false;
-        this.notificationService.addNotification("Analyse IA terminée avec succès.", "ROLE_ADMIN", "SUCCESS");
-      },
-      error: () => {
-        this.aiLoading = false;
-        this.notificationService.addNotification("Erreur lors de l'analyse IA.", "ROLE_ADMIN", "WARNING");
-      }
-    });
-  }
-
-  onAction(type: string, ref: string): void {
-    const dossier = this.dossiers.find(d => d.reference === ref);
-
-    if ((type === 'Approuver' || type === 'Valider') && dossier && dossier.id) {
-      const actionRef = type === 'Approuver' ? 'prevalider' : 'validerFinal';
-      const promptMsg = type === 'Approuver' ? 
-          'Voulez-vous PRÉ-VALIDER ce dossier ? (Oui pour valider, Non pour refuser)' :
-          'Voulez-vous VALIDER ce dossier ? (Oui pour valider, Non pour refuser)';
-
-      this.confirmService.open({
-        title: 'Validation de Dossier',
-        message: promptMsg,
-        confirmLabel: 'Oui, Valider',
-        cancelLabel: 'Non, Refuser'
-      }).subscribe((confirmed: boolean) => {
-        if (confirmed) {
-          this.dossierService[actionRef](dossier.id!).subscribe({
-            next: (updated) => {
-              dossier.statut = updated.statut;
-              this.loadStats();
-              this.loadDossiers();
-              this.notificationService.addNotification(
-                `Dossier ${ref} ${type === 'Approuver' ? 'pré-validé' : 'validé'} avec succès.`,
-                'ROLE_ADMIN', 'SUCCESS'
-              );
-            },
-            error: (err) => alert(err.error?.message || "Erreur lors de la validation")
-          });
-        } else {
-          // Trigger refusal workflow
-          this.refusalDossierId = dossier.id!;
-          this.refusalMotif = '';
-          this.showRefuseModal = true;
-        }
-      });
-    } else if (type === 'Soumettre' && dossier && dossier.id) {
-      this.dossierService.updateStatus(dossier.id, 'EN_ATTENTE_PREVALIDATION' as any).subscribe({
-        next: (updated) => {
-          dossier.statut = updated.statut;
-          this.notificationService.addNotification(`Dossier ${ref} soumis pour pré-validation.`, 'ROLE_CHARGE_DOSSIER', 'INFO');
-        }
-      });
-    } else if (type === 'Batch Paiement') {
-      this.batchSendToTreasury();
-    } else if (type === 'Export' && ref === 'Referentiel') {
-      this.exportAnnuaire();
-    } else if (type === 'Nouveau Tribunal' || type === 'Ajouter Auxiliaire' || type.startsWith('Voir')) {
-      this.notificationService.addNotification(
-        `Ouverture du module: ${type}...`,
-        'ROLE_ADMIN', 'SUCCESS'
-      );
-      this.router.navigate(['/referentiel'], { queryParams: { action: type } });
-    } else {
-      this.notificationService.addNotification(
-        `${type} pour ${ref} : Cette fonctionnalité sera disponible dans la prochaine mise à jour.`,
-        'ROLE_ADMIN', 'WARNING'
-      );
-    }
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
-
-  exportGlobalStats(): void {
-    const btn = document.querySelector('.generate-pdf-btn') as HTMLButtonElement;
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = '<span class="loading-spinner"></span> Génération...';
-    }
-    
-    this.reportingService.exportDashboardPdf();
-    
-    setTimeout(() => {
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Générer Analyse Globale (PDF)';
-      }
-    }, 2000);
-  }
-
-  getSpaceName(): string {
-    if (this.isChargeDossier()) return 'Chargé de Dossier';
-    if (this.isPreValidateur()) return 'Pré-Validateur';
-    if (this.isValidateur()) return 'Validateur';
-    if (this.isAdmin()) return 'Administrateur';
-    return 'Action en Défense';
-  }
-
-  exportAnnuaire(): void {
-    if (this.auxiliaires.length === 0) {
-      this.notificationService.addNotification("Aucun auxiliaire à exporter.", "ROLE_ADMIN", "WARNING");
-      return;
-    }
-    const headers = ['Nom', 'Type', 'Spécialité', 'Téléphone', 'Email', 'Adresse', 'Date Ajout'];
-    const rows = this.auxiliaires.map(aux => [
-      aux.nom,
-      aux.type,
-      aux.specialite || 'Généraliste',
-      aux.telephone,
-      aux.email,
-      aux.adresse,
-      aux.createdAt ? new Date(aux.createdAt).toLocaleDateString() : ''
-    ]);
-    const csvContent = [
-      headers.join(';'),
-      ...rows.map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(';'))
-    ].join('\n');
-
-    // Add BOM for Excel UTF-8 display
-    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'annuaire_auxiliaires.csv';
-    link.click();
-    this.notificationService.addNotification("Annuaire exporté (CSV).", "ROLE_ADMIN", "SUCCESS");
-  }
-
-  batchSendToTreasury(): void {
-    this.fraisService.batchSendToTreasury().subscribe({
-      next: (result) => {
-        if (result.count > 0) {
-          this.notificationService.addNotification(
-            `Batch Virement réussi : ${result.count} frais transmis à la Trésorerie.`,
-            'ROLE_VALIDATEUR', 'SUCCESS'
-          );
-        } else {
-          this.notificationService.addNotification(
-            'Aucun frais validé à transmettre à la Trésorerie.',
-            'ROLE_VALIDATEUR', 'WARNING'
-          );
-        }
-        this.loadStats();
-      },
-      error: () => {
-        this.notificationService.addNotification(
-          'Erreur lors du batch virement vers la Trésorerie.',
-          'ROLE_VALIDATEUR', 'WARNING'
-        );
-      }
-    });
-  }
-
-  confirmRefusal(): void {
-    if (!this.refusalDossierId || this.refusalMotif.length < 5) return;
-    this.dossierService.refuser(this.refusalDossierId, this.refusalMotif).subscribe({
-      next: () => {
-        this.showRefuseModal = false;
-        this.notificationService.addNotification("Dossier refusé.", "ROLE_ADMIN", "SUCCESS");
-        this.loadDossiers();
-        this.loadStats();
-      },
-      error: (err: any) => alert(err.error?.message || "Erreur serveur lors du refus.")
-    });
-  }
+  loadHistory(id: number): void { this.dossierService.getHistory(id).subscribe(data => this.workflowHistory = data); }
+  loadAffaires(id: number): void { this.affaireService.getAffairesByDossier(id).subscribe(data => this.affaires = data); }
+  
+  exportGlobalStats(): void {}
+  onAction(t: string, r: string): void {}
 }

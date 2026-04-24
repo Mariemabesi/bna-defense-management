@@ -1,53 +1,60 @@
 package com.bna.defense.controller;
 
 import com.bna.defense.entity.Audience;
-import com.bna.defense.repository.AudienceRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.bna.defense.service.AudienceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/audiences")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class AudienceController {
 
-    @Autowired
-    private AudienceRepository audienceRepository;
+    private final AudienceService audienceService;
+
+    public AudienceController(AudienceService audienceService) {
+        this.audienceService = audienceService;
+    }
 
     @GetMapping
     public List<Audience> getAllAudiences() {
-        return audienceRepository.findAll();
+        return audienceService.getAllAudiences();
+    }
+
+    @GetMapping("/stats")
+    public Map<String, Object> getStats() {
+        return audienceService.getAudienceStats();
     }
 
     @PostMapping
     public Audience createAudience(@RequestBody Audience audience) {
-        return audienceRepository.save(audience);
+        return audienceService.saveAudience(audience);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Audience> getAudienceById(@PathVariable Long id) {
-        return audienceRepository.findById(id)
+        return audienceService.getAudienceById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Audience> updateAudience(@PathVariable Long id, @RequestBody Audience details) {
-        return audienceRepository.findById(id).map(audience -> {
-            audience.setDateAudience(details.getDateAudience());
-            audience.setLieu(details.getLieu());
+        return audienceService.getAudienceById(id).map(audience -> {
+            audience.setDateHeure(details.getDateHeure());
+            audience.setTribunal(details.getTribunal());
+            audience.setSalle(details.getSalle());
             audience.setStatut(details.getStatut());
-            audience.setCompteRendu(details.getCompteRendu());
-            return ResponseEntity.ok(audienceRepository.save(audience));
+            audience.setObservation(details.getObservation());
+            return ResponseEntity.ok(audienceService.saveAudience(audience));
         }).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAudience(@PathVariable Long id) {
-        return audienceRepository.findById(id).map(audience -> {
-            audienceRepository.delete(audience);
-            return ResponseEntity.ok().<Void>build();
-        }).orElse(ResponseEntity.notFound().build());
+        audienceService.deleteAudience(id);
+        return ResponseEntity.ok().build();
     }
 }

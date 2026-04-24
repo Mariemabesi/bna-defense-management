@@ -39,6 +39,7 @@ com/bna/defense/service/referentiel/NatureAffaireService.class
 com/bna/defense/security/UserDetailsServiceImpl.class
 com/bna/defense/repository/ProcedureJudiciaireRepository.class
 com/bna/defense/service/referentiel/ParquetService.class
+com/bna/defense/service/AudienceService.class
 com/bna/defense/controller/referentiel/CentreMediationController.class
 com/bna/defense/repository/AudienceRepository.class
 com/bna/defense/entity/Tribunal.class
@@ -112,6 +113,7 @@ com/bna/defense/entity/RecentDossier.class
 com/bna/defense/controller/NotificationController.class
 com/bna/defense/service/DossierService.class
 com/bna/defense/entity/Affaire$StatutAffaire.class
+com/bna/defense/controller/NotificationController$NotificationRequest.class
 com/bna/defense/controller/referentiel/CourCassationController.class
 com/bna/defense/entity/AuditLog.class
 com/bna/defense/entity/Dossier$Priorite.class

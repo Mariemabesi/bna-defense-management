@@ -16,31 +16,42 @@ public class Audience extends BaseEntity {
     @JsonBackReference
     private ProcedureJudiciaire procedure;
 
-    @Column(nullable = false)
-    private LocalDateTime dateAudience;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "tribunal_id")
+    private Tribunal tribunal;
 
-    private String lieu;
+    @Column(nullable = false)
+    private LocalDateTime dateHeure;
+
+    private String salle;
 
     @Enumerated(EnumType.STRING)
     private StatutAudience statut;
 
     @Column(columnDefinition = "TEXT")
-    private String compteRendu;
+    private String observation;
 
     public Audience() {}
 
     public ProcedureJudiciaire getProcedure() { return procedure; }
     public void setProcedure(ProcedureJudiciaire procedure) { this.procedure = procedure; }
-    public LocalDateTime getDateAudience() { return dateAudience; }
-    public void setDateAudience(LocalDateTime dateAudience) { this.dateAudience = dateAudience; }
-    public String getLieu() { return lieu; }
-    public void setLieu(String lieu) { this.lieu = lieu; }
+
+    public Tribunal getTribunal() { return tribunal; }
+    public void setTribunal(Tribunal tribunal) { this.tribunal = tribunal; }
+
+    public LocalDateTime getDateHeure() { return dateHeure; }
+    public void setDateHeure(LocalDateTime dateHeure) { this.dateHeure = dateHeure; }
+
+    public String getSalle() { return salle; }
+    public void setSalle(String salle) { this.salle = salle; }
+
     public StatutAudience getStatut() { return statut; }
     public void setStatut(StatutAudience statut) { this.statut = statut; }
-    public String getCompteRendu() { return compteRendu; }
-    public void setCompteRendu(String compteRendu) { this.compteRendu = compteRendu; }
+
+    public String getObservation() { return observation; }
+    public void setObservation(String observation) { this.observation = observation; }
 
     public enum StatutAudience {
-        PLANIFIEE, REPORTEE, MENEE, ANNULEE
+        PREVUE, REPORTEE, TENUE, ANNULEE
     }
 }

@@ -39,6 +39,7 @@
 /Users/utilisateur/Documents/bna-pfe/backend/src/main/java/com/bna/defense/repository/referentiel/GreffierRepository.java
 /Users/utilisateur/Documents/bna-pfe/backend/src/main/java/com/bna/defense/repository/AiResultRepository.java
 /Users/utilisateur/Documents/bna-pfe/backend/src/main/java/com/bna/defense/controller/referentiel/CourCassationController.java
+/Users/utilisateur/Documents/bna-pfe/backend/src/main/java/com/bna/defense/service/AudienceService.java
 /Users/utilisateur/Documents/bna-pfe/backend/src/main/java/com/bna/defense/controller/referentiel/DeviseController.java
 /Users/utilisateur/Documents/bna-pfe/backend/src/main/java/com/bna/defense/controller/AuthController.java
 /Users/utilisateur/Documents/bna-pfe/backend/src/main/java/com/bna/defense/config/DatabaseMigrationRunner.java
