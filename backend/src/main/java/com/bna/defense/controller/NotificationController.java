@@ -72,6 +72,7 @@ public class NotificationController {
         if (user != null) {
             notificationService.markAllAsRead(user);
         }
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping

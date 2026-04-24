@@ -12,14 +12,17 @@ import java.util.List;
 @Service
 public class AffaireService {
 
-    @Autowired
-    private AffaireRepository affaireRepository;
+    private final AffaireRepository affaireRepository;
+    private final com.bna.defense.repository.DossierRepository dossierRepository;
+    private final com.bna.defense.repository.ProcedureJudiciaireRepository procedureRepository;
 
-    @Autowired
-    private com.bna.defense.repository.DossierRepository dossierRepository;
-
-    @Autowired
-    private com.bna.defense.repository.ProcedureJudiciaireRepository procedureRepository;
+    public AffaireService(AffaireRepository affaireRepository, 
+                          com.bna.defense.repository.DossierRepository dossierRepository, 
+                          com.bna.defense.repository.ProcedureJudiciaireRepository procedureRepository) {
+        this.affaireRepository = affaireRepository;
+        this.dossierRepository = dossierRepository;
+        this.procedureRepository = procedureRepository;
+    }
 
     @Transactional(readOnly = true)
     public List<Affaire> getAll(com.bna.defense.entity.User currentUser) {

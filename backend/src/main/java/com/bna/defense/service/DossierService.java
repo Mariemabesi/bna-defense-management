@@ -31,13 +31,29 @@ import java.util.stream.Collectors;
 @Service
 public class DossierService {
 
-    @Autowired private DossierRepository dossierRepository;
-    @Autowired private AffaireRepository affaireRepository;
-    @Autowired private UserRepository userRepository;
-    @Autowired private AuditLogService auditLogService;
-    @Autowired private NotificationService notificationService;
-    @Autowired private AuditLogRepository auditLogRepository;
-    @Autowired private com.bna.defense.repository.ProcedureJudiciaireRepository procedureJudiciaireRepository;
+    private final DossierRepository dossierRepository;
+    private final AffaireRepository affaireRepository;
+    private final UserRepository userRepository;
+    private final AuditLogService auditLogService;
+    private final NotificationService notificationService;
+    private final AuditLogRepository auditLogRepository;
+    private final com.bna.defense.repository.ProcedureJudiciaireRepository procedureJudiciaireRepository;
+
+    public DossierService(DossierRepository dossierRepository, 
+                          AffaireRepository affaireRepository, 
+                          UserRepository userRepository, 
+                          AuditLogService auditLogService, 
+                          NotificationService notificationService, 
+                          AuditLogRepository auditLogRepository, 
+                          com.bna.defense.repository.ProcedureJudiciaireRepository procedureJudiciaireRepository) {
+        this.dossierRepository = dossierRepository;
+        this.affaireRepository = affaireRepository;
+        this.userRepository = userRepository;
+        this.auditLogService = auditLogService;
+        this.notificationService = notificationService;
+        this.auditLogRepository = auditLogRepository;
+        this.procedureJudiciaireRepository = procedureJudiciaireRepository;
+    }
 
 
     private boolean hasRole(User user, Role.RoleType roleType) {

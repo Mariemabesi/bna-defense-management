@@ -24,7 +24,6 @@ public class User extends BaseEntity {
     private String fullName;
 
     private boolean enabled = true;
-    private boolean isSuperValidateur = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "groupe_id")
@@ -63,8 +62,6 @@ public class User extends BaseEntity {
     public void setFullName(String fullName) { this.fullName = fullName; }
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public boolean isSuperValidateur() { return isSuperValidateur; }
-    public void setSuperValidateur(boolean superValidateur) { isSuperValidateur = superValidateur; }
     public Groupe getGroupe() { return groupe; }
     public void setGroupe(Groupe groupe) { this.groupe = groupe; }
     public Set<Role> getRoles() { return roles; }
@@ -91,5 +88,17 @@ public class User extends BaseEntity {
 
     public boolean isChargeDossier() {
         return hasRole("ROLE_CHARGE_DOSSIER");
+    }
+
+    public boolean isPreValidateur() {
+        return hasRole("ROLE_PRE_VALIDATEUR");
+    }
+
+    public boolean isValidateur() {
+        return hasRole("ROLE_VALIDATEUR");
+    }
+
+    public boolean isSuperValidateur() {
+        return hasRole("ROLE_SUPER_VALIDATEUR");
     }
 }

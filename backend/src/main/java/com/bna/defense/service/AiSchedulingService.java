@@ -12,10 +12,18 @@ import java.util.Map;
 @Service
 public class AiSchedulingService {
 
-    @Autowired private AiClient aiClient;
-    @Autowired private AiResultRepository aiResultRepository;
-    @Autowired private NotificationService notificationService;
-    @Autowired private UserRepository userRepository;
+    private final AiClient aiClient;
+    private final AiResultRepository aiResultRepository;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
+
+    public AiSchedulingService(AiClient aiClient, AiResultRepository aiResultRepository, 
+                               NotificationService notificationService, UserRepository userRepository) {
+        this.aiClient = aiClient;
+        this.aiResultRepository = aiResultRepository;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
+    }
 
     /**
      * Daily refresh of Predictive KPIs (Feature 8)

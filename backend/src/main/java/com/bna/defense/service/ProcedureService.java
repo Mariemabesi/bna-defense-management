@@ -16,14 +16,17 @@ import java.util.List;
 @Service
 public class ProcedureService {
 
-    @Autowired
-    private ProcedureJudiciaireRepository procedureRepository;
+    private final ProcedureJudiciaireRepository procedureRepository;
+    private final FraisRepository fraisRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private FraisRepository fraisRepository;
-
-    @Autowired
-    private UserRepository userRepository;
+    public ProcedureService(ProcedureJudiciaireRepository procedureRepository, 
+                            FraisRepository fraisRepository, 
+                            UserRepository userRepository) {
+        this.procedureRepository = procedureRepository;
+        this.fraisRepository = fraisRepository;
+        this.userRepository = userRepository;
+    }
 
     public List<ProcedureJudiciaire> getAllProcedures(UserDetailsImpl userDetails) {
         if (isGlobalSupervisor(userDetails)) {

@@ -122,10 +122,6 @@ public class AuthController {
             user.setPassword(signUpRequest.getPassword());
             user.setFullName(signUpRequest.getFullName());
         
-            if (signUpRequest.getIsSuperValidateur() != null) {
-                user.setSuperValidateur(signUpRequest.getIsSuperValidateur());
-            }
-        
             Long managerId = signUpRequest.getManagerId();
             if (managerId != null) {
                 user.setManager(userRepository.findById(managerId).orElse(null));
@@ -148,6 +144,10 @@ public class AuthController {
                         catch (Exception e) { return com.bna.defense.entity.Role.RoleType.ROLE_CHARGE_DOSSIER; }
                     }).collect(Collectors.toSet())
                     : new java.util.HashSet<>();
+
+            if (signUpRequest.getIsSuperValidateur() != null && signUpRequest.getIsSuperValidateur()) {
+                strRoles.add(com.bna.defense.entity.Role.RoleType.ROLE_SUPER_VALIDATEUR);
+            }
 
             if (signUpRequest.getAuxiliaireId() != null) {
                 com.bna.defense.entity.Auxiliaire aux = new com.bna.defense.entity.Auxiliaire();
