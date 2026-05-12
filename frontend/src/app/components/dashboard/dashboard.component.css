@@ -392,25 +392,41 @@ tr:last-child td {
   color: var(--bna-green);
 }
 
-.btn-action {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid var(--border-color);
-  background: #ffffff;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-action:hover {
-  border-color: var(--bna-green);
-  color: var(--bna-green);
-  background: var(--bna-green-light);
-}
+    .actions-cell { 
+      display: flex; 
+      gap: 10px; 
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .btn-action { 
+      background: white; 
+      color: #64748b; 
+      border: 1px solid var(--border-color); 
+      width: 36px; 
+      height: 36px; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      position: relative;
+    }
+    .btn-action:hover { 
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      border-color: var(--bna-green);
+      z-index: 10;
+    }
+    .btn-action svg { width: 16px; height: 16px; transition: transform 0.2s; }
+    .btn-action:hover svg { transform: scale(1.1); }
+    
+    .btn-action.view-btn { background: #f8fafc; color: #334155; }
+    .btn-action.view-btn:hover { background: white; color: #0f172a; border-color: #cbd5e1; }
+    
+    .btn-action.edit-btn { background: #f0f7ff; color: #2563eb; border-color: #dbeafe; }
+    .btn-action.edit-btn:hover { background: #2563eb; color: white; border-color: #2563eb; }
 
 /* RESPONSIVENESS */
 @media (max-width: 1024px) {

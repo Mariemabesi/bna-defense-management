@@ -2,7 +2,7 @@ package com.bna.defense.controller.referentiel;
 
 import com.bna.defense.entity.referentiel.ModeReglement;
 import com.bna.defense.repository.referentiel.ModeReglementRepository;
-import com.bna.defense.service.referentiel.GenericReferentielService;
+import com.bna.defense.service.referentiel.ModeReglementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +20,7 @@ public class ModeReglementController {
     private ModeReglementRepository repository;
 
     @Autowired
-    private GenericReferentielService<ModeReglement, Long> service;
+    private ModeReglementService service;
 
     @GetMapping
     public ResponseEntity<Page<ModeReglement>> getAll(

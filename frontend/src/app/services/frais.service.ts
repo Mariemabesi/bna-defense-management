@@ -12,14 +12,16 @@ export interface Frais {
             titre: string;
         }
     };
+    dossierReference?: string;
     referenceDossier?: string; // Still used for creation DTO mapping
     libelle: string;
     description?: string; // Fallback for old code
     montant: number;
-    statut: 'ATTENTE' | 'PRE_VALIDE' | 'VALIDE' | 'REJETE' | 'ENVOYE_TRESORERIE';
+    statut: 'EN_ATTENTE_PREVALIDATION' | 'PRE_VALIDE' | 'VALIDE' | 'REFUSE' | 'ENVOYE_TRESORERIE';
     type?: string;
     observation?: string;
     dateDemande?: Date;
+    attachments?: any[];
 }
 
 @Injectable({
@@ -38,6 +40,10 @@ export class FraisService {
         return this.http.post<Frais>(this.apiUrl, frais);
     }
 
+    createFraisWithFiles(formData: FormData): Observable<Frais> {
+        return this.http.post<Frais>(this.apiUrl, formData);
+    }
+
     preValidate(id: number): Observable<Frais> {
         return this.http.put<Frais>(`${this.apiUrl}/${id}/pre-valider`, {});
     }
@@ -52,5 +58,9 @@ export class FraisService {
 
     batchSendToTreasury(): Observable<{ message: string; count: number }> {
         return this.http.put<{ message: string; count: number }>(`${this.apiUrl}/batch-tresorerie`, {});
+    }
+
+    getAttachmentDownloadUrl(id: number): string {
+        return `${this.apiUrl}/attachments/${id}/download`;
     }
 }

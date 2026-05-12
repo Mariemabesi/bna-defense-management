@@ -125,7 +125,7 @@ public class ProcedureService {
         frais.setLibelle("Honoraires automatiques pour procédure: " + procedure.getTitre());
         frais.setMontant(new BigDecimal("500.00")); // Montant forfaitaire exemple
         frais.setType(Frais.TypeFrais.HONORAIRES_AVOCAT);
-        frais.setStatut(Frais.StatutFrais.ATTENTE);
+        frais.setStatut(Frais.StatutFrais.EN_ATTENTE_PREVALIDATION);
         frais.setObservation("Généré automatiquement suite à la validation de la procédure #" + procedure.getId());
         
         fraisRepository.save(frais);

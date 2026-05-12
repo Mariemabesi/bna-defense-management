@@ -313,7 +313,7 @@ public class ReportingService {
             boolean isValidateur = currentUser.isValidateur();
             dossiers = dossierRepository.findAllWithRBAC(
                     currentUser, currentUser.getUsername(),
-                    false, isCharge, isPreVal, isValidateur,
+                    false, isCharge, isPreVal, isValidateur, false,
                     Pageable.unpaged()
             ).getContent();
         } else {
@@ -352,12 +352,12 @@ public class ReportingService {
                 .count();
 
         long totalFraisPending = filteredFrais.stream()
-                .filter(f -> f.getStatut() == Frais.StatutFrais.ATTENTE
+                .filter(f -> f.getStatut() == Frais.StatutFrais.EN_ATTENTE_PREVALIDATION
                         || f.getStatut() == Frais.StatutFrais.PRE_VALIDE)
                 .count();
 
         BigDecimal totalFraisAmountPending = filteredFrais.stream()
-                .filter(f -> f.getStatut() == Frais.StatutFrais.ATTENTE
+                .filter(f -> f.getStatut() == Frais.StatutFrais.EN_ATTENTE_PREVALIDATION
                         || f.getStatut() == Frais.StatutFrais.PRE_VALIDE)
                 .map(Frais::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

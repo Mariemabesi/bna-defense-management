@@ -2,7 +2,7 @@ package com.bna.defense.controller.referentiel;
 
 import com.bna.defense.entity.referentiel.TvaTimbre;
 import com.bna.defense.repository.referentiel.TvaTimbreRepository;
-import com.bna.defense.service.referentiel.GenericReferentielService;
+import com.bna.defense.service.referentiel.TvaTimbreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +20,7 @@ public class TvaTimbreController {
     private TvaTimbreRepository repository;
 
     @Autowired
-    private GenericReferentielService<TvaTimbre, Long> service;
+    private TvaTimbreService service;
 
     @GetMapping
     public ResponseEntity<Page<TvaTimbre>> getAll(

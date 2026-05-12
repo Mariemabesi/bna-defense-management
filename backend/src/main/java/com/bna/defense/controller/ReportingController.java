@@ -22,7 +22,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/reports")
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "*", maxAge = 90)
 public class ReportingController {
 
     private final ReportingService reportingService;
@@ -31,9 +31,9 @@ public class ReportingController {
     private final DossierService dossierService;
 
     public ReportingController(ReportingService reportingService,
-                               UserRepository userRepository,
-                               ExportService exportService,
-                               DossierService dossierService) {
+            UserRepository userRepository,
+            ExportService exportService,
+            DossierService dossierService) {
         this.reportingService = reportingService;
         this.userRepository = userRepository;
         this.exportService = exportService;
@@ -46,7 +46,8 @@ public class ReportingController {
         byte[] data = reportingService.exportDashboardStatsToPdf(user);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDisposition(ContentDisposition.attachment().filename("analyse_statistique_globale.pdf").build());
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename("analyse_statistique_globale.pdf").build());
         return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
@@ -69,7 +70,8 @@ public class ReportingController {
             @RequestParam(required = false) Long groupeId) {
         byte[] data = reportingService.exportFraisToExcel(start, end, groupeId);
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentType(
+                MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
         headers.setContentDisposition(ContentDisposition.attachment().filename("reporting_frais.xlsx").build());
         return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
@@ -84,7 +86,7 @@ public class ReportingController {
     public ResponseEntity<byte[]> exportDossiersPdf(Principal principal) {
         try {
             User user = userRepository.findByUsername(principal.getName()).orElseThrow();
-            List<Dossier> dossiers = dossierService.getAllDossiers(user, PageRequest.of(0, 500)).getContent();
+            List<Dossier> dossiers = dossierService.getAllDossiers(user, PageRequest.of(0, 500), false).getContent();
             byte[] data = exportService.exportDossiersPdf(user, dossiers);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -99,11 +101,28 @@ public class ReportingController {
     public ResponseEntity<byte[]> exportDossiersExcel(Principal principal) {
         try {
             User user = userRepository.findByUsername(principal.getName()).orElseThrow();
-            List<Dossier> dossiers = dossierService.getAllDossiers(user, PageRequest.of(0, 500)).getContent();
+            List<Dossier> dossiers = dossierService.getAllDossiers(user, PageRequest.of(0, 500), false).getContent();
             byte[] data = exportService.exportDossiersExcel(user, dossiers);
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            headers.setContentType(
+                    MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
             headers.setContentDisposition(ContentDisposition.attachment().filename("dossiers_bna.xlsx").build());
+            return new ResponseEntity<>(data, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/dossiers/{id}/export/pdf")
+    public ResponseEntity<byte[]> exportSingleDossierPdf(@PathVariable Long id, Principal principal) {
+        try {
+            User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+            Dossier dossier = dossierService.getDossierById(id);
+            byte[] data = exportService.exportDossiersPdf(user, java.util.List.of(dossier));
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDisposition(
+                    ContentDisposition.attachment().filename("dossier_" + dossier.getReference() + ".pdf").build());
             return new ResponseEntity<>(data, headers, HttpStatus.OK);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

@@ -16,6 +16,7 @@ import com.bna.defense.entity.AuditLog;
 import com.bna.defense.entity.Dossier.StatutDossier;
 import com.bna.defense.entity.Dossier.Priorite;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
+import com.bna.defense.dto.FinancialFinalizationDTO;
+
 @Service
 public class DossierService {
 
@@ -38,6 +41,7 @@ public class DossierService {
     private final NotificationService notificationService;
     private final AuditLogRepository auditLogRepository;
     private final com.bna.defense.repository.ProcedureJudiciaireRepository procedureJudiciaireRepository;
+    private final AiClient aiClient;
 
     public DossierService(DossierRepository dossierRepository, 
                           AffaireRepository affaireRepository, 
@@ -45,7 +49,8 @@ public class DossierService {
                           AuditLogService auditLogService, 
                           NotificationService notificationService, 
                           AuditLogRepository auditLogRepository, 
-                          com.bna.defense.repository.ProcedureJudiciaireRepository procedureJudiciaireRepository) {
+                          com.bna.defense.repository.ProcedureJudiciaireRepository procedureJudiciaireRepository,
+                          AiClient aiClient) {
         this.dossierRepository = dossierRepository;
         this.affaireRepository = affaireRepository;
         this.userRepository = userRepository;
@@ -53,6 +58,116 @@ public class DossierService {
         this.notificationService = notificationService;
         this.auditLogRepository = auditLogRepository;
         this.procedureJudiciaireRepository = procedureJudiciaireRepository;
+        this.aiClient = aiClient;
+    }
+
+    // Existing methods ...
+
+    /**
+     * Workflow: Finalisation Financière
+     * Step 1: Submission by Chargé
+     */
+    @Transactional
+    public Dossier soumettreFinalisationFinanciere(Long id, FinancialFinalizationDTO dto, String username) {
+        Dossier dossier = getDossierById(id);
+        
+        // Strict workflow check
+        if (dossier.getFinancialStatut() != Dossier.FinancialStatut.NONE && 
+            dossier.getFinancialStatut() != Dossier.FinancialStatut.REJETE_PAR_PREVALIDATION &&
+            dossier.getFinancialStatut() != Dossier.FinancialStatut.REJETE) {
+            throw new RuntimeException("Workflow financier : Statut actuel ne permet pas une nouvelle soumission.");
+        }
+
+        dossier.setHonorairesAvocatFinal(dto.getHonorairesAvocatFinal());
+        dossier.setFraisHuissierFinal(dto.getFraisHuissierFinal());
+        dossier.setAutresFraisFinal(dto.getAutresFraisFinal());
+        dossier.setFinancialStatut(Dossier.FinancialStatut.EN_ATTENTE_PREVALIDATION);
+        
+        Dossier saved = dossierRepository.save(dossier);
+
+        auditLogService.log(username, "SOUMISSION_FINANCIERE", "Dossier", id,
+            "Formulaire de finalisation financière soumis par " + username + ". Observation: " + dto.getObservation());
+
+        return saved;
+    }
+
+    /**
+     * Step 2: Pre-validation by Pre-validator
+     */
+    @Transactional
+    public Dossier prevaliderFinalisationFinanciere(Long id, String commentaire, String username) {
+        Dossier dossier = getDossierById(id);
+        if (dossier.getFinancialStatut() != Dossier.FinancialStatut.EN_ATTENTE_PREVALIDATION) {
+            throw new RuntimeException("Workflow financier : Dossier n'est pas en attente de prévalidation.");
+        }
+
+        dossier.setFinancialStatut(Dossier.FinancialStatut.PRE_VALIDE);
+        Dossier saved = dossierRepository.save(dossier);
+
+        auditLogService.log(username, "PREVALIDATION_FINANCIERE", "Dossier", id,
+            "Finalisation financière prévalidée par " + username + ". Commentaire: " + commentaire);
+
+        return saved;
+    }
+
+    /**
+     * Step 2b: Rejection by Pre-validator
+     */
+    @Transactional
+    public Dossier refuserPrevalidationFinanciere(Long id, String commentaire, String username) {
+        Dossier dossier = getDossierById(id);
+        if (dossier.getFinancialStatut() != Dossier.FinancialStatut.EN_ATTENTE_PREVALIDATION) {
+            throw new RuntimeException("Workflow financier : Dossier n'est pas en attente de prévalidation.");
+        }
+
+        dossier.setFinancialStatut(Dossier.FinancialStatut.REJETE_PAR_PREVALIDATION);
+        dossier.setMotifRefusFinancier(commentaire);
+        Dossier saved = dossierRepository.save(dossier);
+
+        auditLogService.log(username, "REJET_PREVALIDATION_FINANCIERE", "Dossier", id,
+            "Finalisation financière rejetée par le prévalidateur (" + username + "). Motif: " + commentaire);
+
+        return saved;
+    }
+
+    /**
+     * Step 3: Final Validation by Validator
+     */
+    @Transactional
+    public Dossier validerFinalisationFinanciere(Long id, String commentaire, String username) {
+        Dossier dossier = getDossierById(id);
+        if (dossier.getFinancialStatut() != Dossier.FinancialStatut.PRE_VALIDE) {
+            throw new RuntimeException("Workflow financier : Dossier doit être prévalidé avant validation finale.");
+        }
+
+        dossier.setFinancialStatut(Dossier.FinancialStatut.VALIDE);
+        dossier.setFinancialsFinalized(true);
+        Dossier saved = dossierRepository.save(dossier);
+
+        auditLogService.log(username, "VALIDATION_FINANCIERE_FINALE", "Dossier", id,
+            "Finalisation financière validée définitivement par " + username + ". Commentaire: " + commentaire);
+
+        return saved;
+    }
+
+    /**
+     * Step 3b: Rejection by Final Validator
+     */
+    @Transactional
+    public Dossier refuserFinalisationFinanciere(Long id, String commentaire, String username) {
+        Dossier dossier = getDossierById(id);
+        if (dossier.getFinancialStatut() != Dossier.FinancialStatut.PRE_VALIDE) {
+            throw new RuntimeException("Workflow financier : Dossier doit être prévalidé avant décision finale.");
+        }
+
+        dossier.setFinancialStatut(Dossier.FinancialStatut.REJETE);
+        dossier.setMotifRefusFinancier(commentaire);
+        Dossier saved = dossierRepository.save(dossier);
+
+        auditLogService.log(username, "REJET_FINAL_FINANCIER", "Dossier", id,
+            "Finalisation financière rejetée définitivement par " + username + ". Motif: " + commentaire);
+
+        return saved;
     }
 
 
@@ -66,7 +181,7 @@ public class DossierService {
             || hasRole(user, Role.RoleType.ROLE_SUPER_VALIDATEUR);
     }
 
-    public Page<Dossier> getAllDossiers(User currentUser, Pageable pageable) {
+    public Page<Dossier> getAllDossiers(User currentUser, Pageable pageable, boolean includeArchived) {
         boolean isSuper     = isSuper(currentUser);
         boolean isCharge    = !isSuper && hasRole(currentUser, Role.RoleType.ROLE_CHARGE_DOSSIER);
         boolean isPreVal    = !isSuper && hasRole(currentUser, Role.RoleType.ROLE_PRE_VALIDATEUR);
@@ -79,14 +194,6 @@ public class DossierService {
             sort
         );
 
-        List<StatutDossier> allowedStatuses = Arrays.asList(
-            StatutDossier.EN_ATTENTE_VALIDATION,
-            StatutDossier.VALIDE,
-            StatutDossier.REFUSE,
-            StatutDossier.CLOTURE,
-            StatutDossier.EN_ATTENTE_VALIDATION_CLOTURE
-        );
-
         return dossierRepository.findAllWithRBAC(
             currentUser,
             currentUser.getUsername(),
@@ -94,11 +201,12 @@ public class DossierService {
             isCharge,
             isPreVal,
             isValidateur,
+            includeArchived,
             sortedPageable
         );
     }
 
-    public Page<Dossier> getMyDossiers(User currentUser, Pageable pageable) {
+    public Page<Dossier> getMyDossiers(User currentUser, Pageable pageable, boolean includeArchived) {
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         Pageable sortedPageable = PageRequest.of(
             pageable.getPageNumber(), 
@@ -112,6 +220,7 @@ public class DossierService {
             true,  // isCharge (force charge behavior)
             false, // isPreVal
             false, // isValidateur
+            includeArchived,
             sortedPageable
         );
     }
@@ -502,7 +611,42 @@ public class DossierService {
         return dossierRepository.findPendingClosureForValidateur(validateur, StatutDossier.EN_ATTENTE_VALIDATION_CLOTURE);
     }
 
+    @Transactional(readOnly = true)
+    public List<Dossier> getDossiersToFinalize(User user) {
+        boolean isSuper = isSuper(user);
+        boolean isPreVal = hasRole(user, Role.RoleType.ROLE_PRE_VALIDATEUR);
+        boolean isValidateur = hasRole(user, Role.RoleType.ROLE_VALIDATEUR);
+
+        if (isSuper) {
+            return dossierRepository.findAll().stream()
+                .filter(d -> d.getFinancialStatut() != Dossier.FinancialStatut.NONE && d.getFinancialStatut() != Dossier.FinancialStatut.VALIDE)
+                .collect(Collectors.toList());
+        }
+
+        List<Dossier> result = new ArrayList<>();
+        
+        // 1. Dossiers I need to submit (as Chargé)
+        result.addAll(dossierRepository.findByStatutAndFinancialsFinalizedFalseAndAssignedCharge(StatutDossier.CLOTURE, user).stream()
+            .filter(d -> d.getFinancialStatut() == Dossier.FinancialStatut.NONE || 
+                         d.getFinancialStatut() == Dossier.FinancialStatut.REJETE_PAR_PREVALIDATION || 
+                         d.getFinancialStatut() == Dossier.FinancialStatut.REJETE)
+            .collect(Collectors.toList()));
+
+        // 2. Dossiers I need to pre-validate (as Pre-validator)
+        if (isPreVal) {
+            result.addAll(dossierRepository.findByFinancialStatutForPreValidateur(Dossier.FinancialStatut.EN_ATTENTE_PREVALIDATION, user));
+        }
+
+        // 3. Dossiers I need to validate (as Validator)
+        if (isValidateur) {
+            result.addAll(dossierRepository.findByFinancialStatutForValidateur(Dossier.FinancialStatut.PRE_VALIDE, user));
+        }
+
+        return result.stream().distinct().collect(Collectors.toList());
+    }
+
     @Transactional
+
     public List<Dossier> searchDossiers(String query) {
         return dossierRepository.searchDossiers(query);
     }
@@ -541,6 +685,52 @@ public class DossierService {
     @Transactional(readOnly = true)
     public List<Dossier> getByExpert(Long expertId) {
         return dossierRepository.findByExpert_Id(expertId);
+    }
+
+    /**
+     * Point 11: AI Integration
+     * Analyzes dossier outcome using Logistic Regression model
+     */
+    @Transactional
+    public Dossier analyzeDossierWithAI(Long id, String username) {
+        Dossier dossier = getDossierById(id);
+        
+        // Prepare DTO for AI service
+        com.bna.defense.dto.AIAnalysisDTO request = com.bna.defense.dto.AIAnalysisDTO.builder()
+            .affaire_type(dossier.getNatureAffaire() != null ? dossier.getNatureAffaire().getNom() : "Inconnu")
+            .avocat_specialite(dossier.getAvocat() != null ? dossier.getAvocat().getSpecialite() : "Généraliste")
+            .nb_reportees((double) (dossier.getAffaires() != null ? dossier.getAffaires().size() : 0))
+            .avocat_experience_annees(
+                dossier.getAvocatExperienceAnnees() != null ? dossier.getAvocatExperienceAnnees() : 
+                (dossier.getAvocat() != null && dossier.getAvocat().getExperienceAnnees() != null ? 
+                 dossier.getAvocat().getExperienceAnnees().doubleValue() : 5.0)
+            )
+            .qualite_preuves(dossier.getQualitePreuves() != null ? dossier.getQualitePreuves() : "MOYENNE")
+            .solidite_dossier(dossier.getSoliditeDossier() != null ? dossier.getSoliditeDossier() : "STANDARD")
+            .dossier_budget_provisionne(dossier.getBudgetProvisionne() != null ? dossier.getBudgetProvisionne().doubleValue() : 0.0)
+            .specialite_compatible(dossier.getSpecialiteCompatible() != null ? dossier.getSpecialiteCompatible() : "OUI")
+            .build();
+
+        // Call FastAPI
+        com.bna.defense.dto.AIAnalysisDTO response = aiClient.predictOutcome(request).block();
+        
+        if (response != null && "success".equals(response.getStatus())) {
+            dossier.setVerdict(response.getPrediction());
+            dossier.setProbabilitySuccess(response.getProbabilitySuccess());
+            dossier.setProbabilityFailure(response.getProbabilityFailure());
+            dossier.setRiskScore(response.getRiskLevel());
+            dossier.setAiAnalysis(response.getAnalysis());
+            
+            Dossier saved = dossierRepository.save(dossier);
+            
+            auditLogService.log(username, "AI_ANALYSIS", "Dossier", id,
+                "Analyse IA effectuée. Prédiction: " + response.getPrediction() + 
+                ", Probabilité: " + response.getProbabilitySuccess() + "%");
+                
+            return saved;
+        } else {
+            throw new RuntimeException("L'analyse IA a échoué. Veuillez vérifier le service AI.");
+        }
     }
 }
 

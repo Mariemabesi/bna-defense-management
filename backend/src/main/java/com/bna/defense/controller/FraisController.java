@@ -16,20 +16,53 @@ public class FraisController {
     @Autowired
     private FraisService fraisService;
 
+    @Autowired
+    private com.bna.defense.repository.UserRepository userRepository;
+
     @GetMapping
-    public ResponseEntity<?> getAll() {
+    public ResponseEntity<?> getAll(java.security.Principal principal) {
         try {
-            return ResponseEntity.ok(fraisService.getAllFrais());
+            com.bna.defense.entity.User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+            return ResponseEntity.ok(fraisService.getFraisForUser(user));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error: " + e.getMessage());
         }
     }
 
-    @PostMapping
+    @PostMapping(consumes = {"multipart/form-data"})
     @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN')")
-    public ResponseEntity<Frais> create(@RequestBody FraisDTO dto) {
-        return ResponseEntity.ok(fraisService.demandFrais(dto));
+    public ResponseEntity<Frais> create(
+            @RequestPart("frais") com.bna.defense.dto.FraisDTO dto,
+            @RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files) {
+        return ResponseEntity.ok(fraisService.demandFrais(dto, files));
+    }
+
+    @PostMapping("/{id}/attachments")
+    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN')")
+    public ResponseEntity<?> addAttachment(
+            @PathVariable Long id,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        return ResponseEntity.ok(fraisService.addAttachment(id, file));
+    }
+
+    @Autowired
+    private com.bna.defense.service.FileStorageService fileStorageService;
+
+    @GetMapping("/attachments/{id}/download")
+    public ResponseEntity<org.springframework.core.io.Resource> downloadAttachment(@PathVariable Long id) {
+        com.bna.defense.entity.FraisAttachment attachment = fraisService.getAttachment(id);
+        try {
+            java.nio.file.Path path = fileStorageService.load(attachment.getFileName(), "frais/" + attachment.getFrais().getId());
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.UrlResource(path.toUri());
+
+            return ResponseEntity.ok()
+                    .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getOriginalName() + "\"")
+                    .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, attachment.getContentType())
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @PutMapping("/{id}/pre-valider")

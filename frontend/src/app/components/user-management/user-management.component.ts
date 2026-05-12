@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { SidebarComponent } from '../sidebar/sidebar.component';
@@ -77,23 +77,32 @@ interface UserDTO {
                   </td>
                   <td>
                     <div class="flex items-center gap-2">
-                      <!-- SUSPEND / RESTORE -->
-                      <button class="btn-action" 
-                             [title]="u.enabled ? 'Suspendre' : 'Réactiver'"
-                             (click)="toggleUserStatus(u)">
-                         <svg *ngIf="u.enabled" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                         <svg *ngIf="!u.enabled" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-                      </button>
-                      
-                      <!-- EDIT -->
-                      <button class="btn-action" title="Modifier" (click)="openEditModal(u)">
-                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                      </button>
+                       <!-- 1. Toujours Suspendre/Réactiver (Action de contrôle rapide) -->
+                       <button class="btn-action" 
+                              [title]="u.enabled ? 'Suspendre' : 'Réactiver'"
+                              (click)="toggleUserStatus(u)">
+                          <svg *ngIf="u.enabled" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                          <svg *ngIf="!u.enabled" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                       </button>
 
-                      <!-- DELETE (REAL) -->
-                      <button class="btn-action hover-danger" title="Supprimer Définitivement" (click)="deleteUser(u)">
-                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                      </button>
+                       <!-- 2. Modifier (Toujours visible) -->
+                       <button class="btn-action" title="Modifier" (click)="openEditModal(u)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                       </button>
+
+                       <!-- Plus d'actions (Dropdown pour le reste) -->
+                       <div class="more-actions-wrapper">
+                         <button class="btn-action more-btn" (click)="toggleActionMenu($event, u.id!)" title="Plus d'actions">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+                         </button>
+                         
+                         <div class="actions-dropdown" *ngIf="activeActionMenuId === u.id" (click)="$event.stopPropagation()">
+                            <!-- DELETE (REAL) -->
+                            <button class="btn-action hover-danger" title="Supprimer Définitivement" (click)="deleteUser(u)">
+                               <svg viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                         </div>
+                       </div>
                     </div>
                   </td>
                 </tr>
@@ -213,11 +222,51 @@ interface UserDTO {
     .main-content { flex: 1; display: flex; flex-direction: column; }
     .dashboard-content { padding: 40px; max-width: 1400px; width: 100%; margin: 0 auto; }
     
-    .btn-action {
-      background: white; border: 1px solid #e2e8f0; width: 40px; height: 40px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
+    .btn-action { 
+      background: white; 
+      color: #64748b; 
+      border: 1px solid #e2e8f0; 
+      width: 40px; 
+      height: 40px; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      position: relative;
     }
-    .btn-action:hover { background: #f8fafc; border-color: var(--bna-green); transform: translateY(-2px); }
+    .btn-action:hover { 
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      border-color: var(--bna-green);
+      z-index: 10;
+    }
+    .btn-action svg { width: 16px; height: 16px; transition: transform 0.2s; }
+    .btn-action:hover svg { transform: scale(1.1); }
+
+    .more-actions-wrapper { position: relative; display: flex; align-items: center; }
+    .actions-dropdown {
+      position: absolute;
+      top: 50%;
+      right: 45px;
+      transform: translateY(-50%);
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      animation: slideInRight 0.2s ease-out;
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateY(-50%) translateX(10px); }
+      to { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    
     .btn-action.hover-danger:hover { border-color: #ef4444; background: #fef2f2; }
     .btn-action.hover-danger:hover svg { stroke: #ef4444 !important; }
     
@@ -306,6 +355,7 @@ interface UserDTO {
 })
 export class UserManagementComponent implements OnInit {
   users: UserDTO[] = [];
+  activeActionMenuId: number | null = null;
   auxiliaires: any[] = [];
   showSignupModal = false;
   newAccount = { username: '', email: '', password: '', role: ['ROLE_CHARGE_DOSSIER'], auxiliaireId: null as number | null, managerId: null as number | null };
@@ -320,6 +370,16 @@ export class UserManagementComponent implements OnInit {
   ngOnInit(): void {
     this.loadUsers();
     this.loadAuxiliaires();
+  }
+
+  toggleActionMenu(event: Event, id: number) {
+    event.stopPropagation();
+    this.activeActionMenuId = this.activeActionMenuId === id ? null : id;
+  }
+
+  @HostListener('document:click')
+  closeActionMenu() {
+    this.activeActionMenuId = null;
   }
 
   loadAuxiliaires() {

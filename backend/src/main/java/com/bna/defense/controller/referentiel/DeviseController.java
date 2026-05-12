@@ -2,7 +2,7 @@ package com.bna.defense.controller.referentiel;
 
 import com.bna.defense.entity.referentiel.Devise;
 import com.bna.defense.repository.referentiel.DeviseRepository;
-import com.bna.defense.service.referentiel.GenericReferentielService;
+import com.bna.defense.service.referentiel.DeviseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +20,7 @@ public class DeviseController {
     private DeviseRepository repository;
 
     @Autowired
-    private GenericReferentielService<Devise, Long> service;
+    private DeviseService service;
 
     @GetMapping
     public ResponseEntity<Page<Devise>> getAll(

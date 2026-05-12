@@ -1,6 +1,7 @@
 package com.bna.defense.repository;
 
 import com.bna.defense.entity.Frais;
+import com.bna.defense.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,10 +11,23 @@ import java.util.List;
 
 public interface FraisRepository extends JpaRepository<Frais, Long> {
 
-    @Query("SELECT f FROM Frais f JOIN FETCH f.affaire a JOIN FETCH a.dossier d")
-    List<Frais> findAllWithAffaire();
-
-    List<Frais> findByStatut(Frais.StatutFrais statut);
+    @Query("SELECT f FROM Frais f " +
+            "JOIN FETCH f.affaire a " +
+            "JOIN FETCH a.dossier d " +
+            "LEFT JOIN d.assignedCharge ac " +
+            "LEFT JOIN ac.manager m " +
+            "WHERE (:isSuper = true) " +
+            "OR (f.createdBy = :username) " +
+            "OR (:isCharge = true AND ac = :user) " +
+            "OR (:isPreVal = true AND (ac = :user OR m = :user)) " +
+            "OR (:isValidateur = true AND (ac = :user OR m = :user OR m.manager = :user))")
+    List<Frais> findByRBAC(
+            @Param("user") User user,
+            @Param("username") String username,
+            @Param("isSuper") boolean isSuper,
+            @Param("isCharge") boolean isCharge,
+            @Param("isPreVal") boolean isPreVal,
+            @Param("isValidateur") boolean isValidateur);
 
     @Query("SELECT f FROM Frais f JOIN FETCH f.affaire a JOIN FETCH a.dossier d WHERE d.id = :dossierId")
     List<Frais> findByDossierId(@Param("dossierId") Long dossierId);

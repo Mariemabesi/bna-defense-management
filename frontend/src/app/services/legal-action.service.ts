@@ -9,15 +9,17 @@ export interface Procedure {
   statut: 'BROUILLON' | 'EN_COURS' | 'VALIDEE' | 'TERMINEE' | 'ANNULEE';
   description: string;
   affaireId: number;
+  audiences?: Audience[];
 }
 
 export interface Audience {
   id?: number;
-  dateAudience: string;
-  lieu: string;
-  statut: 'PLANIFIEE' | 'REPORTEE' | 'MENEE' | 'ANNULEE';
-  compteRendu: string;
+  dateHeure: string;
+  salle?: string;
+  statut: string;
+  observation?: string;
   procedureId: number;
+  tribunal?: any;
 }
 
 export interface Jugement {

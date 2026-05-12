@@ -169,7 +169,7 @@ export class LoginComponent {
         this.router.navigate(['/dashboard']);
       },
       error: err => {
-        this.error = 'Identifiant ou mot de passe incorrect';
+        this.error = err.error?.message || 'Identifiant ou mot de passe incorrect';
         this.loading = false;
       }
     });

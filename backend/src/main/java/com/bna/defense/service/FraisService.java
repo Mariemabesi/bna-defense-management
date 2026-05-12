@@ -4,11 +4,14 @@ import com.bna.defense.dto.FraisDTO;
 import com.bna.defense.entity.Affaire;
 import com.bna.defense.entity.Dossier;
 import com.bna.defense.entity.Frais;
+import com.bna.defense.entity.FraisAttachment;
 import com.bna.defense.repository.DossierRepository;
+import com.bna.defense.repository.FraisAttachmentRepository;
 import com.bna.defense.repository.FraisRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,22 +22,51 @@ public class FraisService {
     private FraisRepository fraisRepository;
 
     @Autowired
+    private FraisAttachmentRepository attachmentRepository;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
     private DossierRepository dossierRepository;
 
     @Autowired
     private DossierService dossierService;
 
-    public List<Frais> getAllFrais() {
-        return fraisRepository.findAllWithAffaire();
+    public List<Frais> getFraisForUser(com.bna.defense.entity.User user) {
+        boolean isSuper = user.isSuperValidateur() || user.isAdmin();
+        boolean isCharge = user.isChargeDossier();
+        boolean isPreVal = user.isPreValidateur();
+        boolean isValidateur = user.isValidateur();
+
+        List<Frais> all = fraisRepository.findByRBAC(user, user.getUsername(), isSuper, isCharge, isPreVal, isValidateur);
+
+        // Filter based on workflow visibility rules:
+        if (isSuper) return all;
+
+        return all.stream().filter(f -> {
+            // Charge sees everything they are assigned to OR they created
+            if (isCharge && (
+                (f.getAffaire().getDossier().getAssignedCharge() != null && f.getAffaire().getDossier().getAssignedCharge().getId().equals(user.getId())) ||
+                (f.getCreatedBy() != null && f.getCreatedBy().equals(user.getUsername()))
+            )) {
+                return true;
+            }
+            // Pre-validator and Validator see everything within their branch (RBAC query already filtered the branch)
+            // We just return true here because findByRBAC already did the heavy lifting
+            if (isPreVal || isValidateur) {
+                return true;
+            }
+
+            return false;
+        }).collect(java.util.stream.Collectors.toList());
     }
 
     @Transactional
-    public Frais demandFrais(FraisDTO dto) {
+    public Frais demandFrais(FraisDTO dto, List<MultipartFile> files) {
         Affaire affaire = null;
         if (dto.getReferenceAffaire() != null && !dto.getReferenceAffaire().isEmpty()) {
-            // Find by affaire reference if provided
-            // For now let's assume we search by judicial reference or id
-            // But let's simplify and use Dossier reference as fallback
+            // Simplified: logic to find affaire could be more robust
         }
 
         if (affaire == null && dto.getReferenceDossier() != null) {
@@ -42,7 +74,7 @@ public class FraisService {
                     .orElse(null);
 
             if (dossier != null && !dossier.getAffaires().isEmpty()) {
-                affaire = dossier.getAffaires().get(0); // Take first one as default
+                affaire = dossier.getAffaires().get(0);
             }
         }
 
@@ -55,18 +87,45 @@ public class FraisService {
         frais.setLibelle(dto.getLibelle());
         frais.setMontant(dto.getMontant());
         frais.setType(dto.getType() != null ? dto.getType() : Frais.TypeFrais.AUTRE);
-        frais.setStatut(Frais.StatutFrais.ATTENTE);
+        frais.setStatut(Frais.StatutFrais.EN_ATTENTE_PREVALIDATION);
         frais.setObservation(dto.getObservation());
-
-        // AI Anomaly Detection Simulation
-        if (frais.getMontant() != null && frais.getMontant().compareTo(new java.math.BigDecimal("10000")) > 0) {
-            String warning = "[NOTE IA] Alerte Anomale : Montant élevé détecté (" + frais.getMontant() + " TND). ";
-            frais.setObservation(frais.getObservation() != null ? warning + frais.getObservation() : warning);
-        }
+        
+        // Handle Date (Default to today if null)
+        // If DTO had a date field we'd use it here. Let's assume we use it if present.
+        // For now using entity default.
 
         Frais saved = fraisRepository.save(frais);
+
+        // Handle File Uploads
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    addFileToFrais(saved, file);
+                }
+            }
+        }
+
         triggerRecalculate(saved.getAffaire().getDossier().getId());
         return saved;
+    }
+
+    @Transactional
+    public FraisAttachment addAttachment(Long fraisId, MultipartFile file) {
+        Frais frais = fraisRepository.findById(fraisId).orElseThrow();
+        return addFileToFrais(frais, file);
+    }
+
+    private FraisAttachment addFileToFrais(Frais frais, MultipartFile file) {
+        String savedFilename = fileStorageService.save(file, "frais/" + frais.getId());
+        
+        FraisAttachment attachment = new FraisAttachment();
+        attachment.setFrais(frais);
+        attachment.setFileName(savedFilename);
+        attachment.setOriginalName(file.getOriginalFilename());
+        attachment.setContentType(file.getContentType());
+        attachment.setFileSize(file.getSize());
+        
+        return attachmentRepository.save(attachment);
     }
 
     private void triggerRecalculate(Long dossierId) {
@@ -77,7 +136,7 @@ public class FraisService {
     @Transactional
     public Frais preValidate(Long id) {
         Frais frais = fraisRepository.findById(id).orElseThrow();
-        if (frais.getStatut() != Frais.StatutFrais.ATTENTE) {
+        if (frais.getStatut() != Frais.StatutFrais.EN_ATTENTE_PREVALIDATION) {
             throw new RuntimeException("Statut invalide pour pré-validation");
         }
         frais.setStatut(Frais.StatutFrais.PRE_VALIDE);
@@ -107,11 +166,11 @@ public class FraisService {
     }
 
     public List<Frais> findByStatut(Frais.StatutFrais statut) {
-        return fraisRepository.findByStatut(statut);
+        return fraisRepository.findAll().stream().filter(f -> f.getStatut() == statut).collect(java.util.stream.Collectors.toList());
     }
 
     public int batchSendToTreasury() {
-        List<Frais> valideFrais = fraisRepository.findByStatut(Frais.StatutFrais.VALIDE);
+        List<Frais> valideFrais = this.findByStatut(Frais.StatutFrais.VALIDE);
         for (Frais frais : valideFrais) {
             frais.setStatut(Frais.StatutFrais.ENVOYE_TRESORERIE);
         }
@@ -122,8 +181,12 @@ public class FraisService {
     @Transactional
     public Frais reject(Long id, String reason) {
         Frais frais = fraisRepository.findById(id).orElseThrow();
-        frais.setStatut(Frais.StatutFrais.REJETE);
+        frais.setStatut(Frais.StatutFrais.REFUSE);
         frais.setObservation(reason != null ? "[REFUS] " + reason : "[REFUS] Aucun motif spécifié");
         return fraisRepository.save(frais);
+    }
+
+    public FraisAttachment getAttachment(Long id) {
+        return attachmentRepository.findById(id).orElseThrow();
     }
 }

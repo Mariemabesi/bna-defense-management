@@ -140,4 +140,17 @@ public class AiClient {
                 .timeout(Duration.ofSeconds(10))
                 .onErrorReturn(Map.of("status", "CLEAN"));
     }
+
+    public Mono<com.bna.defense.dto.AIAnalysisDTO> predictOutcome(com.bna.defense.dto.AIAnalysisDTO request) {
+        return this.webClient.post()
+                .uri("/api/ai/predict-outcome")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(com.bna.defense.dto.AIAnalysisDTO.class)
+                .timeout(Duration.ofSeconds(60))
+                .onErrorResume(e -> {
+                    System.err.println("AI Prediction Error: " + e.getMessage());
+                    return Mono.empty();
+                });
+    }
 }

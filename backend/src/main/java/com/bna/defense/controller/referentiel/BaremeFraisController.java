@@ -2,7 +2,7 @@ package com.bna.defense.controller.referentiel;
 
 import com.bna.defense.entity.referentiel.BaremeFrais;
 import com.bna.defense.repository.referentiel.BaremeFraisRepository;
-import com.bna.defense.service.referentiel.GenericReferentielService;
+import com.bna.defense.service.referentiel.BaremeFraisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +20,7 @@ public class BaremeFraisController {
     private BaremeFraisRepository repository;
 
     @Autowired
-    private GenericReferentielService<BaremeFrais, Long> service;
+    private BaremeFraisService service;
 
     @GetMapping
     public ResponseEntity<Page<BaremeFrais>> getAll(

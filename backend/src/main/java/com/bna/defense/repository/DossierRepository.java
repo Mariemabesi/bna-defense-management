@@ -27,7 +27,7 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
     @Query("SELECT DISTINCT d FROM Dossier d " +
            "LEFT JOIN d.assignedCharge ac " +
            "LEFT JOIN ac.manager m " +
-           "WHERE d.archived = false AND (" +
+           "WHERE ((:includeArchived = true AND d.archived = true) OR (:includeArchived = false AND d.archived = false)) AND (" +
            "(:isSuper = true) " +
            "OR (:isCharge = true AND (d.createdBy = :username OR ac.username = :username)) " +
            "OR (:isPreVal = true AND ac IS NOT NULL AND m = :user) " +
@@ -40,6 +40,7 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
         @Param("isCharge") boolean isCharge,
         @Param("isPreVal") boolean isPreVal,
         @Param("isValidateur") boolean isValidateur,
+        @Param("includeArchived") boolean includeArchived,
         Pageable pageable
     );
 
@@ -65,6 +66,38 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
            "AND d.statut = :status")
     List<Dossier> findPendingClosureForValidateur(@Param("validateur") User validateur, @Param("status") Dossier.StatutDossier status);
 
+    @Query("SELECT DISTINCT d FROM Dossier d " +
+           "LEFT JOIN d.assignedCharge ac " +
+           "LEFT JOIN ac.manager m " +
+           "LEFT JOIN d.affaires a " +
+           "LEFT JOIN d.avocat auxD " +
+           "LEFT JOIN a.avocat auxA " +
+           "LEFT JOIN a.tribunal t " +
+           "WHERE d.archived = false AND (" +
+           "  (:isSuper = true) " +
+           "  OR (:isCharge = true AND (d.createdBy = :username OR ac.username = :username)) " +
+           "  OR (:isPreVal = true AND ac IS NOT NULL AND m = :user) " +
+           "  OR (:isValidateur = true)" +
+           ") AND (" +
+           "  UPPER(d.reference) LIKE UPPER(CONCAT('%', :q, '%')) " +
+           "  OR UPPER(d.titre) LIKE UPPER(CONCAT('%', :q, '%')) " +
+           "  OR UPPER(d.description) LIKE UPPER(CONCAT('%', :q, '%')) " +
+           "  OR UPPER(d.clientName) LIKE UPPER(CONCAT('%', :q, '%')) " +
+           "  OR UPPER(auxD.nom) LIKE UPPER(CONCAT('%', :q, '%')) " +
+           "  OR UPPER(auxA.nom) LIKE UPPER(CONCAT('%', :q, '%')) " +
+           "  OR UPPER(t.nom) LIKE UPPER(CONCAT('%', :q, '%')) " +
+           "  OR UPPER(d.statut) LIKE UPPER(CONCAT('%', :q, '%'))" +
+           ")")
+    List<Dossier> globalSearchWithRBAC(
+        @Param("q") String query,
+        @Param("user") User user,
+        @Param("username") String username,
+        @Param("isSuper") boolean isSuper,
+        @Param("isCharge") boolean isCharge,
+        @Param("isPreVal") boolean isPreVal,
+        @Param("isValidateur") boolean isValidateur
+    );
+
     @Query("SELECT DISTINCT d FROM Dossier d LEFT JOIN d.affaires a LEFT JOIN a.avocat aux " +
            "WHERE UPPER(d.reference) LIKE UPPER(CONCAT('%', :q, '%')) " +
            "OR UPPER(d.titre) LIKE UPPER(CONCAT('%', :q, '%')) " +
@@ -73,7 +106,30 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
            "OR UPPER(aux.nom) LIKE UPPER(CONCAT('%', :q, '%'))")
     List<Dossier> searchDossiers(@Param("q") String query);
 
+    @Query("SELECT d FROM Dossier d " +
+           "LEFT JOIN FETCH d.avocat " +
+           "LEFT JOIN FETCH d.huissier " +
+           "LEFT JOIN FETCH d.expert " +
+           "WHERE d.statut = :statut AND d.financialsFinalized = false")
+    List<Dossier> findByStatutAndFinancialsFinalizedFalse(Dossier.StatutDossier statut);
+
+    @Query("SELECT d FROM Dossier d " +
+           "LEFT JOIN FETCH d.avocat " +
+           "LEFT JOIN FETCH d.huissier " +
+           "LEFT JOIN FETCH d.expert " +
+           "WHERE d.statut = :statut AND d.financialsFinalized = false AND d.assignedCharge = :user")
+    List<Dossier> findByStatutAndFinancialsFinalizedFalseAndAssignedCharge(Dossier.StatutDossier statut, User user);
+
+    @Query("SELECT d FROM Dossier d LEFT JOIN d.assignedCharge ac " +
+           "WHERE d.financialStatut = :statut AND ac.manager = :user")
+    List<Dossier> findByFinancialStatutForPreValidateur(@Param("statut") Dossier.FinancialStatut statut, @Param("user") User user);
+
+    @Query("SELECT d FROM Dossier d LEFT JOIN d.assignedCharge ac " +
+           "WHERE d.financialStatut = :statut AND (ac.manager.manager = :user OR ac.manager = :user)")
+    List<Dossier> findByFinancialStatutForValidateur(@Param("statut") Dossier.FinancialStatut statut, @Param("user") User user);
+
     List<Dossier> findByNatureAffaire_Id(Long id);
+
     List<Dossier> findByCurrentPhase_Id(Long id);
     List<Dossier> findByAvocat_Id(Long id);
     List<Dossier> findByHuissier_Id(Long id);

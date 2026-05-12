@@ -1,0 +1,10 @@
+id,nom,specialites,types_affaires,procedures
+AVO_3,Me. Ahmed Mansour,droit_civil,litige,injonction;premiere_instance;refere
+AVO_4,Me. Leila Ferchiou,droit_commercial,litige,injonction;premiere_instance;refere
+AVO_7,Me. Slimane Jendoubi,droit_civil,litige,injonction;premiere_instance;refere
+AVO_8,Me. Ahmed Mansour,droit_penal,litige,premiere_instance
+AVO_9,Me. Leila Ferchiou,droit_immobilier,litige,premiere_instance
+AVO_12,Me. Slimane Jendoubi,droit_civil,litige,premiere_instance
+AVO_15,Mariem Abbassi,droit_fiscal,litige,premiere_instance
+AVO_16,lola,droit_civil,litige,premiere_instance
+AVO_1,Me. Karim Ben Salah,droit_commercial,litige,injonction;premiere_instance;refere

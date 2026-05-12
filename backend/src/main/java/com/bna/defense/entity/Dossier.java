@@ -78,12 +78,40 @@ public class Dossier extends BaseEntity {
     @org.hibernate.annotations.Formula("(frais_reel - frais_initial)")
     private BigDecimal depassement;
 
+    // Final Financial Fields (Feature request)
+    private BigDecimal honorairesAvocatFinal = BigDecimal.ZERO;
+    private BigDecimal fraisHuissierFinal = BigDecimal.ZERO;
+    private BigDecimal autresFraisFinal = BigDecimal.ZERO;
+    private String pieceJointeFinanciere;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean financialsFinalized = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FinancialStatut financialStatut = FinancialStatut.NONE;
+
+    @Column(columnDefinition = "TEXT")
+    private String motifRefusFinancier;
+
     private String verdict;
+
 
     private String riskScore; // FAIBLE, MOYEN, ÉLEVÉ (Feature 2)
 
     @Column(columnDefinition = "TEXT")
-    private String motifRefus; // Motif de refus (Point 9)
+    private String motifRefus; 
+
+    // AI Analysis Fields
+    private String qualitePreuves; // HAUTE, MOYENNE, FAIBLE
+    private String soliditeDossier; // ROBUSTE, STANDARD, FRAGILE
+    private String specialiteCompatible; // OUI, NON
+    private Double avocatExperienceAnnees;
+
+    private Double probabilitySuccess;
+    private Double probabilityFailure;
+    
+    @Column(columnDefinition = "TEXT")
+    private String aiAnalysis;
 
     @OneToMany(mappedBy = "dossier", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -139,6 +167,24 @@ public class Dossier extends BaseEntity {
     public void setFraisReel(BigDecimal fraisReel) { this.fraisReel = fraisReel; }
     public BigDecimal getDepassement() { return depassement; }
 
+    public BigDecimal getHonorairesAvocatFinal() { return honorairesAvocatFinal; }
+    public void setHonorairesAvocatFinal(BigDecimal honorairesAvocatFinal) { this.honorairesAvocatFinal = honorairesAvocatFinal; }
+    public BigDecimal getFraisHuissierFinal() { return fraisHuissierFinal; }
+    public void setFraisHuissierFinal(BigDecimal fraisHuissierFinal) { this.fraisHuissierFinal = fraisHuissierFinal; }
+    public BigDecimal getAutresFraisFinal() { return autresFraisFinal; }
+    public void setAutresFraisFinal(BigDecimal autresFraisFinal) { this.autresFraisFinal = autresFraisFinal; }
+    public String getPieceJointeFinanciere() { return pieceJointeFinanciere; }
+    public void setPieceJointeFinanciere(String pieceJointeFinanciere) { this.pieceJointeFinanciere = pieceJointeFinanciere; }
+    public boolean isFinancialsFinalized() { return financialsFinalized; }
+    public void setFinancialsFinalized(boolean financialsFinalized) { this.financialsFinalized = financialsFinalized; }
+
+    public FinancialStatut getFinancialStatut() { return financialStatut; }
+    public void setFinancialStatut(FinancialStatut financialStatut) { this.financialStatut = financialStatut; }
+
+    public String getMotifRefusFinancier() { return motifRefusFinancier; }
+    public void setMotifRefusFinancier(String motifRefusFinancier) { this.motifRefusFinancier = motifRefusFinancier; }
+
+
     public com.bna.defense.entity.referentiel.NatureAffaire getNatureAffaire() { return natureAffaire; }
     public void setNatureAffaire(com.bna.defense.entity.referentiel.NatureAffaire n) { this.natureAffaire = n; }
     public com.bna.defense.entity.referentiel.PhaseProcedure getCurrentPhase() { return currentPhase; }
@@ -150,6 +196,22 @@ public class Dossier extends BaseEntity {
     public void setHuissier(Auxiliaire h) { this.huissier = h; }
     public Auxiliaire getExpert() { return expert; }
     public void setExpert(Auxiliaire e) { this.expert = e; }
+
+    // AI Accessors
+    public String getQualitePreuves() { return qualitePreuves; }
+    public void setQualitePreuves(String q) { this.qualitePreuves = q; }
+    public String getSoliditeDossier() { return soliditeDossier; }
+    public void setSoliditeDossier(String s) { this.soliditeDossier = s; }
+    public String getSpecialiteCompatible() { return specialiteCompatible; }
+    public void setSpecialiteCompatible(String s) { this.specialiteCompatible = s; }
+    public Double getAvocatExperienceAnnees() { return avocatExperienceAnnees; }
+    public void setAvocatExperienceAnnees(Double e) { this.avocatExperienceAnnees = e; }
+    public Double getProbabilitySuccess() { return probabilitySuccess; }
+    public void setProbabilitySuccess(Double p) { this.probabilitySuccess = p; }
+    public Double getProbabilityFailure() { return probabilityFailure; }
+    public void setProbabilityFailure(Double p) { this.probabilityFailure = p; }
+    public String getAiAnalysis() { return aiAnalysis; }
+    public void setAiAnalysis(String a) { this.aiAnalysis = a; }
 
     public enum Priorite { HAUTE, MOYENNE, BASSE }
 
@@ -181,6 +243,15 @@ public class Dossier extends BaseEntity {
 
     public boolean isArchived() { return archived; }
     public void setArchived(boolean archived) { this.archived = archived; }
+
+    public enum FinancialStatut {
+        NONE,
+        EN_ATTENTE_PREVALIDATION,
+        PRE_VALIDE,
+        REJETE_PAR_PREVALIDATION,
+        VALIDE,
+        REJETE
+    }
 }
 
 

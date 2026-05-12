@@ -78,4 +78,25 @@ public class AuxiliaireController {
 
         return ResponseEntity.ok(details);
     }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_VALIDATEUR') or hasRole('REFERENTIEL') or hasRole('CHARGE_DOSSIER')")
+    public ResponseEntity<Auxiliaire> update(@PathVariable Long id, @RequestBody Auxiliaire details) {
+        return auxiliaireRepository.findById(id).map(aux -> {
+            aux.setNom(details.getNom());
+            aux.setType(details.getType());
+            aux.setAdresse(details.getAdresse());
+            aux.setTelephone(details.getTelephone());
+            aux.setEmail(details.getEmail());
+            aux.setNumOrdreNational(details.getNumOrdreNational());
+            aux.setSpecialite(details.getSpecialite());
+            aux.setRegion(details.getRegion());
+            aux.setTribunauxCouverts(details.getTribunauxCouverts());
+            aux.setTarifTimbre(details.getTarifTimbre());
+            aux.setTarifDependances(details.getTarifDependances());
+            aux.setTauxTva(details.getTauxTva());
+            aux.setExperienceAnnees(details.getExperienceAnnees());
+            return ResponseEntity.ok(auxiliaireRepository.save(aux));
+        }).orElse(ResponseEntity.notFound().build());
+    }
 }

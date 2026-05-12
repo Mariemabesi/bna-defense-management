@@ -9,7 +9,7 @@ export interface Dossier {
     depassement?: number;
     description?: string;
     motifRefus?: string;
-    statut: 'OUVERT' | 'EN_COURS' | 'EN_ATTENTE_PREVALIDATION' | 'EN_ATTENTE_VALIDATION' | 'VALIDE' | 'REFUSE' | 'CLOTURE';
+    statut: string;
     riskScore?: 'FAIBLE' | 'MOYEN' | 'ÉLEVÉ';
     avocat?: any;
     huissier?: any;
@@ -17,4 +17,20 @@ export interface Dossier {
     partieLitige?: any;
     createdAt?: string;
     updatedAt?: string;
+    affaires?: any[];
+    
+    // Financial Workflow
+    financialStatut?: string;
+    honorairesAvocatFinal?: number;
+    fraisHuissierFinal?: number;
+    autresFraisFinal?: number;
+    motifRefusFinancier?: string;
+    assignedCharge?: any;
+    archived?: boolean;
+
+    // AI Prediction results
+    verdict?: string; // GAGNÉ / PERDU
+    probabilitySuccess?: number;
+    probabilityFailure?: number;
+    aiAnalysis?: string;
 }

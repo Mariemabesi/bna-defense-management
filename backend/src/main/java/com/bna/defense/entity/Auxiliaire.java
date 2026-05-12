@@ -17,6 +17,7 @@ public class Auxiliaire extends BaseEntity {
     private String specialite;
     private String region;
     private String tribunauxCouverts; // Semicolon separated
+    private Integer experienceAnnees;
 
     // Point 7: Section 3 - Tarification
     private java.math.BigDecimal tarifTimbre = java.math.BigDecimal.ZERO;
@@ -48,6 +49,9 @@ public class Auxiliaire extends BaseEntity {
     public void setTarifDependances(java.math.BigDecimal t) { this.tarifDependances = t; }
     public java.math.BigDecimal getTauxTva() { return tauxTva; }
     public void setTauxTva(java.math.BigDecimal t) { this.tauxTva = t; }
+
+    public Integer getExperienceAnnees() { return experienceAnnees; }
+    public void setExperienceAnnees(Integer e) { this.experienceAnnees = e; }
 
 
     public enum TypeAuxiliaire {

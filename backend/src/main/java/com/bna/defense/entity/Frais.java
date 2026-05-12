@@ -31,9 +31,21 @@ public class Frais extends BaseEntity {
         return (affaire != null && affaire.getDossier() != null) ? affaire.getDossier().getReference() : "N/A";
     }
 
-    private String observation;
+    @OneToMany(mappedBy = "frais", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<FraisAttachment> attachments = new java.util.ArrayList<>();
 
-    public Frais() {}
+    private java.time.LocalDate dateFrais;
+
+    public Frais() {
+        this.dateFrais = java.time.LocalDate.now();
+    }
+
+    public java.util.List<FraisAttachment> getAttachments() { return attachments; }
+    public void setAttachments(java.util.List<FraisAttachment> attachments) { this.attachments = attachments; }
+    public java.time.LocalDate getDateFrais() { return dateFrais; }
+    public void setDateFrais(java.time.LocalDate dateFrais) { this.dateFrais = dateFrais; }
+
+    private String observation;
 
     @PrePersist @PreUpdate
     public void calculateTtc() {
@@ -61,5 +73,5 @@ public class Frais extends BaseEntity {
     public void setObservation(String observation) { this.observation = observation; }
 
     public enum TypeFrais { HONORAIRES_AVOCAT, FRAIS_HUISSIER, EXPERTISE, CONSIGNATION, TIMBRAGE, AUTRE }
-    public enum StatutFrais { ATTENTE, PRE_VALIDE, VALIDE, REJETE, ENVOYE_TRESORERIE }
+    public enum StatutFrais { EN_ATTENTE_PREVALIDATION, PRE_VALIDE, VALIDE, REFUSE, ENVOYE_TRESORERIE }
 }

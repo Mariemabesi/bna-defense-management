@@ -2,7 +2,7 @@ package com.bna.defense.controller.referentiel;
 
 import com.bna.defense.entity.referentiel.CourAppel;
 import com.bna.defense.repository.referentiel.CourAppelRepository;
-import com.bna.defense.service.referentiel.GenericReferentielService;
+import com.bna.defense.service.referentiel.CourAppelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +20,7 @@ public class CourAppelController {
     private CourAppelRepository repository;
 
     @Autowired
-    private GenericReferentielService<CourAppel, Long> service;
+    private CourAppelService service;
 
     @GetMapping
     public ResponseEntity<Page<CourAppel>> getAll(

@@ -78,24 +78,24 @@ import { AuthService } from '../../services/auth.service';
               <td class="type-tag">{{ f.type }}</td>
               <td class="amount">{{ f.montant | number:'1.2-2' }} TND</td>
               <td>{{ f.createdAt | date:'shortDate' }}</td>
-              <td class="actions-group">
+              <td class="actions-cell">
                 <!-- PRE-VALIDATION (N1) -->
                 <div *ngIf="f.statut === 'ATTENTE' && isPreValidateur()" class="workflow-btns">
                   <button (click)="preValidate(f)" class="btn-action pre" title="Pré-valider">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </button>
                   <button (click)="reject(f)" class="btn-action reject" title="Rejeter">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
                 </div>
-
+ 
                 <!-- FINAL VALIDATION (N2) -->
                 <div *ngIf="f.statut === 'PRE_VALIDE' && isValidateur()" class="workflow-btns">
                   <button (click)="validate(f)" class="btn-action validate" title="Valider Final">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </button>
                   <button (click)="reject(f)" class="btn-action reject" title="Rejeter">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
                 </div>
 
@@ -155,10 +155,29 @@ import { AuthService } from '../../services/auth.service';
     .workflow-btns { display: flex; gap: 8px; }
     
     .btn-action { 
-      width: 32px; height: 32px; border-radius: 8px; border: none; 
-      display: flex; align-items: center; justify-content: center; cursor: pointer; 
-      transition: 0.2s; 
+      background: white; 
+      color: #64748b; 
+      border: 1px solid #e2e8f0; 
+      width: 40px; 
+      height: 40px; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      position: relative;
     }
+    .btn-action:hover { 
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      border-color: #008766;
+      z-index: 10;
+    }
+    .btn-action svg { width: 16px; height: 16px; transition: transform 0.2s; }
+    .btn-action:hover svg { transform: scale(1.1); }
+
     .btn-action.pre { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
     .btn-action.pre:hover { background: #166534; color: white; }
     

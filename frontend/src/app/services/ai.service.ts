@@ -18,7 +18,7 @@ export interface AIAnalysis {
 export class AIService {
   private apiUrl = '/api/ai';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   classifyDossier(description: string): Observable<AIAnalysis> {
     return this.http.post<AIAnalysis>(`${this.apiUrl}/classify-dossier`, { description });

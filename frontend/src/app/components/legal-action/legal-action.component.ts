@@ -9,6 +9,7 @@ import { HeaderComponent } from '../header/header.component';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { SidebarService } from '../../services/sidebar.service';
 import { AudienceService, Audience } from '../../services/audience.service';
+import { HostListener } from '@angular/core';
 import { ReferentielService, Tribunal } from '../../services/referentiel.service';
 
 @Component({
@@ -113,18 +114,31 @@ import { ReferentielService, Tribunal } from '../../services/referentiel.service
                     <td><span class="status-pill" [ngClass]="p.statut">{{ p.statut | titlecase }}</span></td>
                     <td>
                       <div class="actions-cell">
-                        <button class="btn-icon view" (click)="toggleExpand(p.id!)" title="Voir Détails">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <!-- 1. Toujours Voir -->
+                        <button class="btn-action view-btn" (click)="toggleExpand(p.id!)" title="Voir Détails">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
-                        <button class="btn-icon" (click)="openAudienceModal(p)" title="Ajouter Audience" *ngIf="canManage()">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+
+                        <!-- 2. Action Principale (Ajouter Audience) -->
+                        <button class="btn-action approve-btn" (click)="openAudienceModal(p)" title="Ajouter Audience" *ngIf="canManage()">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         </button>
-                        <button class="btn-icon" (click)="onEditProcedure(p)" title="Modifier" *ngIf="canManage()">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                        </button>
-                        <button class="btn-icon danger" (click)="onDelete(p.id!)" title="Supprimer" *ngIf="canManage()">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
+
+                        <!-- Plus d'actions (Dropdown) -->
+                        <div class="more-actions-wrapper" *ngIf="canManage()">
+                          <button class="btn-action more-btn" (click)="toggleActionMenu($event, p.id!)" title="Plus d'actions">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+                          </button>
+                          
+                          <div class="actions-dropdown" *ngIf="activeActionMenuId === p.id" (click)="$event.stopPropagation()">
+                            <button class="btn-action edit-btn" (click)="onEditProcedure(p)" title="Modifier">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="btn-action delete-btn" (click)="onDelete(p.id!)" title="Supprimer">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -354,9 +368,72 @@ import { ReferentielService, Tribunal } from '../../services/referentiel.service
     .status-pill { padding: 5px 12px; border-radius: 50px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
     .status-pill.VALIDEE { background: #dcfce7; color: #15803d; }
     .status-pill.VALIDEE { background: #dcfce7; color: #15803d; }
-    .btn-icon { width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: #f8fafc; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-    .btn-icon:hover { border-color: #008766; color: #008766; transform: translateY(-2px); }
-    .btn-icon.view:hover { border-color: #3b82f6; color: #3b82f6; }
+    .actions-cell { 
+      display: flex; 
+      gap: 10px; 
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .btn-action { 
+      background: white; 
+      color: #64748b; 
+      border: 1px solid #f1f5f9; 
+      width: 40px; 
+      height: 40px; 
+      border-radius: 12px; 
+      cursor: pointer; 
+      display: inline-flex; 
+      align-items: center; 
+      justify-content: center; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      position: relative;
+    }
+    .btn-action:hover { 
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      border-color: #e2e8f0;
+      z-index: 10;
+    }
+    
+    .btn-action.approve-btn { background: #f0fdf4; color: #166534; border-color: #dcfce7; }
+    .btn-action.approve-btn:hover { background: #166534; color: white; border-color: #166534; }
+    
+    .btn-action.reject-btn { background: #fef2f2; color: #991b1b; border-color: #fee2e2; }
+    .btn-action.reject-btn:hover { background: #991b1b; color: white; border-color: #991b1b; }
+    
+    .btn-action.delete-btn { background: #fffcfc; color: #ef4444; border-color: #fee2e2; }
+    .btn-action.delete-btn:hover { background: #ef4444; color: white; border-color: #ef4444; }
+    
+    .view-btn { background: #f8fafc; color: #334155; border-color: #f1f5f9; }
+    .view-btn:hover { background: white; color: #0f172a; border-color: #cbd5e1; }
+    
+    .edit-btn { background: #f0f7ff; color: #2563eb; border-color: #dbeafe; }
+    .edit-btn:hover { background: #2563eb; color: white; border-color: #2563eb; }
+    
+    .btn-action svg { width: 16px; height: 16px; transition: transform 0.2s; }
+    .btn-action:hover svg { transform: scale(1.1); }
+
+    .more-actions-wrapper { position: relative; display: flex; align-items: center; }
+    .actions-dropdown {
+      position: absolute;
+      top: 50%;
+      right: 45px;
+      transform: translateY(-50%);
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      animation: slideInRight 0.2s ease-out;
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateY(-50%) translateX(10px); }
+      to { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
 
     /* Detail Row & Audiences */
     .detail-row td { background: #f8fafc; padding: 0; }
@@ -403,8 +480,10 @@ import { ReferentielService, Tribunal } from '../../services/referentiel.service
   `]
 })
 export class LegalActionComponent implements OnInit {
-  procedures: any[] = [];
-  filteredProcedures: any[] = [];
+  procedures: Procedure[] = [];
+  filteredProcedures: Procedure[] = [];
+  selectedProcedure: Procedure | null = null;
+  activeActionMenuId: number | null = null;
   affaires: Affaire[] = [];
   tribunaux: Tribunal[] = [];
 
@@ -436,6 +515,16 @@ export class LegalActionComponent implements OnInit {
 
   canManage(): boolean {
     return this.authService.hasRole('ROLE_ADMIN') || this.authService.hasRole('ROLE_CHARGE_DOSSIER');
+  }
+
+  toggleActionMenu(event: Event, id: number) {
+    event.stopPropagation();
+    this.activeActionMenuId = this.activeActionMenuId === id ? null : id;
+  }
+
+  @HostListener('document:click')
+  closeActionMenu() {
+    this.activeActionMenuId = null;
   }
 
   ngOnInit(): void {

@@ -13,8 +13,10 @@ import com.bna.defense.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -56,28 +58,34 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication);
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(item -> item.getAuthority())
-                .collect(Collectors.toList());
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            List<String> roles = userDetails.getAuthorities().stream()
+                    .map(item -> item.getAuthority())
+                    .collect(Collectors.toList());
 
-        User user = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
-        String avatarUrl = user != null ? user.getAvatarUrl() : null;
+            User user = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+            String avatarUrl = user != null ? user.getAvatarUrl() : null;
 
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getEmail(),
-                roles,
-                avatarUrl,
-                userDetails.getGroupeId(),
-                userDetails.isSuperValidateur()));
+            return ResponseEntity.ok(new JwtResponse(jwt,
+                    userDetails.getId(),
+                    userDetails.getUsername(),
+                    userDetails.getEmail(),
+                    roles,
+                    avatarUrl,
+                    userDetails.getGroupeId(),
+                    userDetails.isSuperValidateur()));
+        } catch (DisabledException e) {
+            return ResponseEntity.status(403).body(new MessageResponse("Votre compte a été suspendu. Veuillez contacter l'administrateur."));
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(401).body(new MessageResponse("Identifiants incorrects."));
+        }
     }
 
     @PostMapping("/upload-avatar")
@@ -150,6 +158,9 @@ public class AuthController {
 
             if (signUpRequest.getIsSuperValidateur() != null && signUpRequest.getIsSuperValidateur()) {
                 roleTypes.add(RoleType.ROLE_SUPER_VALIDATEUR);
+                user.setSuperValidateur(true);
+            } else {
+                user.setSuperValidateur(false);
             }
 
             if (signUpRequest.getAuxiliaireId() != null) {

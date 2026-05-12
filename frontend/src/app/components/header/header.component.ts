@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -28,10 +28,50 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
       </div>
       
       <div class="header-right">
-        <div class="header-search">
-           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" placeholder="Rechercher..." 
-                   [(ngModel)]="searchQuery" (input)="onSearch($event)" (keyup.enter)="goToDossiers()">
+        <div class="header-search-container">
+          <div class="header-search">
+             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" placeholder="Rechercher dossier, avocat, tribunal..." 
+                     [(ngModel)]="searchQuery" (input)="onSearch($event)" (focus)="onSearchFocus()" (keyup.enter)="goToDossiers()">
+              <div *ngIf="loadingSearch" class="search-loader"></div>
+          </div>
+
+          <!-- GLOBAL SEARCH RESULTS DROPDOWN -->
+          <div class="search-results-dropdown" *ngIf="showSearchResults && (globalResults.dossiers.length > 0 || globalResults.auxiliaires.length > 0 || (searchQuery.length > 1 && !loadingSearch))">
+            
+            <div *ngIf="loadingSearch" class="search-status">Recherche en cours...</div>
+            
+            <div *ngIf="!loadingSearch && globalResults.dossiers.length === 0 && globalResults.auxiliaires.length === 0" class="search-status">
+              Aucun résultat pour "{{searchQuery}}"
+            </div>
+
+            <ng-container *ngIf="!loadingSearch">
+              <!-- DOSSIERS CATEGORY -->
+              <div class="search-category" *ngIf="globalResults.dossiers.length > 0">
+                <div class="category-title">Dossiers</div>
+                <div class="result-item" *ngFor="let d of globalResults.dossiers" (click)="viewDossier(d)">
+                  <div class="result-icon dossier"></div>
+                  <div class="result-info">
+                    <span class="result-name">{{ d.reference }}</span>
+                    <span class="result-sub">{{ d.titre }}</span>
+                  </div>
+                  <div class="result-status" [ngClass]="d.statut?.toLowerCase()">{{ d.statut }}</div>
+                </div>
+              </div>
+
+              <!-- AUXILIAIRES CATEGORY -->
+              <div class="search-category" *ngIf="globalResults.auxiliaires.length > 0">
+                <div class="category-title">Auxiliaires & Avocats</div>
+                <div class="result-item" *ngFor="let a of globalResults.auxiliaires" (click)="viewAuxiliaire(a)">
+                  <div class="result-icon auxiliaire"></div>
+                  <div class="result-info">
+                    <span class="result-name">{{ a.nom }}</span>
+                    <span class="result-sub">{{ a.type }} • {{ a.specialite || a.region }}</span>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
         </div>
 
         <button class="notification-btn" (click)="toggleNotifications()">
@@ -121,6 +161,10 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
       gap: 20px;
     }
 
+    .header-search-container {
+      position: relative;
+    }
+
     .header-search {
       display: flex;
       align-items: center;
@@ -128,14 +172,14 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
       background: #ffffff;
       padding: 8px 16px;
       border-radius: 20px;
-      width: 240px;
+      width: 280px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: var(--soft-shadow);
       border: 1px solid var(--border-color);
     }
 
     .header-search:focus-within {
-      width: 320px;
+      width: 400px;
       box-shadow: var(--premium-shadow);
       border-color: var(--bna-green);
     }
@@ -153,6 +197,126 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
     .header-search svg {
       color: var(--text-light);
     }
+
+    .search-loader {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(0, 135, 102, 0.1);
+      border-top-color: var(--bna-green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* RESULTS DROPDOWN */
+    .search-results-dropdown {
+      position: absolute;
+      top: 50px;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      border: 1px solid rgba(255,255,255,0.8);
+      z-index: 1000;
+      max-height: 480px;
+      overflow-y: auto;
+      padding: 12px 0;
+      animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .search-status {
+      padding: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .search-category {
+      margin-bottom: 16px;
+    }
+
+    .category-title {
+      padding: 8px 20px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--bna-green);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .result-item {
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .result-item:hover {
+      background: rgba(0, 135, 102, 0.05);
+    }
+
+    .result-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .result-icon.dossier::before { content: '📁'; font-size: 18px; }
+    .result-icon.auxiliaire::before { content: '⚖️'; font-size: 18px; }
+
+    .result-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .result-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .result-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .result-status {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .result-status.ouvert { background: #dcfce7; color: #166534; }
+    .result-status.cloture { background: #f1f5f9; color: #475569; }
+    .result-status.refuse { background: #fee2e2; color: #991b1b; }
+
 
     .notification-btn {
       background: #ffffff;
@@ -414,6 +578,9 @@ export class HeaderComponent implements OnInit {
 
   searchQuery = '';
   searchResults: Dossier[] = [];
+  globalResults: { dossiers: Dossier[], auxiliaires: any[] } = { dossiers: [], auxiliaires: [] };
+  showSearchResults = false;
+  loadingSearch = false;
   showProfileDropdown = false;
   private searchSubject = new Subject<string>();
 
@@ -426,8 +593,17 @@ export class HeaderComponent implements OnInit {
     public sidebarService: SidebarService,
     private searchService: SearchService,
     private dossierService: DossierService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private eRef: ElementRef
   ) { }
+
+  @HostListener('document:click', ['$event'])
+  clickout(event: any) {
+    if(!this.eRef.nativeElement.contains(event.target)) {
+      this.showSearchResults = false;
+      this.showProfileDropdown = false;
+    }
+  }
 
   ngOnInit(): void {
     this.authService.currentUser.subscribe(user => {
@@ -447,16 +623,26 @@ export class HeaderComponent implements OnInit {
     });
 
     this.searchSubject.pipe(
-      debounceTime(300),
+      debounceTime(400),
       distinctUntilChanged()
     ).subscribe(query => {
       this.searchService.updateSearch(query);
       if (query.trim().length > 1) {
-        this.dossierService.searchDossiers(query).subscribe(results => {
-          this.searchResults = results.slice(0, 5); // Limit to 5 results
+        this.loadingSearch = true;
+        this.showSearchResults = true;
+        this.searchService.globalSearch(query).subscribe({
+          next: (results) => {
+            this.globalResults = results;
+            this.loadingSearch = false;
+          },
+          error: () => {
+            this.loadingSearch = false;
+          }
         });
       } else {
-        this.searchResults = [];
+        this.globalResults = { dossiers: [], auxiliaires: [] };
+        this.showSearchResults = false;
+        this.loadingSearch = false;
       }
     });
   }
@@ -482,9 +668,23 @@ export class HeaderComponent implements OnInit {
   viewDossier(dossier: Dossier) {
     const ref = dossier.reference;
     this.searchQuery = '';
-    this.searchResults = [];
-    this.searchService.updateSearch(''); // Reset global search to show specific dossier
+    this.showSearchResults = false;
+    this.globalResults = { dossiers: [], auxiliaires: [] };
+    this.searchService.updateSearch(''); 
     this.router.navigate(['/mes-dossiers'], { queryParams: { highlight: ref } });
+  }
+
+  viewAuxiliaire(aux: any) {
+    this.searchQuery = '';
+    this.showSearchResults = false;
+    this.globalResults = { dossiers: [], auxiliaires: [] };
+    this.router.navigate(['/referentiel/auxiliaires'], { queryParams: { q: aux.nom } });
+  }
+
+  onSearchFocus() {
+    if (this.searchQuery.length > 1) {
+      this.showSearchResults = true;
+    }
   }
 
   goToDossiers() {

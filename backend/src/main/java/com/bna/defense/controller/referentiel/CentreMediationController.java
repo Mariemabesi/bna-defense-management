@@ -2,7 +2,7 @@ package com.bna.defense.controller.referentiel;
 
 import com.bna.defense.entity.referentiel.CentreMediation;
 import com.bna.defense.repository.referentiel.CentreMediationRepository;
-import com.bna.defense.service.referentiel.GenericReferentielService;
+import com.bna.defense.service.referentiel.CentreMediationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +23,7 @@ public class CentreMediationController {
     private CentreMediationRepository repository;
 
     @Autowired
-    private GenericReferentielService<CentreMediation, Long> service;
+    private CentreMediationService service;
 
     @GetMapping
     public ResponseEntity<Page<CentreMediation>> getAll(

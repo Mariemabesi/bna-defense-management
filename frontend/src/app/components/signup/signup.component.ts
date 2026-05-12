@@ -217,7 +217,7 @@ export class SignupComponent implements OnInit {
       password: this.password,
       fullName: this.fullName,
       role: [this.selectedRole],
-      supervisorId: this.supervisorId,
+      managerId: this.supervisorId,
       isSuperValidateur: this.selectedRole === 'ROLE_SUPER_VALIDATEUR'
     };
 

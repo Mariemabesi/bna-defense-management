@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -58,6 +58,12 @@ import { FormsModule } from '@angular/forms';
               <button class="pill" [class.active]="activeTab === 'VALIDE'" (click)="setTab('VALIDE')">
                 <span class="pill-icon">✅</span> Validés
               </button>
+              <button class="pill" [class.active]="activeTab === 'CLOTURE'" (click)="setTab('CLOTURE')">
+                <span class="pill-icon">🔒</span> Clôturés
+              </button>
+              <button class="pill" [class.active]="activeTab === 'ARCHIVED'" (click)="setTab('ARCHIVED')">
+                <span class="pill-icon">📦</span> Archivés
+              </button>
               <button class="pill" [class.active]="activeTab === 'REFUSE'" (click)="setTab('REFUSE')">
                 <span class="pill-icon">🚫</span> Refusés
               </button>
@@ -94,7 +100,7 @@ import { FormsModule } from '@angular/forms';
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let d of getFilteredDossiers()">
+                <tr *ngFor="let d of filteredDossiers">
                   <td><strong>{{ d.reference }}</strong></td>
                   <td>{{ d.titre }}</td>
                   <td>
@@ -106,7 +112,8 @@ import { FormsModule } from '@angular/forms';
                     <span class="badge" [ngClass]="getBadgeClass(d.statut)">
                       {{ getStatusLabel(d.statut) }}
                     </span>
-                     <td>
+                  </td>
+                  <td>
                     <div class="finance-cell">
                       <div class="budget-row"><span class="label">P:</span> {{ d.budgetProvisionne != null ? (d.budgetProvisionne | number:'1.2-2') : '—' }}</div>
                       <div class="reel-row" *ngIf="d.fraisReel" [class.danger-text]="d.depassement && d.depassement > 0">
@@ -118,55 +125,53 @@ import { FormsModule } from '@angular/forms';
                     </div>
                   </td>
                   <td>
-                    <div class="actions-cell">
-                      <button class="btn-action view-btn" title="Détails" (click)="$event.stopPropagation(); onViewDossier(d)">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                      </button>
-                      
-                      <button class="btn-action edit-btn" title="Modifier" *ngIf="isChargeDossier() && (d.statut === 'OUVERT' || d.statut === 'REFUSE')" [routerLink]="['/modifier-dossier', d.reference]">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                      </button>
+                      <div class="actions-cell">
+                        <!-- 1. Toujours Voir -->
+                        <button class="btn-action view-btn" title="Détails" (click)="$event.stopPropagation(); onViewDossier(d)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
 
-                      <button class="btn-action approve-btn" title="Soumettre" *ngIf="isChargeDossier() && (d.statut === 'OUVERT' || d.statut === 'REFUSE')" (click)="$event.stopPropagation(); executeWorkflow('soumettre', d.id!)">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      </button>
+                        <!-- Actions Dynamiques -->
+                        <ng-container *ngIf="actionsMap[d.id!] as dossierActions">
+                          <!-- Afficher les 2 premières actions directement -->
+                          <button *ngFor="let act of dossierActions.slice(0, 2)" 
+                                  class="btn-action" [ngClass]="act.class" 
+                                  [title]="act.title" 
+                                  (click)="handleAction(act.id, d, $event)">
+                            <ng-container [ngSwitch]="act.icon">
+                              <svg *ngSwitchCase="'soumettre'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              <svg *ngSwitchCase="'demarrer'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                              <svg *ngSwitchCase="'cloturer'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                              <svg *ngSwitchCase="'reject'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                              <svg *ngSwitchCase="'archiver'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+                              <svg *ngSwitchCase="'delete'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </ng-container>
+                          </button>
 
-                      <button class="btn-action approve-btn" title="Pré-valider" *ngIf="isPreValidateur() && d.statut === 'EN_ATTENTE_PREVALIDATION'" (click)="$event.stopPropagation(); executeWorkflow('prevalider', d.id!)">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      </button>
-
-                      <button class="btn-action approve-btn" title="Valider Final" *ngIf="isValidateur() && d.statut === 'EN_ATTENTE_VALIDATION'" (click)="$event.stopPropagation(); executeWorkflow('validerFinal', d.id!)">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      </button>
-
-                       <button class="btn-action reject-btn" title="Refuser" *ngIf="(isPreValidateur() && d.statut === 'EN_ATTENTE_PREVALIDATION') || (isValidateur() && d.statut === 'EN_ATTENTE_VALIDATION')" (click)="$event.stopPropagation(); executeWorkflow('refuser', d.id!)">
-                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                       </button>
-
-                       <!-- Démarrer (En cours) -->
-                       <button class="btn-action approve-btn" title="Démarrer (En cours)" *ngIf="isChargeDossier() && d.statut === 'OUVERT'" (click)="$event.stopPropagation(); executeWorkflow('en-cours', d.id!)" style="background: #e0f2fe; color: #0369a1; border-color: #bae6fd;">
-                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                       </button>
-
-                       <!-- Demander clôture -->
-                       <button class="btn-action view-btn" title="Demander la clôture" *ngIf="isChargeDossier() && (d.statut === 'OUVERT' || d.statut === 'EN_COURS')" (click)="$event.stopPropagation(); executeWorkflow('cloturer', d.id!)" style="border-color: #94a3b8;">
-                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
-                       </button>
-
-                       <!-- Pré-valider clôture -->
-                        <button class="btn-action approve-btn" title="Pré-valider la clôture" *ngIf="isPreValidateur() && $any(d).statut === 'EN_ATTENTE_PREVALIDATION_CLOTURE'" (click)="$event.stopPropagation(); executeWorkflow('prevalider-cloture', d.id!)" style="background: #fef3c7; color: #92400e; border-color: #fcd34d;">
-                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                       </button>
-
-                       <!-- Valider clôture -->
-                        <button class="btn-action approve-btn" title="Valider la clôture" *ngIf="isValidateur() && $any(d).statut === 'EN_ATTENTE_VALIDATION_CLOTURE'" (click)="$event.stopPropagation(); executeWorkflow('valider-cloture', d.id!)" style="background: #fef3c7; color: #92400e; border-color: #fcd34d;">
-                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                       </button>
-
-                       <button class="btn-action delete-btn" title="Supprimer" *ngIf="isAdmin() || (isChargeDossier() && d.statut === 'OUVERT')" (click)="$event.stopPropagation(); deleteDossier(d.id!)">
-                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                       </button>
-                     </div>
+                          <!-- Si plus de 2 actions, afficher les points de suspension -->
+                          <div class="more-actions-wrapper" *ngIf="dossierActions.length > 2">
+                            <button class="btn-action more-btn" (click)="toggleActionMenu($event, d.id!)" title="Plus d'actions">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
+                            </button>
+                            
+                            <div class="actions-dropdown" *ngIf="activeActionMenuId === d.id" (click)="$event.stopPropagation()">
+                              <button *ngFor="let act of dossierActions.slice(2)" 
+                                      class="btn-action" [ngClass]="act.class" 
+                                      [title]="act.title" 
+                                      (click)="handleAction(act.id, d, $event)">
+                                <ng-container [ngSwitch]="act.icon">
+                                  <svg *ngSwitchCase="'soumettre'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                  <svg *ngSwitchCase="'demarrer'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                  <svg *ngSwitchCase="'cloturer'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                                  <svg *ngSwitchCase="'reject'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                  <svg *ngSwitchCase="'archiver'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+                                  <svg *ngSwitchCase="'delete'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </ng-container>
+                              </button>
+                            </div>
+                          </div>
+                        </ng-container>
+                      </div>
                   </td>
                 </tr>
               </tbody>
@@ -330,7 +335,72 @@ import { FormsModule } from '@angular/forms';
                   </div>
                 </div>
 
-                  <!-- AI ANALYSIS SECTION -->
+                  <!-- AI PREDICTION SECTION (ML) -->
+                  <div class="ai-ml-section" *ngIf="selectedDossier.verdict || mlLoading">
+                    <div class="ai-premium-card ml-card" [ngClass]="{'loading': mlLoading}">
+                      <div class="ai-header">
+                        <div class="ai-sparkle-icon ml">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
+                        </div>
+                        <div class="ai-title-wrap">
+                          <span class="ai-label">MACHINE LEARNING - RÉGRESSION LOGISTIQUE</span>
+                          <h4 class="ai-title">Prédiction du Verdict</h4>
+                        </div>
+                      </div>
+                      
+                      <div *ngIf="mlLoading" class="ai-loader-premium">
+                        <div class="ai-pulse-bar ml"></div>
+                        <span class="pulse-text">Calcul de la probabilité en cours...</span>
+                      </div>
+    
+                      <div *ngIf="!mlLoading && selectedDossier.verdict" class="ai-body-premium ml-body slideIn">
+                        <div class="prediction-main">
+                          <div class="verdict-display" [ngClass]="selectedDossier.verdict.toLowerCase()">
+                            <span class="verdict-label">VERDICT PRÉDIT</span>
+                            <span class="verdict-value">{{ selectedDossier.verdict }}</span>
+                          </div>
+                          
+                          <div class="probability-stats">
+                            <div class="stat-item">
+                              <span class="stat-label">SUCCÈS</span>
+                              <div class="progress-container">
+                                <div class="progress-bar success" [style.width.%]="selectedDossier.probabilitySuccess"></div>
+                              </div>
+                              <span class="stat-val">{{ selectedDossier.probabilitySuccess }}%</span>
+                            </div>
+                            <div class="stat-item">
+                              <span class="stat-label">ÉCHEC</span>
+                              <div class="progress-container">
+                                <div class="progress-bar failure" [style.width.%]="selectedDossier.probabilityFailure"></div>
+                              </div>
+                              <span class="stat-val">{{ selectedDossier.probabilityFailure }}%</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="ai-meta-pills ml-pills">
+                          <span class="ai-pill risk" [ngClass]="selectedDossier.riskScore ? selectedDossier.riskScore.toLowerCase() : 'moyen'">
+                            NIVEAU DE RISQUE: {{ selectedDossier.riskScore || 'MOYEN' }}
+                          </span>
+                        </div>
+
+                        <!-- Assistant NVIDIA AI -->
+                        <div class="ai-assistant-analysis slideIn" *ngIf="selectedDossier.aiAnalysis">
+                          <div class="assistant-header">
+                            <div class="assistant-bot-icon">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
+                            </div>
+                            <span>ASSISTANT JURIDIQUE NVIDIA GLM-5.1</span>
+                          </div>
+                          <div class="assistant-content">
+                            <p>{{ selectedDossier.aiAnalysis }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- LEGACY AI SUMMARY SECTION (Optional/Claude) -->
                   <div class="ai-section" *ngIf="aiAnalysis || aiLoading">
                     <div class="ai-premium-card">
                       <div class="ai-header">
@@ -338,7 +408,7 @@ import { FormsModule } from '@angular/forms';
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
                         </div>
                         <div class="ai-title-wrap">
-                          <span class="ai-label">INTELLIGENCE BNA</span>
+                          <span class="ai-label">INTELLIGENCE BNA (Claude)</span>
                           <h4 class="ai-title">Résumé IA Decision-Ready</h4>
                         </div>
                       </div>
@@ -376,9 +446,13 @@ import { FormsModule } from '@angular/forms';
                   </div>
               </div>
               <div class="modal-footer">
+                <button class="btn-ai ml" (click)="analyzeWithML()" [disabled]="mlLoading">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
+                  {{ mlLoading ? 'Analyse ML...' : 'Prédiction Verdict (ML)' }}
+                </button>
                 <button class="btn-ai" (click)="analyzeWithAI()" [disabled]="aiLoading">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
-                  {{ aiLoading ? 'Analyse...' : 'Analyse IA Profonde' }}
+                  {{ aiLoading ? 'Analyse...' : 'Résumé IA (Claude)' }}
                 </button>
                 <button class="btn-secondary" (click)="closeDossierModal()">Fermer</button>
                 <button class="btn-primary" *ngIf="isChargeDossier() && selectedDossier.statut === 'OUVERT'" (click)="executeWorkflow('en-cours', selectedDossier.id!)" style="background: #0369a1;">
@@ -639,43 +713,78 @@ import { FormsModule } from '@angular/forms';
     .badge.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
     .badge.info { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
     .badge.danger { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge.secondary { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
     
     .step-text { font-size: 14px; color: var(--text-muted); font-weight: 600; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; }
 
-    .actions-cell { display: flex; gap: 12px; }
+    .actions-cell { 
+      display: flex; 
+      gap: 10px; 
+      align-items: center;
+      justify-content: flex-start;
+    }
     .btn-action { 
       background: white; 
       color: #64748b; 
-      border: 1.5px solid #f1f5f9; 
-      width: 44px; 
-      height: 44px; 
-      border-radius: 14px; 
+      border: 1px solid #f1f5f9; 
+      width: 40px; 
+      height: 40px; 
+      border-radius: 12px; 
       cursor: pointer; 
       display: inline-flex; 
       align-items: center; 
       justify-content: center; 
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      position: relative;
     }
     .btn-action:hover { 
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       border-color: #e2e8f0;
+      z-index: 10;
     }
     
-    .btn-action.approve-btn { background: #f0fdf4; color: #16a34a; border-color: #dcfce7; }
-    .btn-action.approve-btn:hover { background: #16a34a; color: white; border-color: #16a34a; }
+    .btn-action.approve-btn { background: #f0fdf4; color: #166534; border-color: #dcfce7; }
+    .btn-action.approve-btn:hover { background: #166534; color: white; border-color: #166534; }
     
-    .btn-action.reject-btn { background: #fef2f2; color: #dc2626; border-color: #fee2e2; }
-    .btn-action.reject-btn:hover { background: #dc2626; color: white; border-color: #dc2626; }
+    .btn-action.reject-btn { background: #fef2f2; color: #991b1b; border-color: #fee2e2; }
+    .btn-action.reject-btn:hover { background: #991b1b; color: white; border-color: #991b1b; }
     
-    .btn-action.delete-btn { color: #ef4444; }
+    .btn-action.delete-btn { background: #fffcfc; color: #ef4444; border-color: #fee2e2; }
     .btn-action.delete-btn:hover { background: #ef4444; color: white; border-color: #ef4444; }
     
-    .view-btn { color: #475569; }
-    .edit-btn { color: #3b82f6; }
+    .view-btn { background: #f8fafc; color: #334155; border-color: #f1f5f9; }
+    .view-btn:hover { background: white; color: #0f172a; border-color: #cbd5e1; }
+    
+    .edit-btn { background: #f0f7ff; color: #2563eb; border-color: #dbeafe; }
+    .edit-btn:hover { background: #2563eb; color: white; border-color: #2563eb; }
+    
+    .btn-action svg { width: 16px; height: 16px; transition: transform 0.2s; }
+    .btn-action:hover svg { transform: scale(1.1); }
 
-    .btn-action svg { width: 22px; height: 22px; }
+    .more-actions-wrapper { position: relative; display: flex; align-items: center; }
+    .actions-dropdown {
+      position: absolute;
+      top: 50%;
+      right: 45px;
+      transform: translateY(-50%);
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+      animation: slideInRight 0.2s ease-out;
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateY(-50%) translateX(10px); }
+      to { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    .cloture-btn { background: #fffbeb; color: #d97706; border-color: #fef3c7; }
+    .cloture-btn:hover { background: #d97706; color: white; border-color: #d97706; }
 
     /* LOADING STATE */
     .loading-state {
@@ -854,6 +963,36 @@ import { FormsModule } from '@angular/forms';
     .ai-reco-box ul { margin: 0; padding-left: 20px; list-style-type: none; }
     .ai-reco-box li { position: relative; font-size: 14px; color: #475569; margin-bottom: 8px; padding-left: 4px; font-weight: 500; }
     .ai-reco-box li::before { content: '•'; position: absolute; left: -14px; color: #0ea5e9; font-weight: 900; }
+    
+    /* ML PREDICTION SPECIFIC */
+    .ml-card { border-color: #008766; }
+    .ml-card::before { background: linear-gradient(90deg, #008766, #10b981); }
+    .ai-sparkle-icon.ml { background: linear-gradient(135deg, #008766 0%, #10b981 100%); box-shadow: 0 6px 12px rgba(0, 135, 102, 0.2); }
+    .ai-pulse-bar.ml::after { background: linear-gradient(90deg, transparent, #008766, transparent); }
+
+    .prediction-main { display: flex; flex-direction: column; gap: 24px; margin-bottom: 24px; }
+    .verdict-display { 
+      background: #f8fafc; border-radius: 16px; padding: 20px; text-align: center;
+      display: flex; flex-direction: column; gap: 4px; border: 2px solid #e2e8f0;
+    }
+    .verdict-display.gagné { border-color: #10b981; background: #f0fdf4; }
+    .verdict-display.perdu { border-color: #ef4444; background: #fef2f2; }
+    .verdict-label { font-size: 11px; font-weight: 800; color: #64748b; letter-spacing: 1px; }
+    .verdict-value { font-size: 28px; font-weight: 900; }
+    .verdict-display.gagné .verdict-value { color: #15803d; }
+    .verdict-display.perdu .verdict-value { color: #b91c1c; }
+
+    .probability-stats { display: flex; flex-direction: column; gap: 16px; }
+    .stat-item { display: flex; align-items: center; gap: 16px; }
+    .stat-label { font-size: 12px; font-weight: 800; color: #64748b; width: 60px; }
+    .progress-container { flex: 1; height: 10px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
+    .progress-bar { height: 100%; border-radius: 10px; }
+    .progress-bar.success { background: #10b981; }
+    .progress-bar.failure { background: #ef4444; }
+    .stat-val { font-size: 14px; font-weight: 800; color: #1e293b; width: 50px; text-align: right; }
+
+    .btn-ai.ml { background: linear-gradient(135deg, #008766 0%, #10b981 100%); box-shadow: 0 4px 12px rgba(0, 135, 102, 0.3); }
+    .btn-ai.ml:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(0, 135, 102, 0.4); }
 
 
     
@@ -1158,6 +1297,44 @@ import { FormsModule } from '@angular/forms';
     .aff-part-role { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
     .aff-part-name { font-size: 13px; font-weight: 700; color: #1e293b; }
 
+    .ai-assistant-analysis {
+      margin-top: 16px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border-left: 4px solid #10b981;
+      padding: 16px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .assistant-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: #047857;
+      font-weight: 800;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .assistant-bot-icon {
+      background: #10b981;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .assistant-content p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #334155;
+      margin: 0;
+      font-style: italic;
+      white-space: pre-wrap;
+    }
+
     @media (max-width: 1024px) {
       .top-header { padding: 0 24px; }
       .dashboard-content { padding: 24px; }
@@ -1166,11 +1343,44 @@ import { FormsModule } from '@angular/forms';
 })
 export class MesDossiersComponent implements OnInit {
   currentUser: any;
-  dossiers: Dossier[] = [];
+  private _dossiers: Dossier[] = [];
+  get dossiers(): Dossier[] { return this._dossiers; }
+  set dossiers(val: Dossier[]) {
+    this._dossiers = val;
+    this._updateCache();
+  }
+
+  // Cached computed values — never recalculated by change detection
+  filteredDossiers: Dossier[] = [];
+  actionsMap: Record<number, any[]> = {};
+
+  private _updateCache(): void {
+    this.filteredDossiers = this._computeFilteredDossiers();
+    const map: Record<number, any[]> = {};
+    for (const d of this._dossiers) {
+      if (d.id != null) {
+        map[d.id] = this.getAvailableActions(d);
+      }
+    }
+    this.actionsMap = map;
+  }
+
   selectedDossier: Dossier | null = null;
   loading = false;
+  mlLoading = false;
   error: string | null = null;
   Math = Math;
+  activeActionMenuId: number | null = null;
+
+  toggleActionMenu(event: Event, id: number) {
+    event.stopPropagation();
+    this.activeActionMenuId = this.activeActionMenuId === id ? null : id;
+  }
+
+  @HostListener('document:click')
+  closeActionMenu() {
+    this.activeActionMenuId = null;
+  }
 
   // Pagination
   currentPage = 0;
@@ -1201,7 +1411,7 @@ export class MesDossiersComponent implements OnInit {
   confirmMessage = '';
   pendingAction: (() => void) | null = null;
 
-  activeTab: 'ALL' | 'SOUMIS' | 'PRE_VALIDE' | 'VALIDE' | 'REFUSE' = 'ALL';
+  activeTab: 'ALL' | 'SOUMIS' | 'PRE_VALIDE' | 'VALIDE' | 'CLOTURE' | 'ARCHIVED' | 'REFUSE' = 'ALL';
 
   constructor(
     private authService: AuthService,
@@ -1270,7 +1480,8 @@ export class MesDossiersComponent implements OnInit {
   loadDossiers(): void {
     this.loading = true;
     this.error = null;
-    this.dossierService.getDossiers(this.currentPage, this.pageSize).subscribe({
+    const fetchArchived = this.activeTab === 'ARCHIVED';
+    this.dossierService.getDossiers(this.currentPage, this.pageSize, fetchArchived).subscribe({
       next: (data) => {
         if (data && data.content !== undefined) {
           this.dossiers = data.content || [];
@@ -1372,7 +1583,7 @@ export class MesDossiersComponent implements OnInit {
 
     this.aiLoading = true;
     this.aiAnalysis = null;
-    this.aiService.analyzeDossier(this.selectedDossier.description).subscribe({
+    this.aiService.analyzeDossier(this.selectedDossier.id!).subscribe({
       next: (result) => {
         this.aiAnalysis = result;
         this.aiLoading = false;
@@ -1385,7 +1596,28 @@ export class MesDossiersComponent implements OnInit {
     });
   }
 
-  executeWorkflow(action: 'soumettre' | 'prevalider' | 'validerFinal' | 'refuser' | 'en-cours' | 'cloturer' | 'prevalider-cloture' | 'valider-cloture', id: number): void {
+  analyzeWithML(): void {
+    if (!this.selectedDossier || !this.selectedDossier.id) return;
+
+    this.mlLoading = true;
+    this.dossierService.analyzeDossier(this.selectedDossier.id).subscribe({
+      next: (updatedDossier) => {
+        this.selectedDossier = updatedDossier;
+        this.mlLoading = false;
+        this.notificationService.addNotification("Prédiction ML effectuée avec succès.", "ROLE_ADMIN", "SUCCESS");
+        // Update in list too
+        const idx = this.dossiers.findIndex(d => d.id === updatedDossier.id);
+        if (idx !== -1) this.dossiers[idx] = updatedDossier;
+      },
+      error: (err) => {
+        this.mlLoading = false;
+        console.error("ML Error", err);
+        this.notificationService.addNotification("L'analyse ML a échoué. Vérifiez le service AI.", "ROLE_ADMIN", "WARNING");
+      }
+    });
+  }
+
+  executeWorkflow(action: 'soumettre' | 'prevalider' | 'validerFinal' | 'refuser' | 'en-cours' | 'cloturer' | 'prevalider-cloture' | 'valider-cloture' | 'archiver' | 'demarrer', id: number): void {
     if (action === 'refuser') {
       this.refusalDossierId = id;
       this.refusalMotif = '';
@@ -1395,11 +1627,13 @@ export class MesDossiersComponent implements OnInit {
         'soumettre': 'Soumettre ce dossier pour pré-validation ?',
         'prevalider': 'Voulez-vous PRÉ-VALIDER ce dossier ? (Oui pour valider, Non pour refuser)',
         'validerFinal': 'Voulez-vous VALIDER ce dossier ? (Oui pour valider, Non pour refuser)',
+        'demarrer': 'Démarrer ce dossier et le marquer "En cours" ?',
         'en-cours': 'Marquer ce dossier comme "En cours" ?',
         'cloturer': 'Soumettre une demande de CLOTURE pour ce dossier ?',
         'prevalider-cloture': 'Voulez-vous PRÉ-VALIDER la clôture de ce dossier ?',
         'valider-cloture': 'Voulez-vous VALIDER DEFINITIVEMENT la clôture ?',
-        'refuser': ''
+        'refuser': '',
+        'archiver': 'Voulez-vous ARCHIVER ce dossier ?'
       };
 
       this.confirmService.open({
@@ -1414,10 +1648,12 @@ export class MesDossiersComponent implements OnInit {
             'soumettre': 'soumettre',
             'prevalider': 'prevalider',
             'validerFinal': 'validerFinal',
+            'demarrer': 'setEnCours',
             'en-cours': 'setEnCours',
             'cloturer': 'cloturer',
             'prevalider-cloture': 'prevaliderCloture',
-            'valider-cloture': 'validerCloture'
+            'valider-cloture': 'validerCloture',
+            'archiver': 'archiver'
           };
 
           const serviceMethod = methodMap[action];
@@ -1486,6 +1722,7 @@ export class MesDossiersComponent implements OnInit {
       case 'EN_ATTENTE_PREVALIDATION_CLOTURE': return 'Clôture (Attente Pré-val)';
       case 'EN_ATTENTE_VALIDATION_CLOTURE': return 'Clôture (Attente Validation)';
       case 'CLOTURE': return 'Clôturé';
+      case 'ARCHIVEE': return 'Archivé';
       case 'REFUSE': return 'Refusé';
       default: return statut;
     }
@@ -1502,6 +1739,7 @@ export class MesDossiersComponent implements OnInit {
       case 'REFUSE': return 'danger';
       case 'VALIDE': return 'success';
       case 'CLOTURE': return 'success';
+      case 'ARCHIVEE': return 'secondary';
       default: return 'info';
     }
   }
@@ -1566,24 +1804,88 @@ export class MesDossiersComponent implements OnInit {
 
   setTab(tab: any): void {
     this.activeTab = tab;
+    this.currentPage = 0;
+    this.loadDossiers();
+    this._updateCache();
   }
 
-  getFilteredDossiers(): Dossier[] {
-    if (this.activeTab === 'ALL') return this.dossiers;
+  private _computeFilteredDossiers(): Dossier[] {
+    if (this.activeTab === 'ALL') return this._dossiers;
     
-    return this.dossiers.filter(d => {
+    return this._dossiers.filter(d => {
       switch(this.activeTab) {
         case 'SOUMIS': return d.statut === 'EN_ATTENTE_PREVALIDATION';
         case 'PRE_VALIDE': return d.statut === 'EN_ATTENTE_VALIDATION';
-        case 'VALIDE': return d.statut === 'VALIDE' || d.statut === 'CLOTURE';
+        case 'VALIDE': return d.statut === 'VALIDE';
+        case 'CLOTURE': return d.statut === 'CLOTURE';
+        case 'ARCHIVED': return (d as any).archived === true;
         case 'REFUSE': return d.statut === 'REFUSE';
         default: return true;
       }
     });
   }
 
+  // Keep public method for compatibility but it now just returns the cache
+  getFilteredDossiers(): Dossier[] {
+    return this.filteredDossiers;
+  }
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  getAvailableActions(d: any) {
+    const actions: any[] = [];
+    
+    // Workflow Actions for Charge
+    if (this.isChargeDossier()) {
+      if (d.statut === 'OUVERT' || d.statut === 'REFUSE') {
+        actions.push({ id: 'soumettre', title: 'Soumettre', icon: 'soumettre', class: 'approve-btn' });
+        actions.push({ id: 'demarrer', title: 'Démarrer', icon: 'demarrer', class: 'edit-btn' });
+      }
+      if (d.statut === 'VALIDE' && !d.archived) {
+        actions.push({ id: 'demarrer', title: 'Démarrer', icon: 'demarrer', class: 'edit-btn' });
+      }
+      if (d.statut === 'OUVERT' || d.statut === 'EN_COURS') {
+        actions.push({ id: 'cloturer', title: 'Clôturer', icon: 'cloturer', class: 'cloture-btn' });
+      }
+    }
+
+    // Pre-validation
+    if (this.isPreValidateur() && d.statut === 'EN_ATTENTE_PREVALIDATION') {
+      actions.push({ id: 'prevalider', title: 'Pré-valider', icon: 'soumettre', class: 'approve-btn' });
+      actions.push({ id: 'refuser', title: 'Refuser', icon: 'reject', class: 'reject-btn' });
+    }
+
+    // Validation
+    if (this.isValidateur() && d.statut === 'EN_ATTENTE_VALIDATION') {
+      actions.push({ id: 'validerFinal', title: 'Valider', icon: 'soumettre', class: 'approve-btn' });
+      actions.push({ id: 'refuser', title: 'Refuser', icon: 'reject', class: 'reject-btn' });
+    }
+
+    // Admin / Super
+    if (this.isAdmin()) {
+      if (d.statut === 'VALIDE' && !d.archived) {
+        actions.push({ id: 'archiver', title: 'Archiver', icon: 'archiver', class: 'view-btn' });
+      }
+      actions.push({ id: 'delete', title: 'Supprimer', icon: 'delete', class: 'delete-btn' });
+    } else if (this.isChargeDossier() && d.statut === 'OUVERT') {
+      actions.push({ id: 'delete', title: 'Supprimer', icon: 'delete', class: 'delete-btn' });
+    }
+
+    return actions;
+  }
+
+  handleAction(actionId: string, d: any, event?: Event) {
+    if (event) event.stopPropagation();
+    
+    if (actionId === 'view') {
+      this.onViewDossier(d);
+    } else if (actionId === 'delete') {
+      this.deleteDossier(d.id!);
+    } else {
+      this.executeWorkflow(actionId as any, d.id!);
+    }
   }
 }

@@ -37,6 +37,9 @@ public class User extends BaseEntity {
     private LocalDateTime tokenExpiry;
     private String avatarUrl;
 
+    @Column(name = "is_super_validateur", nullable = false)
+    private boolean superValidateur = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")
     @com.fasterxml.jackson.annotation.JsonIgnore
@@ -99,6 +102,10 @@ public class User extends BaseEntity {
     }
 
     public boolean isSuperValidateur() {
-        return hasRole("ROLE_SUPER_VALIDATEUR");
+        return superValidateur || hasRole("ROLE_SUPER_VALIDATEUR");
+    }
+
+    public void setSuperValidateur(boolean superValidateur) {
+        this.superValidateur = superValidateur;
     }
 }

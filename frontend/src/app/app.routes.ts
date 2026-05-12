@@ -35,8 +35,7 @@ export const routes: Routes = [
     { path: 'modifier-dossier/:id', component: DossierFormComponent, canActivate: [() => roleGuard(['ROLE_CHARGE_DOSSIER', 'ROLE_ADMIN'])] },
     { path: 'nouvelle-demande-frais', component: FraisFormComponent, canActivate: [authGuard] },
     { path: 'mes-frais', loadComponent: () => import('./components/mes-frais/mes-frais.component').then(m => m.MesFraisComponent), canActivate: [authGuard] },
-    // ⚖️ RÉFÉRENTIEL MODULE (Static Hub & Dynamic Engine)
-    { path: 'referentiel', loadComponent: () => import('./components/referentiel/referentiel.component').then(m => m.ReferentielComponent), canActivate: [authGuard] },
+    // ⚖️ RÉFÉRENTIEL MODULE (Dynamic Engine)
     { path: 'referentiel/litige', redirectTo: 'litige' },
     { path: 'litige', loadComponent: () => import('./components/referentiel-litige/referentiel-litige.component').then(m => m.LitigeComponent), canActivate: [authGuard] },
     { path: 'referentiel/:type', loadComponent: () => import('./components/referentiel-list/referentiel-list.component').then(m => m.ReferentielListComponent), canActivate: [authGuard] },

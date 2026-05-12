@@ -18,10 +18,14 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class AiController {
 
-    @Autowired private AiClient aiClient;
-    @Autowired private AiResultRepository aiResultRepository;
-    @Autowired private AuditLogRepository auditLogRepository;
-    @Autowired private UserRepository userRepository;
+    @Autowired
+    private AiClient aiClient;
+    @Autowired
+    private AiResultRepository aiResultRepository;
+    @Autowired
+    private AuditLogRepository auditLogRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     private void logAiAction(String feature, String entityType, Long entityId, String details, Principal principal) {
         AuditLog log = new AuditLog();
@@ -42,50 +46,60 @@ public class AiController {
     public Mono<Map<String, Object>> classifyDossier(@RequestBody Map<String, String> request, Principal principal) {
         String desc = request.get("description");
         return aiClient.classifyDossier(desc)
-            .doOnNext(res -> {
-                logAiAction("CLASSIFY", "DOSSIER", 0L, "Description: " + desc, principal);
-                saveAiResult("CLASSIFY", "DOSSIER", 0L, res);
-            });
+                .doOnNext(res -> {
+                    logAiAction("CLASSIFY", "DOSSIER", 0L, "Description: " + desc, principal);
+                    saveAiResult("CLASSIFY", "DOSSIER", 0L, res);
+                });
     }
 
     @PostMapping("/risk-score")
     public Mono<Map<String, Object>> calculateRiskScore(@RequestBody Map<String, Object> request, Principal principal) {
         Long dossierId = Long.valueOf(request.get("dossierId").toString());
         return aiClient.calculateRiskScore(dossierId, request)
-            .doOnNext(res -> {
-                logAiAction("RISK_SCORE", "DOSSIER", dossierId, "Data: " + request.toString(), principal);
-                saveAiResult("RISK_SCORE", "DOSSIER", dossierId, res);
-            });
+                .doOnNext(res -> {
+                    logAiAction("RISK_SCORE", "DOSSIER", dossierId, "Data: " + request.toString(), principal);
+                    saveAiResult("RISK_SCORE", "DOSSIER", dossierId, res);
+                });
     }
 
     @PostMapping("/summarize-dossier")
     public Mono<Map<String, Object>> summarizeDossier(@RequestBody Map<String, Object> request, Principal principal) {
         Long dossierId = Long.valueOf(request.get("dossierId").toString());
         return aiClient.summarizeDossier(dossierId)
-            .doOnNext(res -> {
-                logAiAction("SUMMARIZE", "DOSSIER", dossierId, "Summary generated", principal);
-                saveAiResult("SUMMARIZE", "DOSSIER", dossierId, res);
-            });
+                .doOnNext(res -> {
+                    logAiAction("SUMMARIZE", "DOSSIER", dossierId, "Summary generated", principal);
+                    saveAiResult("SUMMARIZE", "DOSSIER", dossierId, res);
+                });
+    }
+
+    @PostMapping("/analyze-dossier")
+    public Mono<Map<String, Object>> analyzeDossier(@RequestBody Map<String, Object> request, Principal principal) {
+        Long dossierId = Long.valueOf(request.get("dossierId").toString());
+        return aiClient.summarizeDossier(dossierId) // Re-using summarize logic or actual analysis
+                .doOnNext(res -> {
+                    logAiAction("ANALYZE", "DOSSIER", dossierId, "Dossier analyzed", principal);
+                    saveAiResult("ANALYZE", "DOSSIER", dossierId, res);
+                });
     }
 
     @PostMapping("/detect-anomaly")
     public Mono<Map<String, Object>> detectAnomaly(@RequestBody Map<String, Object> request, Principal principal) {
         Long fraisId = Long.valueOf(request.get("fraisId").toString());
         return aiClient.detectAnomaly(fraisId)
-            .doOnNext(res -> {
-                logAiAction("DETECT_ANOMALY", "FRAIS", fraisId, "Anomaly check", principal);
-                saveAiResult("DETECT_ANOMALY", "FRAIS", fraisId, res);
-            });
+                .doOnNext(res -> {
+                    logAiAction("DETECT_ANOMALY", "FRAIS", fraisId, "Anomaly check", principal);
+                    saveAiResult("DETECT_ANOMALY", "FRAIS", fraisId, res);
+                });
     }
 
     @PostMapping("/predict-budget")
     public Mono<Map<String, Object>> predictBudget(@RequestBody Map<String, Object> request, Principal principal) {
         Long dossierId = Long.valueOf(request.get("dossierId").toString());
         return aiClient.predictBudget(dossierId)
-            .doOnNext(res -> {
-                logAiAction("PREDICT_BUDGET", "DOSSIER", dossierId, "Budget prediction", principal);
-                saveAiResult("PREDICT_BUDGET", "DOSSIER", dossierId, res);
-            });
+                .doOnNext(res -> {
+                    logAiAction("PREDICT_BUDGET", "DOSSIER", dossierId, "Budget prediction", principal);
+                    saveAiResult("PREDICT_BUDGET", "DOSSIER", dossierId, res);
+                });
     }
 
     @GetMapping("/avocat-score/{id}")

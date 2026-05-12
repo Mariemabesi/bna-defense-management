@@ -2,7 +2,7 @@ package com.bna.defense.controller.referentiel;
 
 import com.bna.defense.entity.referentiel.PhaseProcedure;
 import com.bna.defense.repository.referentiel.PhaseProcedureRepository;
-import com.bna.defense.service.referentiel.GenericReferentielService;
+import com.bna.defense.service.referentiel.PhaseProcedureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +20,7 @@ public class PhaseProcedureController {
     private PhaseProcedureRepository repository;
 
     @Autowired
-    private GenericReferentielService<PhaseProcedure, Long> service;
+    private PhaseProcedureService service;
 
     @GetMapping
     public ResponseEntity<Page<PhaseProcedure>> getAll(

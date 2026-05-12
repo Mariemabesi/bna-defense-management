@@ -11,12 +11,12 @@ export class DossierService {
 
     constructor(private http: HttpClient) { }
 
-    getDossiers(page: number = 0, size: number = 10): Observable<any> {
-        return this.http.get<any>(`${this.apiUrl}?page=${page}&size=${size}`);
+    getDossiers(page: number = 0, size: number = 10, archived: boolean = false): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}?page=${page}&size=${size}&archived=${archived}`);
     }
 
-    getMyDossiers(page: number = 0, size: number = 10): Observable<any> {
-        return this.http.get<any>(`${this.apiUrl}/mine?page=${page}&size=${size}`);
+    getMyDossiers(page: number = 0, size: number = 10, archived: boolean = false): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/mine?page=${page}&size=${size}&archived=${archived}`);
     }
 
     createDossier(dossier: Dossier): Observable<Dossier> {
@@ -130,6 +130,45 @@ export class DossierService {
     getByExpert(id: number): Observable<Dossier[]> {
         return this.http.get<Dossier[]>(`${this.apiUrl}/by-expert/${id}`);
     }
+    getDossiersToFinalize(): Observable<Dossier[]> {
+        return this.http.get<Dossier[]>(`${this.apiUrl}/pending/finalisation-financiere`);
+    }
+
+    // New Financial Workflow
+    soumettreFinance(id: number, financials: any): Observable<Dossier> {
+        return this.http.put<Dossier>(`${this.apiUrl}/${id}/finance/soumettre`, financials);
+    }
+
+    prevaliderFinance(id: number, commentaire: string): Observable<Dossier> {
+        return this.http.put<Dossier>(`${this.apiUrl}/${id}/finance/prevalider`, { commentaire });
+    }
+
+    refuserPrevalidationFinance(id: number, motif: string): Observable<Dossier> {
+        return this.http.put<Dossier>(`${this.apiUrl}/${id}/finance/refuser-prevalidation`, { motif });
+    }
+
+    validerFinanceFinal(id: number, commentaire: string): Observable<Dossier> {
+        return this.http.put<Dossier>(`${this.apiUrl}/${id}/finance/valider-final`, { commentaire });
+    }
+
+    refuserFinanceFinal(id: number, motif: string): Observable<Dossier> {
+        return this.http.put<Dossier>(`${this.apiUrl}/${id}/finance/refuser-final`, { motif });
+    }
+
+    /** @deprecated Use soumettreFinance instead */
+    finalizeFinancials(id: number, financials: any): Observable<Dossier> {
+        return this.soumettreFinance(id, financials);
+    }
+    exportSingleDossierPdf(id: number): Observable<Blob> {
+        return this.http.get(`/api/reports/dossiers/${id}/export/pdf`, {
+            responseType: 'blob'
+        });
+    }
+
+    analyzeDossier(id: number): Observable<Dossier> {
+        return this.http.post<Dossier>(`${this.apiUrl}/${id}/analyze`, {});
+    }
 }
+
 
 

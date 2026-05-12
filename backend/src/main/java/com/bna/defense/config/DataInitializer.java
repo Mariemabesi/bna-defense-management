@@ -126,7 +126,7 @@ public class DataInitializer {
                 Frais f1 = new Frais();
                 f1.setAffaire(aff1); f1.setLibelle("Honoraires avocat - Phase initiale");
                 f1.setMontant(new BigDecimal("3500.00")); f1.setType(Frais.TypeFrais.HONORAIRES_AVOCAT);
-                f1.setStatut(Frais.StatutFrais.ATTENTE);
+                f1.setStatut(Frais.StatutFrais.EN_ATTENTE_PREVALIDATION);
                 fraisRepository.save(f1);
             }
         };

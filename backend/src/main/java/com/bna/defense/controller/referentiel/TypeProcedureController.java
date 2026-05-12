@@ -2,7 +2,7 @@ package com.bna.defense.controller.referentiel;
 
 import com.bna.defense.entity.referentiel.TypeProcedure;
 import com.bna.defense.repository.referentiel.TypeProcedureRepository;
-import com.bna.defense.service.referentiel.GenericReferentielService;
+import com.bna.defense.service.referentiel.TypeProcedureService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +20,7 @@ public class TypeProcedureController {
     private TypeProcedureRepository repository;
 
     @Autowired
-    private GenericReferentielService<TypeProcedure, Long> service;
+    private TypeProcedureService service;
 
     @GetMapping
     public ResponseEntity<Page<TypeProcedure>> getAll(

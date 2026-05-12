@@ -2,7 +2,7 @@ package com.bna.defense.controller.referentiel;
 
 import com.bna.defense.entity.referentiel.Parquet;
 import com.bna.defense.repository.referentiel.ParquetRepository;
-import com.bna.defense.service.referentiel.GenericReferentielService;
+import com.bna.defense.service.referentiel.ParquetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +20,7 @@ public class ParquetController {
     private ParquetRepository repository;
 
     @Autowired
-    private GenericReferentielService<Parquet, Long> service;
+    private ParquetService service;
 
     @GetMapping
     public ResponseEntity<Page<Parquet>> getAll(

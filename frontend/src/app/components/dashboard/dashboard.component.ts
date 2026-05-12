@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -18,6 +18,7 @@ import { AffaireService, Affaire } from '../../services/affaire.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { AudienceService } from '../../services/audience.service';
 import { Chart, registerables } from 'chart.js';
+import { timer, Subscription } from 'rxjs';
 
 Chart.register(...registerables);
 
@@ -42,11 +43,7 @@ Chart.register(...registerables);
               <h2>Bienvenue, {{ currentUser?.fullName || currentUser?.username }}</h2>
               <p>Vous avez {{ dossiers.length }} dossiers actifs dans votre espace de travail.</p>
             </div>
-            <div class="banner-actions">
-               <button class="btn-primary white" (click)="exportGlobalStats()">
-                 Exporter Rapport Global
-               </button>
-            </div>
+
           </div>
 
           <!-- STATS GRID - SHARED BUT DYNAMIC -->
@@ -124,7 +121,7 @@ Chart.register(...registerables);
           <ng-container *ngIf="isChargeDossier() && !isAdmin()">
             <section class="recent-section">
               <div class="section-header">
-                <h2>Mes Dossiers en Cours</h2>
+                <h2>Mes Dossiers en Cours</h2>f
                 <div class="actions-group">
                    <button class="btn-primary" routerLink="/nouveau-dossier">Nouveau Dossier</button>
                 </div>
@@ -301,12 +298,12 @@ Chart.register(...registerables);
                     <td><span class="badge" [ngClass]="getBadgeClass(d.statut)">{{ getStatusLabel(d.statut) }}</span></td>
                     <td><strong>{{ d.budgetProvisionne | number:'1.2-2' }} TND</strong></td>
                     <td class="actions-cell">
-                       <button class="btn-action" (click)="onViewDossier(d)">
-                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                       </button>
-                       <button class="btn-action" *ngIf="isChargeDossier()" [routerLink]="['/modifier-dossier', d.reference]">
-                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                       </button>
+                        <button class="btn-action view-btn" (click)="onViewDossier(d)" title="Détails">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                        <button class="btn-action edit-btn" *ngIf="isChargeDossier()" [routerLink]="['/modifier-dossier', d.reference]" title="Modifier">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
                     </td>
                   </tr>
                 </tbody>
@@ -319,7 +316,7 @@ Chart.register(...registerables);
   `,
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   dossierChart: any;
   budgetChart: any;
   historyChart: any;
@@ -347,6 +344,7 @@ export class DashboardComponent implements OnInit {
   workflowHistory: any[] = [];
   dynamicStats: any = { total: 0, urgent: 0, enCours: 0, valide: 0, refuse: 0 };
   audienceStats: any = null;
+  private refreshSubscription?: Subscription;
 
   constructor(
     private dossierService: DossierService,
@@ -368,16 +366,31 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
-      this.loadStats();
-      this.loadDossiers();
-      this.loadAudienceStats();
-      if (this.isAdmin()) {
-        this.loadUsers();
-        this.loadLogs();
-      }
-      if (this.isAdmin() || this.isChargeDossier()) {
-        this.loadAuxiliaires();
-      }
+      // Start real-time polling every 30 seconds
+      this.refreshSubscription = timer(0, 30000).subscribe(() => {
+        this.refreshData();
+      });
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshSubscription) {
+      this.refreshSubscription.unsubscribe();
+    }
+  }
+
+  refreshData(): void {
+    this.loadStats();
+    this.loadDossiers();
+    this.loadAudienceStats();
+    
+    if (this.isAdmin()) {
+      this.loadUsers();
+      this.loadLogs();
+    }
+    
+    if (this.isAdmin() || this.isChargeDossier()) {
+      this.loadAuxiliaires();
     }
   }
 
@@ -547,6 +560,5 @@ export class DashboardComponent implements OnInit {
   loadHistory(id: number): void { this.dossierService.getHistory(id).subscribe(data => this.workflowHistory = data); }
   loadAffaires(id: number): void { this.affaireService.getAffairesByDossier(id).subscribe(data => this.affaires = data); }
   
-  exportGlobalStats(): void {}
   onAction(t: string, r: string): void {}
 }

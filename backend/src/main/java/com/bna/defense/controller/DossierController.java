@@ -4,6 +4,7 @@ import com.bna.defense.dto.FraisDTO;
 import com.bna.defense.entity.Dossier;
 import com.bna.defense.entity.Frais;
 import com.bna.defense.entity.User;
+import com.bna.defense.dto.FinancialFinalizationDTO;
 import com.bna.defense.repository.FraisRepository;
 import com.bna.defense.repository.UserRepository;
 import com.bna.defense.service.DossierHistoryService;
@@ -22,14 +23,22 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/dossiers")
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "*", maxAge = 80)
 public class DossierController {
 
-    @Autowired private DossierService dossierService;
-    @Autowired private DossierHistoryService historyService;
-    @Autowired private UserRepository userRepository;
-    @Autowired private FraisService fraisService;
-    @Autowired private FraisRepository fraisRepository;
+    @Autowired
+    private DossierService dossierService;
+    
+    @Autowired
+    private com.bna.defense.service.AuditLogService auditLogService;
+    @Autowired
+    private DossierHistoryService historyService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private FraisService fraisService;
+    @Autowired
+    private FraisRepository fraisRepository;
 
     // ─────────────────────────────────────────────────
     // CORE DOSSIER ENDPOINTS
@@ -39,18 +48,20 @@ public class DossierController {
     public org.springframework.data.domain.Page<Dossier> getAllDossiers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean archived,
             Principal principal) {
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
-        return dossierService.getAllDossiers(user, org.springframework.data.domain.PageRequest.of(page, size));
+        return dossierService.getAllDossiers(user, org.springframework.data.domain.PageRequest.of(page, size), archived);
     }
 
     @GetMapping("/mine")
     public org.springframework.data.domain.Page<Dossier> getMyDossiers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean archived,
             Principal principal) {
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
-        return dossierService.getMyDossiers(user, org.springframework.data.domain.PageRequest.of(page, size));
+        return dossierService.getMyDossiers(user, org.springframework.data.domain.PageRequest.of(page, size), archived);
     }
 
     @PostMapping
@@ -83,7 +94,7 @@ public class DossierController {
     }
 
     @GetMapping("/search")
-    public List<Dossier> searchDossiers(@RequestParam String query) {
+    public List<Dossier> searchDossiers(@RequestParam(name = "q") String query) {
         return dossierService.searchDossiers(query);
     }
 
@@ -203,7 +214,105 @@ public class DossierController {
     }
 
     /**
-     * Pré-validateur or Validateur rejects dossier with a mandatory motif (>=20 chars)
+     * WORKFLOW: Finalisation Financière
+     * Step 1: Chargé submits the financial form for pre-validation
+     */
+    @PutMapping("/{id}/finance/soumettre")
+    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN')")
+    public ResponseEntity<?> soumettreFinance(
+            @PathVariable Long id,
+            @RequestBody FinancialFinalizationDTO dto,
+            Principal principal) {
+        try {
+            return ResponseEntity.ok(dossierService.soumettreFinalisationFinanciere(id, dto, principal.getName()));
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Step 2: Pré-validateur approves the financial form
+     */
+    @PutMapping("/{id}/finance/prevalider")
+    @PreAuthorize("hasRole('PRE_VALIDATEUR') or hasRole('ADMIN')")
+    public ResponseEntity<?> prevaliderFinance(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Principal principal) {
+        try {
+            String commentaire = body.getOrDefault("commentaire", "Approuvé par prévalidateur");
+            return ResponseEntity
+                    .ok(dossierService.prevaliderFinalisationFinanciere(id, commentaire, principal.getName()));
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Step 2b: Pré-validateur rejects the financial form
+     */
+    @PutMapping("/{id}/finance/refuser-prevalidation")
+    @PreAuthorize("hasRole('PRE_VALIDATEUR') or hasRole('ADMIN')")
+    public ResponseEntity<?> refuserPrevalidationFinance(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Principal principal) {
+        try {
+            String motif = body.get("motif");
+            return ResponseEntity.ok(dossierService.refuserPrevalidationFinanciere(id, motif, principal.getName()));
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Step 3: Validateur gives final approval
+     */
+    @PutMapping("/{id}/finance/valider-final")
+    @PreAuthorize("hasRole('VALIDATEUR') or hasRole('SUPER_VALIDATEUR') or hasRole('ADMIN')")
+    public ResponseEntity<?> validerFinanceFinal(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Principal principal) {
+        try {
+            String commentaire = body.getOrDefault("commentaire", "Validation financière finale effectuée");
+            return ResponseEntity
+                    .ok(dossierService.validerFinalisationFinanciere(id, commentaire, principal.getName()));
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Step 3b: Validateur rejects finally
+     */
+    @PutMapping("/{id}/finance/refuser-final")
+    @PreAuthorize("hasRole('VALIDATEUR') or hasRole('SUPER_VALIDATEUR') or hasRole('ADMIN')")
+    public ResponseEntity<?> refuserFinanceFinal(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Principal principal) {
+        try {
+            String motif = body.get("motif");
+            return ResponseEntity.ok(dossierService.refuserFinalisationFinanciere(id, motif, principal.getName()));
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Pré-validateur or Validateur rejects dossier with a mandatory motif (>=20
+     * chars)
      */
     @PutMapping("/{id}/refuser")
     @PreAuthorize("hasRole('PRE_VALIDATEUR') or hasRole('VALIDATEUR') or hasRole('ADMIN')")
@@ -255,8 +364,16 @@ public class DossierController {
         return dossierService.getPendingClosureForValidateur(user);
     }
 
+    @GetMapping("/pending/finalisation-financiere")
+    @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('PRE_VALIDATEUR') or hasRole('VALIDATEUR') or hasRole('ADMIN')")
+    public List<Dossier> getDossiersToFinalize(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+        return dossierService.getDossiersToFinalize(user);
+    }
+
     // ─────────────────────────────────────────────────
     // FRAIS PER DOSSIER (Point 6 + 9)
+
     // ─────────────────────────────────────────────────
 
     /**
@@ -269,7 +386,7 @@ public class DossierController {
         Dossier dossier = dossierService.getDossierById(id);
         // Set referenceDossier from path param (takes priority over body)
         dto.setReferenceDossier(dossier.getReference());
-        Frais frais = fraisService.demandFrais(dto);
+        Frais frais = fraisService.demandFrais(dto, null);
 
         // Recalculate fraisReel = SUM of all montantTtc for this dossier
         BigDecimal totalFraisReel = fraisRepository.sumMontantTtcByDossierId(id);
@@ -289,7 +406,8 @@ public class DossierController {
     }
 
     /**
-     * GET /api/dossiers/:id/frais/summary — returns fraisInitial, fraisReel, tvaTotale, depassement
+     * GET /api/dossiers/:id/frais/summary — returns fraisInitial, fraisReel,
+     * tvaTotale, depassement
      */
     @GetMapping("/{id}/frais/summary")
     @PreAuthorize("@permissionService.canAccessDossier(authentication, #id) or hasRole('ADMIN')")
@@ -301,9 +419,9 @@ public class DossierController {
         // Calculate TVA total from all frais entries
         List<Frais> fraisList = fraisRepository.findByDossierId(id);
         BigDecimal tvaTotale = fraisList.stream()
-            .filter(f -> f.getMontantTtc() != null && f.getMontant() != null)
-            .map(f -> f.getMontantTtc().subtract(f.getMontant()))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .filter(f -> f.getMontantTtc() != null && f.getMontant() != null)
+                .map(f -> f.getMontantTtc().subtract(f.getMontant()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal depassement = fraisReel.subtract(fraisInitial);
         boolean hasDepassement = depassement.compareTo(BigDecimal.ZERO) > 0;
@@ -325,35 +443,43 @@ public class DossierController {
         dossierService.archiveDossier(id);
         return ResponseEntity.noContent().build();
     }
- 
+
     // ─────────────────────────────────────────────────
     // REFERENTIEL LINK ENDPOINTS
     // ─────────────────────────────────────────────────
- 
+
     @GetMapping("/by-nature/{natureId}")
     public List<Dossier> getByNature(@PathVariable Long natureId) {
         return dossierService.getByNature(natureId);
     }
- 
+
     @GetMapping("/by-phase/{phaseId}")
     public List<Dossier> getByPhase(@PathVariable Long phaseId) {
         return dossierService.getByPhase(phaseId);
     }
- 
+
     @GetMapping("/by-avocat/{avocatId}")
     public List<Dossier> getByAvocat(@PathVariable Long avocatId) {
         return dossierService.getByAvocat(avocatId);
     }
- 
+
     @GetMapping("/by-huissier/{huissierId}")
     public List<Dossier> getByHuissier(@PathVariable Long huissierId) {
         return dossierService.getByHuissier(huissierId);
     }
- 
+
     @GetMapping("/by-expert/{expertId}")
     public List<Dossier> getByExpert(@PathVariable Long expertId) {
         return dossierService.getByExpert(expertId);
     }
+
+    /**
+     * POST /api/dossiers/:id/analyze — triggers ML prediction for this dossier
+     */
+    @PostMapping("/{id}/analyze")
+    @PreAuthorize("@permissionService.canAccessDossier(authentication, #id) or hasRole('ADMIN')")
+    public ResponseEntity<Dossier> analyzeDossier(@PathVariable Long id, Principal principal) {
+        return ResponseEntity.ok(dossierService.analyzeDossierWithAI(id, principal.getName()));
+    }
+
 }
-
-

@@ -2,7 +2,7 @@ package com.bna.defense.controller.referentiel;
 
 import com.bna.defense.entity.referentiel.NatureAffaire;
 import com.bna.defense.repository.referentiel.NatureAffaireRepository;
-import com.bna.defense.service.referentiel.GenericReferentielService;
+import com.bna.defense.service.referentiel.NatureAffaireService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +20,7 @@ public class NatureAffaireController {
     private NatureAffaireRepository repository;
 
     @Autowired
-    private GenericReferentielService<NatureAffaire, Long> service;
+    private NatureAffaireService service;
 
     @GetMapping
     public ResponseEntity<Page<NatureAffaire>> getAll(

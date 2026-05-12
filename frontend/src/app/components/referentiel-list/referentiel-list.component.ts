@@ -422,14 +422,15 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
         columns: [
           { key: 'nom', label: 'Nom' },
           { key: 'specialite', label: 'Spécialité' },
-          { key: 'telephone', label: 'Téléphone' },
-          { key: 'email', label: 'Email' }
+          { key: 'experienceAnnees', label: 'Expérience (ans)' },
+          { key: 'telephone', label: 'Téléphone' }
         ],
         filters: [],
         formFields: [
           { key: 'nom', label: 'Nom & Prénom', type: 'text' },
           { key: 'type', label: 'Profession', type: 'select', options: [{value: 'AVOCAT', label: 'Avocat'}] },
           { key: 'specialite', label: 'Spécialité', type: 'text' },
+          { key: 'experienceAnnees', label: 'Expérience (Années)', type: 'number' },
           { key: 'email', label: 'Email', type: 'text' },
           { key: 'telephone', label: 'Téléphone', type: 'text' },
           { key: 'adresse', label: 'Adresse Cabinet', type: 'textarea' }
@@ -653,7 +654,17 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
            this.authService.hasRole('ROLE_CHARGE_DOSSIER'); 
   }
 
-  openAddModal() { this.currentId = null; this.editData = {}; this.showModal = true; }
+  openAddModal() { 
+    this.currentId = null; 
+    this.editData = {}; 
+    
+    // Auto-select profession based on current section
+    if (this.type === 'avocats') this.editData.type = 'AVOCAT';
+    else if (this.type === 'huissiers') this.editData.type = 'HUISSIER';
+    else if (this.type === 'experts') this.editData.type = 'EXPERT';
+    
+    this.showModal = true; 
+  }
 
   closeModal() { this.showModal = false; this.editData = {}; }
 
