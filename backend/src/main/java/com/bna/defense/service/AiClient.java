@@ -147,7 +147,7 @@ public class AiClient {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(com.bna.defense.dto.AIAnalysisDTO.class)
-                .timeout(Duration.ofSeconds(60))
+                .timeout(Duration.ofSeconds(120))
                 .onErrorResume(e -> {
                     System.err.println("AI Prediction Error: " + e.getMessage());
                     return Mono.empty();

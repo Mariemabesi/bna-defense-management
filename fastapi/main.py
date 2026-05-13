@@ -77,6 +77,10 @@ async def predict_outcome(request: LegalAnalysisRequest):
 
         # 5. Appel à NVIDIA GLM-5.1 pour l'Analyse Assistante
         try:
+            import time
+            start_time = time.time()
+            print(f"Envoi de la requête à NVIDIA pour le dossier {request.affaire_type}...", flush=True)
+            
             prompt = f"""
             En tant qu'assistant juridique expert pour la BNA, analyse ce dossier :
             - Type d'affaire : {request.affaire_type}
@@ -103,6 +107,8 @@ async def predict_outcome(request: LegalAnalysisRequest):
                 stream=False
             )
             analysis_text = completion.choices[0].message.content
+            duration = time.time() - start_time
+            print(f"Réponse NVIDIA reçue en {duration:.2f}s", flush=True)
         except Exception as ai_err:
             print(f"Erreur NVIDIA AI : {ai_err}")
             analysis_text = "Analyse AI non disponible pour le moment."
