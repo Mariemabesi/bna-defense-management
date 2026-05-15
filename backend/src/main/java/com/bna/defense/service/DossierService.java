@@ -729,7 +729,49 @@ public class DossierService {
                 
             return saved;
         } else {
-            throw new RuntimeException("L'analyse IA a échoué. Veuillez vérifier le service AI.");
+            throw new RuntimeException("L'analyse ML a échoué. Veuillez vérifier le service AI.");
+        }
+    }
+
+    /**
+     * COUCHE 2 — Analyse NVIDIA (Optionnel).
+     * Enrichit une prédiction ML existante avec une analyse textuelle NVIDIA GLM-5.1.
+     */
+    @Transactional
+    public Dossier analyzeWithNvidia(Long id, String username) {
+        Dossier dossier = getDossierById(id);
+
+        if (dossier.getVerdict() == null || dossier.getVerdict().isBlank()) {
+            throw new RuntimeException("Effectuez d'abord la prédiction ML avant l'analyse NVIDIA.");
+        }
+
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("affaire_type", dossier.getNatureAffaire() != null ? dossier.getNatureAffaire().getNom() : "Inconnu");
+        payload.put("avocat_specialite", dossier.getAvocat() != null ? dossier.getAvocat().getSpecialite() : "Généraliste");
+        payload.put("nb_reportees", dossier.getAffaires() != null ? (double) dossier.getAffaires().size() : 0.0);
+        payload.put("avocat_experience_annees",
+            dossier.getAvocatExperienceAnnees() != null ? dossier.getAvocatExperienceAnnees() :
+            (dossier.getAvocat() != null && dossier.getAvocat().getExperienceAnnees() != null ?
+             dossier.getAvocat().getExperienceAnnees().doubleValue() : 5.0));
+        payload.put("qualite_preuves", dossier.getQualitePreuves() != null ? dossier.getQualitePreuves() : "MOYENNE");
+        payload.put("solidite_dossier", dossier.getSoliditeDossier() != null ? dossier.getSoliditeDossier() : "STANDARD");
+        payload.put("dossier_budget_provisionne", dossier.getBudgetProvisionne() != null ? dossier.getBudgetProvisionne().doubleValue() : 0.0);
+        payload.put("specialite_compatible", dossier.getSpecialiteCompatible() != null ? dossier.getSpecialiteCompatible() : "OUI");
+        payload.put("prediction", dossier.getVerdict());
+        payload.put("probabilitySuccess", dossier.getProbabilitySuccess() != null ? dossier.getProbabilitySuccess() : 50.0);
+        payload.put("probabilityFailure", dossier.getProbabilityFailure() != null ? dossier.getProbabilityFailure() : 50.0);
+        payload.put("riskLevel", dossier.getRiskScore() != null ? dossier.getRiskScore() : "MOYEN");
+
+        java.util.Map<String, Object> response = aiClient.nvidiaAnalysis(payload).block();
+
+        if (response != null && "success".equals(response.get("status"))) {
+            dossier.setAiAnalysis((String) response.get("analysis"));
+            Dossier saved = dossierRepository.save(dossier);
+            auditLogService.log(username, "NVIDIA_ANALYSIS", "Dossier", id,
+                "Analyse NVIDIA effectuée pour le dossier " + dossier.getReference());
+            return saved;
+        } else {
+            throw new RuntimeException("L'analyse NVIDIA a échoué. Veuillez réessayer.");
         }
     }
 }

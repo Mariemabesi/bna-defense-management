@@ -32,8 +32,8 @@ export class FraisService {
 
     constructor(private http: HttpClient) { }
 
-    getFrais(): Observable<Frais[]> {
-        return this.http.get<Frais[]>(this.apiUrl);
+    getFrais(page: number = 0, size: number = 10): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}?page=${page}&size=${size}`);
     }
 
     createFrais(frais: Frais): Observable<Frais> {

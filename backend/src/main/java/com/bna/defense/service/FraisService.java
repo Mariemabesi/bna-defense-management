@@ -33,33 +33,13 @@ public class FraisService {
     @Autowired
     private DossierService dossierService;
 
-    public List<Frais> getFraisForUser(com.bna.defense.entity.User user) {
+    public org.springframework.data.domain.Page<Frais> getFraisForUser(com.bna.defense.entity.User user, org.springframework.data.domain.Pageable pageable) {
         boolean isSuper = user.isSuperValidateur() || user.isAdmin();
         boolean isCharge = user.isChargeDossier();
         boolean isPreVal = user.isPreValidateur();
         boolean isValidateur = user.isValidateur();
 
-        List<Frais> all = fraisRepository.findByRBAC(user, user.getUsername(), isSuper, isCharge, isPreVal, isValidateur);
-
-        // Filter based on workflow visibility rules:
-        if (isSuper) return all;
-
-        return all.stream().filter(f -> {
-            // Charge sees everything they are assigned to OR they created
-            if (isCharge && (
-                (f.getAffaire().getDossier().getAssignedCharge() != null && f.getAffaire().getDossier().getAssignedCharge().getId().equals(user.getId())) ||
-                (f.getCreatedBy() != null && f.getCreatedBy().equals(user.getUsername()))
-            )) {
-                return true;
-            }
-            // Pre-validator and Validator see everything within their branch (RBAC query already filtered the branch)
-            // We just return true here because findByRBAC already did the heavy lifting
-            if (isPreVal || isValidateur) {
-                return true;
-            }
-
-            return false;
-        }).collect(java.util.stream.Collectors.toList());
+        return fraisRepository.findByRBACPaginated(user, user.getUsername(), isSuper, isCharge, isPreVal, isValidateur, pageable);
     }
 
     @Transactional

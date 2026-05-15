@@ -23,7 +23,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/dossiers")
-@CrossOrigin(origins = "*", maxAge = 80)
 public class DossierController {
 
     @Autowired
@@ -474,12 +473,21 @@ public class DossierController {
     }
 
     /**
-     * POST /api/dossiers/:id/analyze — triggers ML prediction for this dossier
+     * POST /api/dossiers/:id/analyze — COUCHE 1: ML prediction only (fast, < 1s)
      */
     @PostMapping("/{id}/analyze")
     @PreAuthorize("@permissionService.canAccessDossier(authentication, #id) or hasRole('ADMIN')")
     public ResponseEntity<Dossier> analyzeDossier(@PathVariable Long id, Principal principal) {
         return ResponseEntity.ok(dossierService.analyzeDossierWithAI(id, principal.getName()));
+    }
+
+    /**
+     * POST /api/dossiers/:id/nvidia-analyze — COUCHE 2: NVIDIA enrichment (optional, ~10s)
+     */
+    @PostMapping("/{id}/nvidia-analyze")
+    @PreAuthorize("@permissionService.canAccessDossier(authentication, #id) or hasRole('ADMIN')")
+    public ResponseEntity<Dossier> analyzeWithNvidia(@PathVariable Long id, Principal principal) {
+        return ResponseEntity.ok(dossierService.analyzeWithNvidia(id, principal.getName()));
     }
 
 }

@@ -165,10 +165,13 @@ export class DossierService {
         });
     }
 
+    /** COUCHE 1 — ML uniquement, rapide */
     analyzeDossier(id: number): Observable<Dossier> {
         return this.http.post<Dossier>(`${this.apiUrl}/${id}/analyze`, {});
     }
+
+    /** COUCHE 2 — NVIDIA analyse avancée (optionnel, ~10s) */
+    nvidiaAnalyzeDossier(id: number): Observable<Dossier> {
+        return this.http.post<Dossier>(`${this.apiUrl}/${id}/nvidia-analyze`, {});
+    }
 }
-
-
-

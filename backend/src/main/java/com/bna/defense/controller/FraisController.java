@@ -20,10 +20,14 @@ public class FraisController {
     private com.bna.defense.repository.UserRepository userRepository;
 
     @GetMapping
-    public ResponseEntity<?> getAll(java.security.Principal principal) {
+    public ResponseEntity<?> getAll(
+            java.security.Principal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         try {
             com.bna.defense.entity.User user = userRepository.findByUsername(principal.getName()).orElseThrow();
-            return ResponseEntity.ok(fraisService.getFraisForUser(user));
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+            return ResponseEntity.ok(fraisService.getFraisForUser(user, pageable));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error: " + e.getMessage());

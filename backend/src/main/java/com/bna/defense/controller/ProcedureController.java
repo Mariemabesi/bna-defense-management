@@ -34,8 +34,11 @@ public class ProcedureController {
     }
 
     @GetMapping
-    public List<ProcedureJudiciaire> getAllProcedures() {
-        return procedureService.getAllProcedures(getCurrentUser());
+    public org.springframework.data.domain.Page<ProcedureJudiciaire> getAllProcedures(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
+        return procedureService.getAllProcedures(getCurrentUser(), pageable);
     }
 
     /** Business Rule: Une Procédure est toujours liée à une Affaire */

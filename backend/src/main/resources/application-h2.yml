@@ -7,7 +7,10 @@ spring:
   h2:
     console:
       enabled: true
+  sql:
+    init:
+      mode: never
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop

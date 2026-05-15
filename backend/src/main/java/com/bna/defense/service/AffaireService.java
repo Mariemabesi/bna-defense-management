@@ -25,41 +25,27 @@ public class AffaireService {
     }
 
     @Transactional(readOnly = true)
-    public List<Affaire> getAll(com.bna.defense.entity.User currentUser) {
-        if (currentUser == null) return java.util.Collections.emptyList();
+    public org.springframework.data.domain.Page<Affaire> getAll(com.bna.defense.entity.User currentUser, 
+                                                               String searchTerm, String type, Affaire.StatutAffaire statut,
+                                                               org.springframework.data.domain.Pageable pageable) {
+        if (currentUser == null) return org.springframework.data.domain.Page.empty();
         
-        List<Affaire> all = affaireRepository.findAll();
-        if (all == null) return java.util.Collections.emptyList();
-
-        // Check for Admin or Validateur (Global Read)
-        boolean isGlobalRead = currentUser.isAdmin() || 
-                              currentUser.hasRole("ROLE_VALIDATEUR") || 
-                              currentUser.hasRole("ROLE_SUPER_VALIDATEUR");
+        boolean isSuper = currentUser.isAdmin() || 
+                         currentUser.hasRole("ROLE_VALIDATEUR") || 
+                         currentUser.hasRole("ROLE_SUPER_VALIDATEUR");
         
-        if (isGlobalRead) return all;
-
         boolean isPreVal = currentUser.hasRole("ROLE_PRE_VALIDATEUR");
-        final String uname = currentUser.getUsername();
 
-        return all.stream()
-            .filter(a -> a != null && a.getDossier() != null)
-            .filter(a -> {
-                Dossier d = a.getDossier();
-                
-                // Charge check: own dossiers
-                boolean isChargeOwn = (d.getCreatedBy() != null && d.getCreatedBy().equalsIgnoreCase(uname)) ||
-                                      (d.getAssignedCharge() != null && d.getAssignedCharge().getUsername().equalsIgnoreCase(uname));
-                
-                if (isChargeOwn) return true;
-
-                // Pre-validateur check: dossiers managed by their charges
-                if (isPreVal && d.getAssignedCharge() != null && d.getAssignedCharge().getManager() != null) {
-                    return d.getAssignedCharge().getManager().getId().equals(currentUser.getId());
-                }
-
-                return false;
-            })
-            .collect(java.util.stream.Collectors.toList());
+        return affaireRepository.findAllWithRBAC(
+            currentUser.getUsername(),
+            currentUser.getId(),
+            isSuper,
+            isPreVal,
+            (searchTerm != null && !searchTerm.isBlank()) ? searchTerm : null,
+            (type != null && !type.isBlank()) ? type : null,
+            statut,
+            pageable
+        );
     }
 
 

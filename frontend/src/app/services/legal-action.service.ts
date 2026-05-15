@@ -40,8 +40,8 @@ export class LegalActionService {
   constructor(private http: HttpClient) { }
 
   // Procedures
-  getAllProcedures(): Observable<Procedure[]> {
-    return this.http.get<Procedure[]>(`${this.apiUrl}/procedures`);
+  getAllProcedures(page: number = 0, size: number = 10): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/procedures?page=${page}&size=${size}`);
   }
 
   createProcedure(procedure: any): Observable<Procedure> {

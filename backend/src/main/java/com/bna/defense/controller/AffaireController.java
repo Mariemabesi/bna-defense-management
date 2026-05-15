@@ -23,11 +23,19 @@ public class AffaireController {
     private com.bna.defense.service.ReportingService reportingService;
 
     @GetMapping
-    public List<Affaire> getAll(java.security.Principal principal) {
-        if (principal == null) return java.util.Collections.emptyList();
+    public org.springframework.data.domain.Page<Affaire> getAll(
+            java.security.Principal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Affaire.StatutAffaire statut) {
+        if (principal == null) return org.springframework.data.domain.Page.empty();
         com.bna.defense.entity.User user = userService.findByUsername(principal.getName());
         if (user == null) user = userService.findByEmail(principal.getName());
-        return affaireService.getAll(user);
+        
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        return affaireService.getAll(user, searchTerm, type, statut, pageable);
     }
 
     @GetMapping("/export/pdf")

@@ -1,6 +1,7 @@
 package com.bna.defense.service;
 
 import com.bna.defense.entity.ProcedureJudiciaire;
+import com.bna.defense.entity.Affaire;
 import com.bna.defense.entity.Frais;
 import com.bna.defense.entity.User;
 import com.bna.defense.repository.ProcedureJudiciaireRepository;
@@ -28,14 +29,17 @@ public class ProcedureService {
         this.userRepository = userRepository;
     }
 
-    public List<ProcedureJudiciaire> getAllProcedures(UserDetailsImpl userDetails) {
-        if (isGlobalSupervisor(userDetails)) {
-            return procedureRepository.findAll();
-        }
-        if (hasRole(userDetails, "ROLE_PRE_VALIDATEUR")) {
-            return procedureRepository.findAllForManager(userDetails.getId());
-        }
-        return procedureRepository.findAllVisibleToUser(userDetails.getId(), userDetails.getUsername());
+    public org.springframework.data.domain.Page<ProcedureJudiciaire> getAllProcedures(UserDetailsImpl userDetails, org.springframework.data.domain.Pageable pageable) {
+        boolean isSuper = isGlobalSupervisor(userDetails);
+        boolean isPreVal = hasRole(userDetails, "ROLE_PRE_VALIDATEUR");
+        
+        return procedureRepository.findAllPaginated(
+            userDetails.getId(),
+            userDetails.getUsername(),
+            isSuper,
+            isPreVal,
+            pageable
+        );
     }
 
     public List<ProcedureJudiciaire> getByAffaire(Long affaireId, UserDetailsImpl userDetails) {

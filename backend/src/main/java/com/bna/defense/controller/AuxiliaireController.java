@@ -25,13 +25,15 @@ public class AuxiliaireController {
     @Autowired private FraisRepository fraisRepository;
 
     @GetMapping
-    public List<Auxiliaire> getAll(@RequestParam(required = false) Auxiliaire.TypeAuxiliaire type) {
+    public org.springframework.data.domain.Page<Auxiliaire> getAll(
+            @RequestParam(required = false) Auxiliaire.TypeAuxiliaire type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "nom"));
         if (type != null) {
-            return auxiliaireRepository.findAll().stream()
-                    .filter(a -> a.getType() == type)
-                    .collect(Collectors.toList());
+            return auxiliaireRepository.findByType(type, pageable);
         }
-        return auxiliaireRepository.findAll();
+        return auxiliaireRepository.findAll(pageable);
     }
 
     @PostMapping

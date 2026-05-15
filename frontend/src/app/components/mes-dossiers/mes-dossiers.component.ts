@@ -321,7 +321,7 @@ import { FormsModule } from '@angular/forms';
                       </div>
                       <div class="aff-actions">
                         <select [value]="aff.statut" (change)="updateAffaireStatut(aff, $any($event.target).value)"
-                                class="aff-select" [ngClass]="aff.statut.toLowerCase()">
+                                class="aff-select" [ngClass]="aff.statut?.toLowerCase() || ''">
                           <option value="EN_COURS">EN COURS</option>
                           <option value="GAGNE">GAGNE</option>
                           <option value="PERDU">PERDU</option>
@@ -355,7 +355,7 @@ import { FormsModule } from '@angular/forms';
     
                       <div *ngIf="!mlLoading && selectedDossier.verdict" class="ai-body-premium ml-body slideIn">
                         <div class="prediction-main">
-                          <div class="verdict-display" [ngClass]="selectedDossier.verdict.toLowerCase()">
+                          <div class="verdict-display" [ngClass]="selectedDossier.verdict?.toLowerCase() || ''">
                             <span class="verdict-label">VERDICT PRÉDIT</span>
                             <span class="verdict-value">{{ selectedDossier.verdict }}</span>
                           </div>
@@ -379,7 +379,7 @@ import { FormsModule } from '@angular/forms';
                         </div>
 
                         <div class="ai-meta-pills ml-pills">
-                          <span class="ai-pill risk" [ngClass]="selectedDossier.riskScore ? selectedDossier.riskScore.toLowerCase() : 'moyen'">
+                          <span class="ai-pill risk" [ngClass]="selectedDossier.riskScore ? selectedDossier.riskScore?.toLowerCase() : 'moyen'">
                             NIVEAU DE RISQUE: {{ selectedDossier.riskScore || 'MOYEN' }}
                           </span>
                         </div>
@@ -400,59 +400,42 @@ import { FormsModule } from '@angular/forms';
                     </div>
                   </div>
 
-                  <!-- LEGACY AI SUMMARY SECTION (Optional/Claude) -->
-                  <div class="ai-section" *ngIf="aiAnalysis || aiLoading">
-                    <div class="ai-premium-card">
+
+                  <!-- NVIDIA ANALYSIS SECTION (Optionnel — s'affiche après clic sur bouton bleu) -->
+                  <div class="ai-section" *ngIf="selectedDossier.aiAnalysis || nvidiaLoading">
+                    <div class="ai-premium-card nvidia-card">
                       <div class="ai-header">
-                        <div class="ai-sparkle-icon">
+                        <div class="ai-sparkle-icon nvidia-icon">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
                         </div>
                         <div class="ai-title-wrap">
-                          <span class="ai-label">INTELLIGENCE BNA (Claude)</span>
-                          <h4 class="ai-title">Résumé IA Decision-Ready</h4>
+                          <span class="ai-label">ANALYSE AVANCÉE — NVIDIA GLM-5.1</span>
+                          <h4 class="ai-title">Interprétation Juridique IA</h4>
                         </div>
                       </div>
-                      
-                      <div *ngIf="aiLoading" class="ai-loader-premium">
-                        <div class="ai-pulse-bar"></div>
-                        <span class="pulse-text">Génération de l'analyse en cours...</span>
+
+                      <div *ngIf="nvidiaLoading" class="ai-loader-premium">
+                        <div class="ai-pulse-bar nvidia-bar"></div>
+                        <span class="pulse-text">Analyse NVIDIA en cours (~10s)...</span>
                       </div>
-    
-                      <div *ngIf="aiAnalysis" class="ai-body-premium slideIn">
-                        <div class="ai-meta-pills">
-                          <span class="ai-pill risk" [ngClass]="aiAnalysis.riskLevel.toLowerCase()">
-                            RISQUE: {{ aiAnalysis.riskLevel }}
-                          </span>
-                          <span class="ai-pill conf">
-                            FIABILITÉ: {{ aiAnalysis.confidence * 100 }}%
-                          </span>
-                        </div>
-    
-                        <div class="ai-summary-text">
-                          {{ aiAnalysis.summary }}
-                        </div>
-    
-                        <div class="ai-reco-box">
-                          <div class="reco-header">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                            RECO. STRATÉGIQUES
-                          </div>
-                          <ul>
-                            <li *ngFor="let s of aiAnalysis.suggestions">{{ s }}</li>
-                          </ul>
+
+                      <div *ngIf="!nvidiaLoading && selectedDossier.aiAnalysis" class="ai-body-premium slideIn">
+                        <div class="assistant-content">
+                          <p>{{ selectedDossier.aiAnalysis }}</p>
                         </div>
                       </div>
                     </div>
                   </div>
               </div>
+
               <div class="modal-footer">
                 <button class="btn-ai ml" (click)="analyzeWithML()" [disabled]="mlLoading">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
-                  {{ mlLoading ? 'Analyse ML...' : 'Prédiction Verdict (ML)' }}
+                  {{ mlLoading ? 'Prédiction en cours...' : 'Prédiction Verdict (ML)' }}
                 </button>
-                <button class="btn-ai" (click)="analyzeWithAI()" [disabled]="aiLoading">
+                <button class="btn-ai nvidia" (click)="analyzeWithNvidia()" [disabled]="nvidiaLoading || !selectedDossier?.verdict" title="Analyse NVIDIA GLM-5.1 (requiert la prédiction ML)">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
-                  {{ aiLoading ? 'Analyse...' : 'Résumé IA (Claude)' }}
+                  {{ nvidiaLoading ? 'Analyse NVIDIA...' : 'Analyse NVIDIA (Optionnel)' }}
                 </button>
                 <button class="btn-secondary" (click)="closeDossierModal()">Fermer</button>
                 <button class="btn-primary" *ngIf="isChargeDossier() && selectedDossier.statut === 'OUVERT'" (click)="executeWorkflow('en-cours', selectedDossier.id!)" style="background: #0369a1;">
@@ -573,7 +556,7 @@ import { FormsModule } from '@angular/forms';
                         <span class="proc-row-titre">{{ p.titre }}</span>
                         <span class="proc-row-type">{{ p.type }}</span>
                       </div>
-                      <span class="proc-row-pill" [ngClass]="p.statut.toLowerCase()">{{ p.statut }}</span>
+                      <span class="proc-row-pill" [ngClass]="p.statut?.toLowerCase() || ''">{{ p.statut }}</span>
                     </div>
                   </div>
                 </div>
@@ -993,6 +976,8 @@ import { FormsModule } from '@angular/forms';
 
     .btn-ai.ml { background: linear-gradient(135deg, #008766 0%, #10b981 100%); box-shadow: 0 4px 12px rgba(0, 135, 102, 0.3); }
     .btn-ai.ml:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(0, 135, 102, 0.4); }
+    .btn-ai.nvidia { background: linear-gradient(135deg, #1a56db 0%, #6366f1 100%); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+    .btn-ai.nvidia:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4); }
 
 
     
@@ -1368,6 +1353,7 @@ export class MesDossiersComponent implements OnInit {
   selectedDossier: Dossier | null = null;
   loading = false;
   mlLoading = false;
+  nvidiaLoading = false;
   error: string | null = null;
   Math = Math;
   activeActionMenuId: number | null = null;
@@ -1605,7 +1591,6 @@ export class MesDossiersComponent implements OnInit {
         this.selectedDossier = updatedDossier;
         this.mlLoading = false;
         this.notificationService.addNotification("Prédiction ML effectuée avec succès.", "ROLE_ADMIN", "SUCCESS");
-        // Update in list too
         const idx = this.dossiers.findIndex(d => d.id === updatedDossier.id);
         if (idx !== -1) this.dossiers[idx] = updatedDossier;
       },
@@ -1613,6 +1598,30 @@ export class MesDossiersComponent implements OnInit {
         this.mlLoading = false;
         console.error("ML Error", err);
         this.notificationService.addNotification("L'analyse ML a échoué. Vérifiez le service AI.", "ROLE_ADMIN", "WARNING");
+      }
+    });
+  }
+
+  analyzeWithNvidia(): void {
+    if (!this.selectedDossier || !this.selectedDossier.id) return;
+    if (!this.selectedDossier.verdict) {
+      this.notificationService.addNotification("Effectuez d'abord la prédiction ML.", "ROLE_ADMIN", "WARNING");
+      return;
+    }
+
+    this.nvidiaLoading = true;
+    this.dossierService.nvidiaAnalyzeDossier(this.selectedDossier.id).subscribe({
+      next: (updatedDossier) => {
+        this.selectedDossier = updatedDossier;
+        this.nvidiaLoading = false;
+        this.notificationService.addNotification("Analyse NVIDIA effectuée avec succès.", "ROLE_ADMIN", "SUCCESS");
+        const idx = this.dossiers.findIndex(d => d.id === updatedDossier.id);
+        if (idx !== -1) this.dossiers[idx] = updatedDossier;
+      },
+      error: (err) => {
+        this.nvidiaLoading = false;
+        console.error("NVIDIA Error", err);
+        this.notificationService.addNotification("L'analyse NVIDIA a échoué. Réessayez.", "ROLE_ADMIN", "WARNING");
       }
     });
   }

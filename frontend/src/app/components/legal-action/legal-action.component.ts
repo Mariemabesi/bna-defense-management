@@ -192,6 +192,34 @@ import { ReferentielService, Tribunal } from '../../services/referentiel.service
               </tbody>
             </table>
           </div>
+
+          <!-- PAGINATION -->
+          <div class="pagination-footer slideIn" *ngIf="totalPages > 1">
+            <div class="pagination-info">
+              Affichage de <b>{{ filteredProcedures.length }}</b> sur <b>{{ totalElements }}</b> procédures
+            </div>
+            <div class="pagination-controls">
+              <button class="btn-page" [disabled]="currentPage === 0" (click)="onPageChange(currentPage - 1)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                Précédent
+              </button>
+              
+              <div class="page-numbers">
+                <button 
+                  *ngFor="let p of [].constructor(totalPages); let i = index" 
+                  class="btn-number" 
+                  [class.active]="i === currentPage"
+                  (click)="onPageChange(i)">
+                  {{ i + 1 }}
+                </button>
+              </div>
+
+              <button class="btn-page" [disabled]="currentPage === totalPages - 1" (click)="onPageChange(currentPage + 1)">
+                Suivant
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -461,6 +489,30 @@ import { ReferentielService, Tribunal } from '../../services/referentiel.service
     .btn-icon-small { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; cursor: pointer; color: #64748b; }
     .empty-mini { padding: 20px; text-align: center; color: #94a3b8; font-style: italic; font-size: 13px; }
 
+    /* PAGINATION STYLES */
+    .pagination-footer {
+      margin-top: 24px; display: flex; justify-content: space-between; align-items: center;
+      padding: 0 8px;
+    }
+    .pagination-info { font-size: 13px; color: #64748b; }
+    .pagination-info b { color: #1e293b; }
+    .pagination-controls { display: flex; align-items: center; gap: 12px; }
+    .page-numbers { display: flex; gap: 6px; }
+    .btn-page {
+      background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 10px;
+      font-size: 13px; font-weight: 700; color: #475569; cursor: pointer;
+      display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+    }
+    .btn-page:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+    .btn-page:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-number {
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+      font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-number:hover { border-color: #cbd5e1; color: #1e293b; }
+    .btn-number.active { background: #008766; border-color: #008766; color: white; }
+
     /* Modal styles */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(6px); z-index: 1000; display: flex; align-items: center; justify-content: center; }
     .modal-card { background: white; border-radius: 24px; width: 100%; max-width: 600px; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.2); overflow: hidden; }
@@ -477,6 +529,10 @@ import { ReferentielService, Tribunal } from '../../services/referentiel.service
     .btn-icon-small.danger:hover { background: #fee2e2; color: #ef4444; border-color: #ef4444; }
     .slideIn { animation: slideIn 0.3s ease-out; }
     @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    @media (max-width: 1024px) {
+      .pagination-footer { flex-direction: column; gap: 16px; text-align: center; }
+    }
   `]
 })
 export class LegalActionComponent implements OnInit {
@@ -492,6 +548,12 @@ export class LegalActionComponent implements OnInit {
   searchTerm = '';
   filterType = 'ALL';
   filterStatut = 'ALL';
+
+  // Pagination
+  currentPage = 0;
+  pageSize = 10;
+  totalPages = 0;
+  totalElements = 0;
 
   showModal = false;
   isEditing = false;
@@ -534,9 +596,11 @@ export class LegalActionComponent implements OnInit {
 
   loadData(): void {
     this.loading = true;
-    this.legalService.getAllProcedures().subscribe({
+    this.legalService.getAllProcedures(this.currentPage, this.pageSize).subscribe({
       next: data => {
-        this.procedures = data;
+        this.procedures = data.content;
+        this.totalElements = data.totalElements;
+        this.totalPages = data.totalPages;
         this.filterProcedures();
         this.loading = false;
       },
@@ -545,7 +609,12 @@ export class LegalActionComponent implements OnInit {
         this.loading = false;
       }
     });
-    this.affaireService.getAllAffaires().subscribe(data => this.affaires = data);
+    this.affaireService.getAllAffaires(0, 1000).subscribe(data => this.affaires = data.content || data);
+  }
+
+  onPageChange(page: number) {
+    this.currentPage = page;
+    this.loadData();
   }
 
   filterProcedures(): void {

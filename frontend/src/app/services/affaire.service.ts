@@ -37,8 +37,12 @@ export class AffaireService {
 
     constructor(private http: HttpClient) { }
 
-    getAllAffaires(): Observable<Affaire[]> {
-        return this.http.get<Affaire[]>(this.apiUrl);
+    getAllAffaires(page: number = 0, size: number = 10, searchTerm?: string, type?: string, statut?: string): Observable<any> {
+        let url = `${this.apiUrl}?page=${page}&size=${size}`;
+        if (searchTerm) url += `&searchTerm=${encodeURIComponent(searchTerm)}`;
+        if (type) url += `&type=${type}`;
+        if (statut) url += `&statut=${statut}`;
+        return this.http.get<any>(url);
     }
 
     getAffaireById(id: number): Observable<Affaire> {

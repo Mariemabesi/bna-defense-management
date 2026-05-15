@@ -147,9 +147,21 @@ public class AiClient {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(com.bna.defense.dto.AIAnalysisDTO.class)
-                .timeout(Duration.ofSeconds(120))
+                .timeout(Duration.ofSeconds(30))
                 .onErrorResume(e -> {
                     System.err.println("AI Prediction Error: " + e.getMessage());
+                    return Mono.empty();
+                });
+    }
+
+    public Mono<Map<String, Object>> nvidiaAnalysis(Map<String, Object> payload) {
+        return this.webClient.post()
+                .uri("/api/ai/nvidia-analysis")
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
+                .onErrorResume(e -> {
+                    System.err.println("NVIDIA Analysis Error: " + e.getMessage());
                     return Mono.empty();
                 });
     }

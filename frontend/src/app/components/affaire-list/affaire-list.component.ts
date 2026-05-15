@@ -149,6 +149,34 @@ import { DossierService } from '../../services/dossier.service';
               </tbody>
             </table>
           </div>
+
+          <!-- PAGINATION -->
+          <div class="pagination-footer slideIn" *ngIf="totalPages > 1">
+            <div class="pagination-info">
+              Affichage de <b>{{ filteredAffaires.length }}</b> sur <b>{{ totalElements }}</b> affaires
+            </div>
+            <div class="pagination-controls">
+              <button class="btn-page" [disabled]="currentPage === 0" (click)="onPageChange(currentPage - 1)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                Précédent
+              </button>
+              
+              <div class="page-numbers">
+                <button 
+                  *ngFor="let p of [].constructor(totalPages); let i = index" 
+                  class="btn-number" 
+                  [class.active]="i === currentPage"
+                  (click)="onPageChange(i)">
+                  {{ i + 1 }}
+                </button>
+              </div>
+
+              <button class="btn-page" [disabled]="currentPage === totalPages - 1" (click)="onPageChange(currentPage + 1)">
+                Suivant
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- AFFAIRE DETAILS MODAL -->
@@ -434,6 +462,30 @@ import { DossierService } from '../../services/dossier.service';
     .empty-state-inline svg { opacity: 0.3; }
     .empty-state-inline p { font-size: 16px; font-weight: 600; color: #94a3b8; margin: 0; }
 
+    /* PAGINATION STYLES */
+    .pagination-footer {
+      margin-top: 24px; display: flex; justify-content: space-between; align-items: center;
+      padding: 0 8px;
+    }
+    .pagination-info { font-size: 13px; color: #64748b; }
+    .pagination-info b { color: #1e293b; }
+    .pagination-controls { display: flex; align-items: center; gap: 12px; }
+    .page-numbers { display: flex; gap: 6px; }
+    .btn-page {
+      background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 10px;
+      font-size: 13px; font-weight: 700; color: #475569; cursor: pointer;
+      display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+    }
+    .btn-page:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+    .btn-page:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-number {
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+      font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-number:hover { border-color: #cbd5e1; color: #1e293b; }
+    .btn-number.active { background: #008766; border-color: #008766; color: white; }
+
     /* Animation */
     .slideIn { animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
     @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -443,6 +495,7 @@ import { DossierService } from '../../services/dossier.service';
       .page-header-actions { flex-direction: column; gap: 16px; }
       .search-filter-bar { flex-direction: column; align-items: stretch; }
       .stats-row { flex-wrap: wrap; }
+      .pagination-footer { flex-direction: column; gap: 16px; text-align: center; }
     }
 
     /* MODAL STYLES */
@@ -558,6 +611,12 @@ export class AffaireListComponent implements OnInit {
   activeActionMenuId: number | null = null;
   filteredAffaires: Affaire[] = [];
 
+  // Pagination
+  currentPage = 0;
+  pageSize = 10;
+  totalPages = 0;
+  totalElements = 0;
+
   searchTerm = '';
   filterType = '';
   filterStatut = '';
@@ -592,21 +651,28 @@ export class AffaireListComponent implements OnInit {
   }
 
   loadAffaires() {
-    this.affaireService.getAllAffaires().subscribe(data => {
-      this.affaires = data;
-      this.onFilter();
+    this.affaireService.getAllAffaires(
+      this.currentPage, 
+      this.pageSize, 
+      this.searchTerm, 
+      this.filterType, 
+      this.filterStatut
+    ).subscribe(data => {
+      this.affaires = data.content;
+      this.filteredAffaires = data.content;
+      this.totalElements = data.totalElements;
+      this.totalPages = data.totalPages;
     });
   }
 
+  onPageChange(page: number) {
+    this.currentPage = page;
+    this.loadAffaires();
+  }
+
   onFilter() {
-    this.filteredAffaires = this.affaires.filter(a => {
-      const matchSearch = !this.searchTerm ||
-        (a.referenceJudiciaire && a.referenceJudiciaire.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        (a.titre && a.titre.toLowerCase().includes(this.searchTerm.toLowerCase()));
-      const matchType   = !this.filterType   || a.type   === this.filterType;
-      const matchStatut = !this.filterStatut || a.statut === this.filterStatut;
-      return matchSearch && matchType && matchStatut;
-    });
+    this.currentPage = 0;
+    this.loadAffaires();
   }
 
   countByStatut(statut: string): number {
