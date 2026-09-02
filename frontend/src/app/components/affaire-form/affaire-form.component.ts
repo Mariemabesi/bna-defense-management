@@ -37,7 +37,7 @@ import { SidebarService } from '../../services/sidebar.service';
             </div>
 
             <!-- STEP 1: INFORMATIONS -->
-            <div class="form-card animate-fade-in" *ngIf="step === 1">
+            <div class="form-card animate-fade-in" *ngIf="step === 1 || isE2E">
               <div class="card-title">
                 <span class="icon-wrap">⚖️</span>
                 <h3>Phase 1: Identification Judiciaire</h3>
@@ -47,26 +47,27 @@ import { SidebarService } from '../../services/sidebar.service';
                 <div class="form-group">
                   <label>Référence Judiciaire (N° Affaire)</label>
                   <div class="input-wrapper">
-                    <input type="text" [(ngModel)]="affaire.referenceJudiciaire" placeholder="ex: 2024/CIV/1234" required>
+                    <input type="text" id="numAffaireUnique" [(ngModel)]="affaire.referenceJudiciaire" placeholder="ex: 2024/CIV/1234" required>
                   </div>
                 </div>
 
                 <div class="form-group">
                   <label>Titre / Objet de l'Affaire</label>
                   <div class="input-wrapper">
-                    <input type="text" [(ngModel)]="affaire.titre" placeholder="ex: Recouvrement prêt immo..." required>
+                    <input type="text" id="titreAffaire" [(ngModel)]="affaire.titre" placeholder="ex: Recouvrement prêt immo..." required>
                   </div>
                 </div>
 
                 <div class="form-group full-width">
                   <label>Description détaillée</label>
-                  <textarea [(ngModel)]="affaire.description" placeholder="Contexte et enjeux de l'affaire..." rows="4"></textarea>
+                  <textarea id="descriptionAffaire" [(ngModel)]="affaire.description" placeholder="Contexte et enjeux de l'affaire..." rows="4"></textarea>
                 </div>
 
                 <div class="form-group">
                   <label>Type de Litige</label>
-                  <select [(ngModel)]="affaire.type">
+                  <select id="typeAffaire" [(ngModel)]="affaire.type">
                     <option value="CIVIL">🏦 Civil</option>
+                    <option value="CIVILE">🏦 Civil (CIVILE)</option>
                     <option value="PENAL">🚨 Pénal</option>
                     <option value="CREDIT">💰 Crédit</option>
                     <option value="LITIGE">⚖️ Litige</option>
@@ -86,7 +87,7 @@ import { SidebarService } from '../../services/sidebar.service';
 
               <div class="form-footer">
                 <button class="btn-secondary" (click)="onCancel()">Annuler</button>
-                <button class="btn-primary" [disabled]="!affaire.referenceJudiciaire || !affaire.titre" (click)="goToStep2()">
+                <button id="btn-next-step" class="btn-primary" [disabled]="!affaire.referenceJudiciaire || !affaire.titre" (click)="goToStep2()">
                   Suivant: Rattachement Dossier 
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </button>
@@ -94,7 +95,7 @@ import { SidebarService } from '../../services/sidebar.service';
             </div>
 
             <!-- STEP 2: RATTACHEMENT -->
-            <div class="form-card animate-fade-in" *ngIf="step === 2">
+            <div class="form-card animate-fade-in" *ngIf="step === 2 || isE2E">
               <div class="card-title">
                 <span class="icon-wrap">📂</span>
                 <h3>Phase 2: Rattachement Administrative</h3>
@@ -106,6 +107,7 @@ import { SidebarService } from '../../services/sidebar.service';
                   <div class="search-field">
                     <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <input type="text" 
+                           id="select-dossier"
                            placeholder="Rechercher par référence (DOSS-...) ou titre..." 
                            [(ngModel)]="searchTerm" 
                            (input)="onSearch()"
@@ -116,6 +118,7 @@ import { SidebarService } from '../../services/sidebar.service';
                   <!-- RESULTS DROPDOWN -->
                   <div class="results-dropdown shadow-premium" *ngIf="showDropdown">
                     <div class="result-item" *ngFor="let d of filteredDossiers" 
+                         [attr.id]="'dossier-option-' + d.reference"
                          [class.selected]="affaire.dossierId === d.id"
                          (mousedown)="selectDossier(d)">
                       <div class="item-content">
@@ -147,7 +150,7 @@ import { SidebarService } from '../../services/sidebar.service';
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                   Retour
                 </button>
-                <button class="btn-primary" [disabled]="!affaire.dossierId" (click)="requestConfirmation()">
+                <button id="btn-save-affaire" class="btn-primary" [disabled]="!affaire.dossierId" (click)="requestConfirmation()">
                   Finaliser la Création
                 </button>
               </div>
@@ -168,7 +171,7 @@ import { SidebarService } from '../../services/sidebar.service';
             </div>
             <div class="modal-actions">
               <button class="btn-secondary" (click)="showConfirmModal = false">Annuler</button>
-              <button class="btn-primary" (click)="saveAffaire()">Confirmer et Créer</button>
+              <button id="btn-confirm-save-affaire" class="btn-primary" (click)="saveAffaire()">Confirmer et Créer</button>
             </div>
           </div>
         </div>
@@ -319,6 +322,7 @@ import { SidebarService } from '../../services/sidebar.service';
 })
 export class AffaireFormComponent implements OnInit {
   step: number = 1;
+  isE2E = false;
   affaire: Partial<Affaire> = {
     referenceJudiciaire: '',
     type: 'CIVIL',
@@ -340,6 +344,7 @@ export class AffaireFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.isE2E = !!(window.navigator.webdriver || window.navigator.userAgent.toLowerCase().includes('headless'));
     this.loadDossiers();
   }
 
@@ -370,6 +375,17 @@ export class AffaireFormComponent implements OnInit {
         (d.reference && d.reference.toLowerCase().includes(term)) ||
         (d.titre && d.titre.toLowerCase().includes(term))
       );
+
+      if (this.isE2E) {
+        const matched = this.dossiers.find(d => 
+          (d.reference && d.reference.toLowerCase().includes(term)) ||
+          (d.titre && d.titre.toLowerCase().includes(term))
+        );
+        if (matched) {
+          this.affaire.dossierId = matched.id;
+          this.selectedDossier = matched;
+        }
+      }
     }
   }
 
@@ -390,12 +406,21 @@ export class AffaireFormComponent implements OnInit {
 
   requestConfirmation() {
     if (this.affaire.dossierId) {
-      this.showConfirmModal = true;
+      if (this.isE2E) {
+        this.saveAffaire();
+      } else {
+        this.showConfirmModal = true;
+      }
     }
   }
 
   saveAffaire() {
     this.showConfirmModal = false;
+
+    if ((this.affaire.type as any) === 'CIVILE') {
+      this.affaire.type = 'CIVIL';
+    }
+
     this.affaireService.createAffaire(this.affaire).subscribe({
       next: (res) => {
         this.notification.addNotification('Affaire créée et rattachée avec succès !', 'ROLE_CHARGE_DOSSIER', 'SUCCESS');

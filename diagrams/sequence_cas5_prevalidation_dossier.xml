@@ -1,0 +1,127 @@
+<mxGraphModel dx="1422" dy="762" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" value="Cas 5 : Pré-validation d'un Dossier Juridique — Diagramme de Séquence MVC" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="100" y="20" width="1000" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- Lifeline headers -->
+    <mxCell id="lh1" value="👤 Pré-validateur" style="shape=mxgraph.sequence.actor;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="30" y="80" width="110" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh2" value="View&#xa;(mes-dossiers.component.html)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="185" y="80" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh3" value="Controller&#xa;(mes-dossiers.component.ts)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="370" y="80" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh4" value="Service&#xa;(dossier.service.ts)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="555" y="80" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh5" value="REST Controller&#xa;(DossierController.java)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="740" y="80" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh6" value="Business Service&#xa;(DossierService.java)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="930" y="80" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh7" value="Repository / DB&#xa;(DossierRepository + PostgreSQL)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1120" y="80" width="170" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll1v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="85" y="140" as="sourcePoint"/><mxPoint x="85" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll2v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="255" y="140" as="sourcePoint"/><mxPoint x="255" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll3v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="140" as="sourcePoint"/><mxPoint x="440" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll4v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="625" y="140" as="sourcePoint"/><mxPoint x="625" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll5v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="810" y="140" as="sourcePoint"/><mxPoint x="810" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll6v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="140" as="sourcePoint"/><mxPoint x="1000" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll7v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1205" y="140" as="sourcePoint"/><mxPoint x="1205" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Messages -->
+    <mxCell id="m1" value="1. Clic sur 'Pré-valider'" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="85" y="180" as="sourcePoint"/><mxPoint x="255" y="180" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" value="2. handleAction('prevalider', dossier)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="255" y="220" as="sourcePoint"/><mxPoint x="440" y="220" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" value="3. Boîte de confirmation (confirmService)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="260" as="sourcePoint"/><mxPoint x="85" y="260" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4" value="4. Clique sur 'Oui, Confirmer'" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="85" y="300" as="sourcePoint"/><mxPoint x="440" y="300" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 5: Controller -> Service -->
+    <mxCell id="m5" value="5. prevalider(dossierId)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="340" as="sourcePoint"/><mxPoint x="625" y="340" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 6: Service -> REST Controller -->
+    <mxCell id="m6" value="6. PUT /api/dossiers/{id}/prevalider" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="625" y="380" as="sourcePoint"/><mxPoint x="810" y="380" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 7: REST Controller Check -->
+    <mxCell id="m7" value="7. @PreAuthorize ROLE_PRE_VALIDATEUR" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="735" y="403" width="250" height="30" as="geometry" />
+    </mxCell>
+    <!-- 8: REST Controller -> Business Service -->
+    <mxCell id="m8" value="8. prevalider(id)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="810" y="450" as="sourcePoint"/><mxPoint x="1000" y="450" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 9: Business Service -> DB -->
+    <mxCell id="m9" value="9. findById(id)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="490" as="sourcePoint"/><mxPoint x="1205" y="490" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 10: DB -> Business Service (return) -->
+    <mxCell id="m10" value="10. Dossier entity (statut = EN_ATTENTE_PREVALIDATION)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1205" y="530" as="sourcePoint"/><mxPoint x="1000" y="530" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 11: Internal Transition -->
+    <mxCell id="m11" value="11. setStatut(EN_ATTENTE_VALIDATION)" style="text;html=1;strokeColor=#9673a6;fillColor=#e1d5e7;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="920" y="555" width="250" height="30" as="geometry" />
+    </mxCell>
+    <!-- 12: Business Service -> DB (Save) -->
+    <mxCell id="m12" value="12. save(dossier)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="605" as="sourcePoint"/><mxPoint x="1205" y="605" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 13: DB -> Business Service (Success) -->
+    <mxCell id="m13" value="13. Dossier updated" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1205" y="645" as="sourcePoint"/><mxPoint x="1000" y="645" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 14: Business Service -> REST Controller -->
+    <mxCell id="m14" value="14. Dossier entity" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="685" as="sourcePoint"/><mxPoint x="810" y="685" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 15: REST Controller -> Service (HTTP 200) -->
+    <mxCell id="m15" value="15. HTTP 200 OK + JSON Dossier" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="810" y="725" as="sourcePoint"/><mxPoint x="625" y="725" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 16: Service -> Controller -->
+    <mxCell id="m16" value="16. Observable&lt;Dossier&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="625" y="765" as="sourcePoint"/><mxPoint x="440" y="765" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 17: Controller -> View -->
+    <mxCell id="m17" value="17. loadDossiers() &amp; notify successful action" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="805" as="sourcePoint"/><mxPoint x="255" y="805" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 18: View -> User -->
+    <mxCell id="m18" value="18. ✅ Dossier mis à jour à 'En attente Validation'" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="255" y="845" as="sourcePoint"/><mxPoint x="85" y="845" as="targetPoint"/></mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

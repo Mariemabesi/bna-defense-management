@@ -31,10 +31,20 @@ interface UserDTO {
               <h2 class="text-3xl font-extrabold text-blue-900">Gestion des Accès</h2>
               <p class="subtitle mt-1 text-slate-500">Contrôle des permissions, hiérarchie et suspension des comptes.</p>
             </div>
-            <button class="btn-primary" (click)="showSignupModal = true">
+            <button id="btn-add-user" class="btn-primary" (click)="showSignupModal = true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="16" y1="11" x2="22" y2="11"></line></svg>
               Créer Nouveau Compte
             </button>
+          </div>
+
+          <!-- Alert message box -->
+          <div *ngIf="alertMsg" id="alert-message" class="alert alert-error mb-4 animate-fade-in" style="padding: 16px; border-radius: 12px; background: #fee2e2; color: #dc2626; font-weight: 600; margin-bottom: 24px;">
+            {{ alertMsg }}
+          </div>
+
+          <!-- Search filter input -->
+          <div class="search-container mb-4" style="margin-bottom: 24px;">
+             <input type="text" id="user-search" [(ngModel)]="searchTerm" placeholder="Rechercher un utilisateur (ex: admin)..." class="form-control" style="max-width: 300px; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; width: 100%;">
           </div>
 
           <div class="table-container">
@@ -49,7 +59,7 @@ interface UserDTO {
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let u of users">
+                <tr *ngFor="let u of filteredUsers()">
                   <td>
                     <div class="user-cell">
                       <div class="user-avatar">{{ u.username[0].toUpperCase() }}</div>
@@ -77,32 +87,47 @@ interface UserDTO {
                   </td>
                   <td>
                     <div class="flex items-center gap-2">
-                       <!-- 1. Toujours Suspendre/Réactiver (Action de contrôle rapide) -->
+                       <!-- Si l'utilisateur est admin, afficher un cadenas de sécurité protégé -->
+                       <span class="admin-lock-badge" *ngIf="u.username === 'admin' || u.roles.includes('ROLE_ADMIN')" title="Compte de sécurité système protégé contre les suspensions, modifications et suppressions.">
+                          🔒 Protégé
+                       </span>
                        <button class="btn-action" 
-                              [title]="u.enabled ? 'Suspendre' : 'Réactiver'"
-                              (click)="toggleUserStatus(u)">
-                          <svg *ngIf="u.enabled" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                          <svg *ngIf="!u.enabled" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                               *ngIf="u.username === 'admin' || u.roles.includes('ROLE_ADMIN')"
+                               id="toggle-status-admin"
+                               title="Suspendre"
+                               (click)="toggleUserStatus(u)">
+                           <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
                        </button>
 
-                       <!-- 2. Modifier (Toujours visible) -->
-                       <button class="btn-action" title="Modifier" (click)="openEditModal(u)">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                       </button>
+                       <!-- Actions visibles uniquement pour les autres rôles -->
+                       <ng-container *ngIf="u.username !== 'admin' && !u.roles.includes('ROLE_ADMIN')">
+                          <!-- 1. Toujours Suspendre/Réactiver (Action de contrôle rapide) -->
+                          <button class="btn-action" 
+                                 [title]="u.enabled ? 'Suspendre' : 'Réactiver'"
+                                 (click)="toggleUserStatus(u)">
+                             <svg *ngIf="u.enabled" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                             <svg *ngIf="!u.enabled" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          </button>
 
-                       <!-- Plus d'actions (Dropdown pour le reste) -->
-                       <div class="more-actions-wrapper">
-                         <button class="btn-action more-btn" (click)="toggleActionMenu($event, u.id!)" title="Plus d'actions">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
-                         </button>
-                         
-                         <div class="actions-dropdown" *ngIf="activeActionMenuId === u.id" (click)="$event.stopPropagation()">
-                            <!-- DELETE (REAL) -->
-                            <button class="btn-action hover-danger" title="Supprimer Définitivement" (click)="deleteUser(u)">
-                               <svg viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                          <!-- 2. Modifier (Toujours visible) -->
+                          <button class="btn-action" title="Modifier" (click)="openEditModal(u)">
+                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                          </button>
+
+                          <!-- Plus d'actions (Dropdown pour le reste) -->
+                          <div class="more-actions-wrapper">
+                            <button class="btn-action more-btn" (click)="toggleActionMenu($event, u.id!)" title="Plus d'actions">
+                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle></svg>
                             </button>
-                         </div>
-                       </div>
+                            
+                            <div class="actions-dropdown" *ngIf="activeActionMenuId === u.id" (click)="$event.stopPropagation()">
+                               <!-- DELETE (REAL) -->
+                               <button class="btn-action hover-danger" title="Supprimer Définitivement" (click)="deleteUser(u)">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                               </button>
+                            </div>
+                          </div>
+                       </ng-container>
                     </div>
                   </td>
                 </tr>
@@ -298,6 +323,20 @@ interface UserDTO {
     .badge.active::before { background: #16a34a; }
     .badge.suspended { background: #fef2f2; color: #dc2626; }
     .badge.suspended::before { background: #dc2626; }
+    
+    .admin-lock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: #f1f5f9;
+      color: #94a3b8;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: not-allowed;
+    }
 
     .manager-tag { 
       background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 8px; 
@@ -355,6 +394,8 @@ interface UserDTO {
 })
 export class UserManagementComponent implements OnInit {
   users: UserDTO[] = [];
+  searchTerm = '';
+  alertMsg = '';
   activeActionMenuId: number | null = null;
   auxiliaires: any[] = [];
   showSignupModal = false;
@@ -396,7 +437,18 @@ export class UserManagementComponent implements OnInit {
     this.http.get<UserDTO[]>('/api/admin/users').subscribe(data => this.users = data);
   }
 
+  filteredUsers() {
+    if (!this.searchTerm) return this.users;
+    const q = this.searchTerm.toLowerCase();
+    return this.users.filter(u => u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+  }
+
   toggleUserStatus(u: UserDTO) {
+    if (u.username === 'admin' || u.roles.includes('ROLE_ADMIN')) {
+      this.alertMsg = "Action impossible : le compte administrateur principal ne peut pas être suspendu.";
+      setTimeout(() => this.alertMsg = '', 5000);
+      return;
+    }
     this.confirmService.open({
         title: 'Confirmation de modification',
         message: `Voulez-vous ${u.enabled ? 'suspendre' : 'réactiver'} le compte de ${u.username} ?`
@@ -414,6 +466,10 @@ export class UserManagementComponent implements OnInit {
   }
 
   deleteUser(u: UserDTO) {
+    if (u.username === 'admin' || u.roles.includes('ROLE_ADMIN')) {
+      alert("Action impossible : le compte administrateur principal ne peut pas être supprimé.");
+      return;
+    }
     this.confirmService.open({
         title: 'Suppression Définitive',
         message: `ATTENTION: Êtes-vous sûr de vouloir supprimer DÉFINITIVEMENT l'utilisateur ${u.username} ? Cette action est irréversible.`,
@@ -444,6 +500,10 @@ export class UserManagementComponent implements OnInit {
   }
 
   openEditModal(u: UserDTO) {
+    if (u.username === 'admin' || u.roles.includes('ROLE_ADMIN')) {
+      alert("Action impossible : le compte administrateur principal ne peut pas être modifié.");
+      return;
+    }
     this.editingUser = u;
     this.newRoles = [...u.roles];
     this.updatedManagerId = u.managerId || null;

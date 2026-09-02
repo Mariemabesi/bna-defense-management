@@ -13,9 +13,9 @@ import com.lowagie.text.Font;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -52,6 +52,21 @@ public class ReportingService {
         this.affaireRepository = affaireRepository;
     }
 
+    private void addLogo(Document document) {
+        try (java.io.InputStream is = getClass().getResourceAsStream("/images/cleanly.png")) {
+            if (is != null) {
+                byte[] bytes = is.readAllBytes();
+                Image logo = Image.getInstance(bytes);
+                logo.scaleToFit(140, 70);
+                logo.setAlignment(Element.ALIGN_CENTER);
+                logo.setSpacingAfter(10);
+                document.add(logo);
+            }
+        } catch (Exception e) {
+            System.err.println("Could not add PDF logo: " + e.getMessage());
+        }
+    }
+
     public byte[] exportDashboardStatsToPdf(User currentUser) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             DashboardStatsDTO stats = getDashboardStats(currentUser);
@@ -59,15 +74,22 @@ public class ReportingService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20);
+            // Add Logo
+            addLogo(document);
+
+            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, new Color(0, 98, 51));
             Font fontSubTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
             Font fontNormal = FontFactory.getFont(FontFactory.HELVETICA, 11);
 
-            Paragraph title = new Paragraph("Analyse Statistique Globale - BNA LegalOps", fontTitle);
+            Paragraph title = new Paragraph("Analyse Statistique Globale", fontTitle);
             title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(10);
             document.add(title);
-            document.add(new Paragraph("Date du rapport : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
-            document.add(new Chunk("\n"));
+            
+            Paragraph datePara = new Paragraph("Date du rapport : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            datePara.setAlignment(Element.ALIGN_CENTER);
+            datePara.setSpacingAfter(15);
+            document.add(datePara);
 
             // Section 1: Dossiers
             document.add(new Paragraph("1. État des Dossiers", fontSubTitle));
@@ -140,12 +162,19 @@ public class ReportingService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-            Paragraph title = new Paragraph("Rapport Filtré des Honoraires - BNA", fontTitle);
+            // Add Logo
+            addLogo(document);
+
+            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, new Color(0, 98, 51));
+            Paragraph title = new Paragraph("Rapport des Honoraires & Frais", fontTitle);
             title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(10);
             document.add(title);
-            document.add(new Paragraph("Période: " + (startDate != null ? startDate : "Début") + " au " + (endDate != null ? endDate : "Fin")));
-            document.add(new Chunk("\n"));
+            
+            Paragraph periodPara = new Paragraph("Période: " + (startDate != null ? startDate : "Début") + " au " + (endDate != null ? endDate : "Fin"));
+            periodPara.setAlignment(Element.ALIGN_CENTER);
+            periodPara.setSpacingAfter(15);
+            document.add(periodPara);
 
             PdfPTable table = new PdfPTable(5);
             table.setWidthPercentage(100);
@@ -176,22 +205,96 @@ public class ReportingService {
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Frais Filtrés");
-            Row header = sheet.createRow(0);
+
+            // Header style
+            CellStyle headerStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.DARK_GREEN.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+
+            // Alt row style
+            CellStyle altStyle = workbook.createCellStyle();
+            altStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+            altStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // Add Logo to Excel
+            try (java.io.InputStream is = getClass().getResourceAsStream("/images/cleanly.png")) {
+                if (is != null) {
+                    byte[] bytes = is.readAllBytes();
+                    int pictureIdx = workbook.addPicture(bytes, Workbook.PICTURE_TYPE_PNG);
+                    CreationHelper helper = workbook.getCreationHelper();
+                    Drawing<?> drawing = sheet.createDrawingPatriarch();
+                    ClientAnchor anchor = helper.createClientAnchor();
+                    anchor.setCol1(0);
+                    anchor.setRow1(0);
+                    anchor.setCol2(2);
+                    anchor.setRow2(3);
+                    Picture pict = drawing.createPicture(anchor, pictureIdx);
+                    pict.resize(0.85);
+                }
+            } catch (Exception e) {
+                System.err.println("Could not add Excel logo: " + e.getMessage());
+            }
+
+            // Title row at Row 1 (Index 1) and Col 3
+            Row titleRow = sheet.createRow(1);
+            Cell titleCell = titleRow.createCell(3);
+            titleCell.setCellValue("Rapport des Honoraires & Frais");
+            CellStyle titleStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font excelTitleFont = workbook.createFont();
+            excelTitleFont.setBold(true);
+            excelTitleFont.setFontHeightInPoints((short) 16);
+            excelTitleFont.setColor(IndexedColors.DARK_GREEN.getIndex());
+            titleStyle.setFont(excelTitleFont);
+            titleCell.setCellStyle(titleStyle);
+
+            // Subtitle row at Row 2 (Index 2) and Col 3
+            Row subRow = sheet.createRow(2);
+            Cell subCell = subRow.createCell(3);
+            subCell.setCellValue("Période: " + (startDate != null ? startDate : "Début") + " au " + (endDate != null ? endDate : "Fin"));
+            CellStyle subStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font excelSubFont = workbook.createFont();
+            excelSubFont.setItalic(true);
+            excelSubFont.setFontHeightInPoints((short) 10);
+            excelSubFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
+            subStyle.setFont(excelSubFont);
+            subCell.setCellStyle(subStyle);
+
+            // Header row at Row 4 (Index 4)
+            Row header = sheet.createRow(4);
             String[] headers = { "Référence Dossier", "Libellé", "Type", "Montant (TND)", "Statut", "Date" };
-            for (int i = 0; i < headers.length; i++)
-                header.createCell(i).setCellValue(headers[i]);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = header.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
 
             List<Frais> list = filterFrais(startDate, endDate, groupeId);
             for (int i = 0; i < list.size(); i++) {
                 Frais f = list.get(i);
-                Row row = sheet.createRow(i + 1);
+                Row row = sheet.createRow(i + 5);
                 row.createCell(0).setCellValue(f.getAffaire().getDossier().getReference());
                 row.createCell(1).setCellValue(f.getLibelle());
                 row.createCell(2).setCellValue(f.getType().toString());
                 row.createCell(3).setCellValue(f.getMontant().doubleValue());
                 row.createCell(4).setCellValue(f.getStatut().toString());
                 row.createCell(5).setCellValue(f.getCreatedAt().toString());
+
+                if (i % 2 == 0) {
+                    for (int col = 0; col < 6; col++) {
+                        if (row.getCell(col) != null) row.getCell(col).setCellStyle(altStyle);
+                    }
+                }
             }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
             workbook.write(out);
             return out.toByteArray();
         } catch (Exception e) {
@@ -215,12 +318,19 @@ public class ReportingService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-            Paragraph title = new Paragraph("Registre des Affaires Judiciaires - BNA", fontTitle);
+            // Add Logo
+            addLogo(document);
+
+            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, new Color(0, 98, 51));
+            Paragraph title = new Paragraph("Liste des Affaires Judiciaires", fontTitle);
             title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(10);
             document.add(title);
-            document.add(new Paragraph("Date d'édition : " + LocalDateTime.now().toString()));
-            document.add(new Chunk("\n"));
+            
+            Paragraph datePara = new Paragraph("Date d'édition : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            datePara.setAlignment(Element.ALIGN_CENTER);
+            datePara.setSpacingAfter(15);
+            document.add(datePara);
 
             PdfPTable table = new PdfPTable(6);
             table.setWidthPercentage(100);
@@ -262,11 +372,14 @@ public class ReportingService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22);
+            // Add Logo
+            addLogo(document);
+
+            Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, new Color(0, 98, 51));
             Paragraph title = new Paragraph("Fiche Individuelle d'Affaire", fontTitle);
             title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(15);
             document.add(title);
-            document.add(new Chunk("\n"));
 
             PdfPTable table = new PdfPTable(2);
             table.setWidthPercentage(100);

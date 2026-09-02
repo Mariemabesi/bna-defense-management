@@ -264,10 +264,7 @@ import { DossierService } from '../../services/dossier.service';
 
             <div class="modal-footer">
               <button class="btn-secondary" (click)="closeModal()">Fermer</button>
-              <button class="btn-secondary" (click)="goToDossier(selectedAffaire)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                Voir Dossier Parent
-              </button>
+            
               <button class="btn-primary" (click)="exportSinglePdf(selectedAffaire)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                 Télécharger Fiche PDF
@@ -630,7 +627,7 @@ export class AffaireListComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     public sidebarService: SidebarService
-  ) {}
+  ) { }
 
   canManage(): boolean {
     return this.authService.hasRole('ROLE_ADMIN') || this.authService.hasRole('ROLE_CHARGE_DOSSIER');
@@ -652,10 +649,10 @@ export class AffaireListComponent implements OnInit {
 
   loadAffaires() {
     this.affaireService.getAllAffaires(
-      this.currentPage, 
-      this.pageSize, 
-      this.searchTerm, 
-      this.filterType, 
+      this.currentPage,
+      this.pageSize,
+      this.searchTerm,
+      this.filterType,
       this.filterStatut
     ).subscribe(data => {
       this.affaires = data.content;
@@ -749,8 +746,8 @@ export class AffaireListComponent implements OnInit {
 
   onDelete(id: number) {
     if (confirm('Voulez-vous vraiment supprimer cette affaire ?')) {
-       // logic here or just a stub for now
-       alert('Action non autorisée pour votre rôle ou en cours de développement.');
+      // logic here or just a stub for now
+      alert('Action non autorisée pour votre rôle ou en cours de développement.');
     }
   }
 }

@@ -1,0 +1,129 @@
+<mxGraphModel dx="1422" dy="762" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" value="Cas 3 : Envoi des Frais à la Trésorerie — Diagramme de Séquence" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="100" y="20" width="900" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- Lifeline headers -->
+    <mxCell id="lh1" value="Validateur / Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="95" y="80" width="30" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh2" value="View&#xa;(mes-frais.component.html)" style="shape=umlBoundary;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="255" y="80" width="50" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh3" value="Controller&#xa;(mes-frais.component.ts)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="450" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh4" value="Service&#xa;(frais.service.ts)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="640" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh5" value="REST Controller&#xa;(FraisController.java)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="830" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh6" value="Business Service&#xa;(FraisService.java)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1020" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh7" value="Repository / DB&#xa;(FraisRepository + PostgreSQL)" style="shape=umlEntity;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1220" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines (vertical dashed lines) -->
+    <mxCell id="ll1v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry x="110" y="140" width="0" height="700" as="geometry">
+        <mxPoint x="110" y="140" as="sourcePoint"/><mxPoint x="110" y="840" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="ll2v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="280" y="140" as="sourcePoint"/><mxPoint x="280" y="840" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll3v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="470" y="140" as="sourcePoint"/><mxPoint x="470" y="840" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll4v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="660" y="140" as="sourcePoint"/><mxPoint x="660" y="840" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll5v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#b85450;" edge="EdgePoint" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="850" y="140" as="sourcePoint"/><mxPoint x="850" y="840" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll6v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1040" y="140" as="sourcePoint"/><mxPoint x="1040" y="840" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll7v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1240" y="140" as="sourcePoint"/><mxPoint x="1240" y="840" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Messages -->
+    <!-- 1: User -> View (click button) -->
+    <mxCell id="m1" value="1. Clic sur 'Envoyer à la trésorerie'" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=open;endFill=1;fontSize=10;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="110" y="180" as="sourcePoint"/><mxPoint x="280" y="180" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 2: View -> Controller -->
+    <mxCell id="m2" value="2. triggers onSendToTreasury(frais)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="280" y="220" as="sourcePoint"/><mxPoint x="470" y="220" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 3: Controller -> User (Ask confirm) -->
+    <mxCell id="m3" value="3. Boîte de confirmation (confirmService)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="470" y="260" as="sourcePoint"/><mxPoint x="110" y="260" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 4: User -> Controller (Clicks Yes) -->
+    <mxCell id="m4" value="4. Confirme l'envoi (Oui)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="110" y="300" as="sourcePoint"/><mxPoint x="470" y="300" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 5: Controller -> Service -->
+    <mxCell id="m5" value="5. sendToTreasury(fraisId)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="470" y="340" as="sourcePoint"/><mxPoint x="660" y="340" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 6: Service -> REST Controller -->
+    <mxCell id="m6" value="6. PUT /api/frais/{id}/envoyer-tresorerie" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="660" y="380" as="sourcePoint"/><mxPoint x="850" y="380" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 7: REST Controller -> Business Service -->
+    <mxCell id="m7" value="7. sendToTreasury(id)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="850" y="420" as="sourcePoint"/><mxPoint x="1040" y="420" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 8: Business Service -> DB (Fetch) -->
+    <mxCell id="m8" value="8. findById(id)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1040" y="460" as="sourcePoint"/><mxPoint x="1240" y="460" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 9: DB -> Business Service (return Entity) -->
+    <mxCell id="m9" value="9. Frais entity (statut = VALIDE)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1240" y="500" as="sourcePoint"/><mxPoint x="1040" y="500" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 10: Internal - update state -->
+    <mxCell id="m10" value="10. setStatut(ENVOYE_TRESORERIE)" style="text;html=1;strokeColor=#9673a6;fillColor=#e1d5e7;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="985" y="525" width="200" height="30" as="geometry" />
+    </mxCell>
+    <!-- 11: Business Service -> DB (Save) -->
+    <mxCell id="m11" value="11. save(frais)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1040" y="575" as="sourcePoint"/><mxPoint x="1240" y="575" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 12: DB -> Business Service (Success) -->
+    <mxCell id="m12" value="12. Frais entity updated" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1240" y="615" as="sourcePoint"/><mxPoint x="1040" y="615" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 13: Business Service -> REST Controller (return) -->
+    <mxCell id="m13" value="13. Frais entity updated" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1040" y="655" as="sourcePoint"/><mxPoint x="850" y="655" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 14: REST Controller -> Service (return HTTP 200) -->
+    <mxCell id="m14" value="14. HTTP 200 OK + JSON Frais" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="850" y="695" as="sourcePoint"/><mxPoint x="660" y="695" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 15: Service -> Controller (Observable) -->
+    <mxCell id="m15" value="15. Observable&lt;Frais&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="660" y="735" as="sourcePoint"/><mxPoint x="470" y="735" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 16: Controller -> View (Success message & reload) -->
+    <mxCell id="m16" value="16. Success alert + loadFrais() refresh" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="470" y="775" as="sourcePoint"/><mxPoint x="280" y="775" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <!-- 17: View -> User (Done) -->
+    <mxCell id="m17" value="17. ✅ Alerte 'Opération réussie' + Statut mis à jour" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="280" y="815" as="sourcePoint"/><mxPoint x="110" y="815" as="targetPoint"/></mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

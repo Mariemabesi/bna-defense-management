@@ -46,7 +46,7 @@ import { AuthService } from '../../services/auth.service';
             
             <div class="error-msg" *ngIf="error">{{ error }}</div>
             
-            <button type="submit" [disabled]="loading" class="btn-submit">
+            <button type="submit" [disabled]="loading" id="btn-login" class="btn-submit">
               <span *ngIf="!loading">Se connecter</span>
               <span *ngIf="loading" class="loader"></span>
             </button>

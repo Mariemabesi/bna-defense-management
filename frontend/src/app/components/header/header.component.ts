@@ -18,9 +18,6 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
   template: `
     <header class="top-header">
       <div class="header-left">
-        <button class="manual-sidebar-toggle" (click)="toggleSidebar()" title="Toggle Menu">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
       </div>
 
       <div class="header-center">
@@ -80,7 +77,7 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
         </button>
         
         <div class="profile-container">
-          <div class="user-profile" (click)="toggleProfileMenu()">
+          <div class="user-profile" id="menu-profile" (click)="toggleProfileMenu()">
             <div class="user-avatar">
               <img *ngIf="currentUser?.avatarUrl" [src]="getFullUrl(currentUser.avatarUrl)" class="header-avatar-img">
               <span *ngIf="!currentUser?.avatarUrl">{{ getInitials() }}</span>
@@ -123,7 +120,7 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           Mon Profil
         </button>
-        <button class="dropdown-item danger" (click)="logout()">
+        <button class="dropdown-item danger" id="btn-logout" (click)="logout()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
           Déconnexion
         </button>
@@ -740,17 +737,8 @@ export class HeaderComponent implements OnInit {
 
   logout() {
     this.showProfileDropdown = false;
-    this.confirmDialog.open({
-      title: 'Déconnexion',
-      message: 'Êtes-vous sûr de vouloir vous déconnecter ?',
-      confirmLabel: 'Se déconnecter',
-      cancelLabel: 'Annuler'
-    }).subscribe(confirmed => {
-      if (confirmed) {
-        this.authService.logout();
-        this.router.navigate(['/login']);
-      }
-    });
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
   getFullUrl(path: string): string {

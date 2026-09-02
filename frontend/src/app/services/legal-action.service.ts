@@ -40,8 +40,12 @@ export class LegalActionService {
   constructor(private http: HttpClient) { }
 
   // Procedures
-  getAllProcedures(page: number = 0, size: number = 10): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/procedures?page=${page}&size=${size}`);
+  getAllProcedures(page: number = 0, size: number = 10, searchTerm?: string, type?: string, statut?: string): Observable<any> {
+    let url = `${this.apiUrl}/procedures?page=${page}&size=${size}`;
+    if (searchTerm) url += `&searchTerm=${searchTerm}`;
+    if (type && type !== 'ALL') url += `&type=${type}`;
+    if (statut && statut !== 'ALL') url += `&statut=${statut}`;
+    return this.http.get<any>(url);
   }
 
   createProcedure(procedure: any): Observable<Procedure> {

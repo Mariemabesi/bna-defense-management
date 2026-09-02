@@ -2,6 +2,7 @@ package com.bna.defense.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ public class Dossier extends BaseEntity {
     private String reference;
 
     @Column(nullable = false)
+    @NotBlank(message = "Le titre est obligatoire")
     private String titre;
 
     @Enumerated(EnumType.STRING)

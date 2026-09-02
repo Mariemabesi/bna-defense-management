@@ -26,7 +26,7 @@ public class AffaireService {
 
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<Affaire> getAll(com.bna.defense.entity.User currentUser, 
-                                                               String searchTerm, String type, Affaire.StatutAffaire statut,
+                                                               String searchTerm, Affaire.TypeAffaire type, Affaire.StatutAffaire statut,
                                                                org.springframework.data.domain.Pageable pageable) {
         if (currentUser == null) return org.springframework.data.domain.Page.empty();
         
@@ -36,13 +36,15 @@ public class AffaireService {
         
         boolean isPreVal = currentUser.hasRole("ROLE_PRE_VALIDATEUR");
 
+        String wildcardSearch = (searchTerm != null && !searchTerm.isBlank()) ? "%" + searchTerm + "%" : null;
+
         return affaireRepository.findAllWithRBAC(
             currentUser.getUsername(),
             currentUser.getId(),
             isSuper,
             isPreVal,
-            (searchTerm != null && !searchTerm.isBlank()) ? searchTerm : null,
-            (type != null && !type.isBlank()) ? type : null,
+            wildcardSearch,
+            type,
             statut,
             pageable
         );

@@ -6,6 +6,7 @@ import com.bna.defense.entity.User;
 import com.bna.defense.repository.ChatInvitationRepository;
 import com.bna.defense.repository.ChatMessageRepository;
 import com.bna.defense.repository.UserRepository;
+import com.bna.defense.websocket.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,6 +29,9 @@ public class ChatController {
     @Autowired
     private ChatInvitationRepository chatInvitationRepository;
 
+    @Autowired
+    private WebSocketService webSocketService;
+
     @PostMapping("/send")
     public ResponseEntity<?> sendMessage(@RequestBody Map<String, Object> request) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -44,6 +48,11 @@ public class ChatController {
         message.setContent(content);
         
         chatMessageRepository.save(message);
+        
+        // Push in real-time over WebSocket
+        String senderName = sender.getFullName() != null && !sender.getFullName().isEmpty() ? sender.getFullName() : sender.getUsername();
+        webSocketService.sendChatMessage(receiver.getUsername(), sender.getId(), senderName, content);
+        
         return ResponseEntity.ok(Map.of("message", "Message envoyé"));
     }
 
@@ -231,6 +240,21 @@ public class ChatController {
                     "role", "ADMIN",
                     "isSupport", true
                 )));
+        }
+
+        // Suggest manager (Pré-validateur) for Chargé de Dossier
+        if (currentUser.getRoles().stream().anyMatch(r -> r.getName().name().equals("ROLE_CHARGE_DOSSIER"))) {
+            if (currentUser.getManager() != null) {
+                User manager = currentUser.getManager();
+                String managerName = manager.getFullName() != null && !manager.getFullName().isEmpty()
+                    ? manager.getFullName() : manager.getUsername();
+                suggestions.add(Map.of(
+                    "id", manager.getId(),
+                    "fullName", "Mon Pré-Validateur (" + managerName + ")",
+                    "role", "PRE_VALIDATEUR",
+                    "username", manager.getUsername()
+                ));
+            }
         }
 
         return ResponseEntity.ok(suggestions);

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
-from openai import OpenAI
+from groq import Groq
 import os
 import time
 import joblib
@@ -13,7 +13,7 @@ app = FastAPI(
     description="""
     Architecture bi-couche :
     - Couche 1 (CORE): Service ML — prédiction indépendante via modèle pré-entraîné.
-    - Couche 2 (OPTIONNEL): Service NVIDIA — analyse avancée et interprétation des résultats.
+    - Couche 2 (OPTIONNEL): Service Groq — analyse avancée et interprétation des résultats (ultra-rapide).
     """
 )
 
@@ -73,24 +73,21 @@ def run_ml_prediction(data: dict) -> dict:
 
 
 # ==============================================================================
-# COUCHE 2 — SERVICE D'ANALYSE AVANCÉE (Optionnel — NVIDIA GLM-5.1)
+# COUCHE 2 — SERVICE D'ANALYSE AVANCÉE (Optionnel — Groq / Llama 3)
 # Enrichit les résultats du Service ML CORE.
 # Ne bloque JAMAIS la prédiction en cas d'indisponibilité.
 # ==============================================================================
 
-NVIDIA_API_KEY = os.getenv(
-    "NVIDIA_API_KEY",
-    "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"
+GROQ_API_KEY = os.getenv(
+    "GROQ_API_KEY",
+    "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"
 )
-nvidia_client = OpenAI(
-    base_url="https://integrate.api.nvidia.com/v1",
-    api_key=NVIDIA_API_KEY
-)
+groq_client = Groq(api_key=GROQ_API_KEY)
 
 
 def run_nvidia_analysis(ml_result: dict, request_data: dict) -> Optional[str]:
     """
-    SERVICE D'ANALYSE OPTIONNEL — Enrichissement NVIDIA.
+    SERVICE D'ANALYSE OPTIONNEL — Enrichissement Groq (Llama 3).
     Reçoit les résultats du ML CORE et génère :
       - Interprétation du verdict
       - Explication des facteurs influents
@@ -100,7 +97,7 @@ def run_nvidia_analysis(ml_result: dict, request_data: dict) -> Optional[str]:
     try:
         start_time = time.time()
         print(
-            f"[NVIDIA] Requête envoyée pour {request_data.get('affaire_type')} "
+            f"[GROQ] Requête envoyée pour {request_data.get('affaire_type')} "
             f"— Prédiction: {ml_result['prediction']}",
             flush=True
         )
@@ -129,22 +126,20 @@ def run_nvidia_analysis(ml_result: dict, request_data: dict) -> Optional[str]:
         Sois direct et factuel. Pas d'introduction ni de conclusion.
         """
 
-        completion = nvidia_client.chat.completions.create(
-            model="z-ai/glm-5.1",
+        completion = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
+            max_tokens=512,
             top_p=0.9,
-            max_tokens=512,  # Concise output — no need for long essays
-            extra_body={"chat_template_kwargs": {"enable_thinking": False}},  # Disabled: was causing 60-90s delay
-            stream=False
         )
         analysis_text = completion.choices[0].message.content
         duration = time.time() - start_time
-        print(f"[NVIDIA] Réponse reçue en {duration:.2f}s", flush=True)
+        print(f"[GROQ] Réponse reçue en {duration:.2f}s", flush=True)
         return analysis_text
 
     except Exception as ai_err:
-        print(f"[NVIDIA] Service indisponible — Fallback activé. Erreur: {ai_err}", flush=True)
+        print(f"[GROQ] Service indisponible — Fallback activé. Erreur: {ai_err}", flush=True)
         return None
 
 
@@ -224,9 +219,9 @@ class NvidiaAnalysisRequest(BaseModel):
 @app.post("/api/ai/nvidia-analysis")
 async def nvidia_analysis(request: NvidiaAnalysisRequest):
     """
-    COUCHE 2 — NVIDIA GLM-5.1 (Optionnel).
+    COUCHE 2 — Groq / Llama 3 (Optionnel).
     Enrichit une prédiction ML existante avec une analyse juridique textuelle.
-    Appelé uniquement si l'utilisateur clique sur le bouton bleu 'Analyse NVIDIA'.
+    Si le service Groq est indisponible, un texte d'analyse local est généré.
     """
     ml_result = {
         "prediction": request.prediction,
@@ -237,11 +232,39 @@ async def nvidia_analysis(request: NvidiaAnalysisRequest):
     request_data = request.dict()
 
     analysis_text = run_nvidia_analysis(ml_result, request_data)
+    
+    # If NVIDIA is unavailable, generate a local fallback analysis from the ML results
     if analysis_text is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Le service d'analyse NVIDIA est temporairement indisponible."
-        )
+        prediction = request.prediction
+        prob_success = request.probabilitySuccess
+        risk = request.riskLevel
+        avocat = request.avocat_specialite
+        experience = request.avocat_experience_annees
+        qualite = request.qualite_preuves
+        solidite = request.solidite_dossier
+
+        if prediction == "GAGNÉ":
+            analysis_text = (
+                f"Le dossier présente un profil favorable avec une probabilité de gain de {prob_success:.1f}%. "
+                f"Les points forts identifiés sont la spécialisation de l'avocat en {avocat} avec {experience:.0f} ans d'expérience "
+                f"et la qualité des preuves évaluée à '{qualite}'. "
+                f"Le niveau de risque est {risk.lower()}, ce qui confirme la solidité de la position de la BNA. "
+                f"Il est recommandé de maintenir la stratégie actuelle et de préparer une documentation exhaustive."
+            )
+        elif prediction == "PERDU":
+            analysis_text = (
+                f"Le dossier présente des fragilités significatives avec seulement {prob_success:.1f}% de probabilité de gain. "
+                f"Les faiblesses principales identifiées sont la solidité du dossier '{solidite}' et la qualité des preuves '{qualite}'. "
+                f"Le niveau de risque élevé ({risk}) suggère une révision de la stratégie juridique. "
+                f"Action corrective recommandée : renforcer le dossier probatoire et envisager une médiation amiable."
+            )
+        else:  # NUANCÉ
+            analysis_text = (
+                f"Le dossier est dans une zone d'équilibre avec {prob_success:.1f}% de probabilité de succès. "
+                f"L'issue dépendra fortement de la qualité de l'argumentation lors des audiences et de l'évolution des preuves disponibles. "
+                f"Recommandation : renforcer les points faibles identifiés avant la prochaine audience."
+            )
+        print(f"[GROQ FALLBACK] Analyse locale générée pour prédiction: {prediction}", flush=True)
 
     return {
         "analysis": analysis_text,
@@ -258,9 +281,9 @@ def health_check():
             "available": model is not None,
             "model": MODEL_PATH if model is not None else None
         },
-        "nvidia_analysis": {
+        "groq_analysis": {
             "available": True,
-            "model": "z-ai/glm-5.1",
+            "model": "llama-3.3-70b-versatile",
             "mode": "optional_enrichment"
         }
     }
@@ -297,7 +320,7 @@ async def analyze_dossier_legacy(request: dict = Body(...)):
 def read_root():
     return {
         "message": "BNA AI Service is Up",
-        "architecture": "ML Core (independent) + NVIDIA Analysis (optional)",
+        "architecture": "ML Core (independent) + Groq Analysis (optional)",
         "ml_core_loaded": model is not None
     }
 

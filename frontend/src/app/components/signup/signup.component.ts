@@ -18,7 +18,20 @@ import { AuthService } from '../../services/auth.service';
           
           <h2 class="auth-title">S'INSCRIRE</h2>
           
-          <form (ngSubmit)="onSubmit()" #signupForm="ngForm">
+          <!-- SUCCESS STATE: Pending admin approval -->
+          <div class="pending-approval" *ngIf="successMsg">
+            <div class="pending-icon">⏳</div>
+            <h3>Demande envoyée !</h3>
+            <p class="pending-text">{{ successMsg }}</p>
+            <div class="pending-info">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              Votre compte est en attente de validation. L'administrateur vous contactera une fois votre accès approuvé.
+            </div>
+            <a routerLink="/login" class="btn-submit" style="text-decoration:none; text-align:center; display:block; margin-top:16px;">Retour à la connexion</a>
+          </div>
+
+          <!-- FORM: only visible before success -->
+          <form (ngSubmit)="onSubmit()" #signupForm="ngForm" *ngIf="!successMsg">
             <div class="form-group">
               <label for="fullName">Nom complet</label>
               <div class="input-container">
@@ -30,7 +43,7 @@ import { AuthService } from '../../services/auth.service';
             <div class="form-group">
               <label for="email">E-mail BNA</label>
               <div class="input-container">
-                <input type="email" id="email" name="email" [(ngModel)]="email" required placeholder="nom.prenom@bna.tn">
+                <input type="email" id="email" name="email" [(ngModel)]="email" required placeholder="Saisir un e-mail" autocomplete="off">
                 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
               </div>
             </div>
@@ -38,7 +51,7 @@ import { AuthService } from '../../services/auth.service';
             <div class="form-group">
               <label for="password">Mot de passe</label>
               <div class="input-container">
-                <input type="password" id="password" name="password" [(ngModel)]="password" required placeholder="Minimum 8 caractères">
+                <input type="password" id="password" name="password" [(ngModel)]="password" required placeholder="Entrer un mot de passe valide" autocomplete="new-password">
                 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               </div>
             </div>
@@ -50,16 +63,6 @@ import { AuthService } from '../../services/auth.service';
                   <input type="radio" name="userRole" [value]="r.value" (change)="setRole(r.value)" [checked]="selectedRole === r.value">
                   <span class="role-label">{{ r.label }}</span>
                 </label>
-              </div>
-            </div>
-
-            <div class="form-group" *ngIf="selectedRole === 'ROLE_CHARGE_DOSSIER'">
-              <label for="supervisorId">Superviseur (Super Validateur)</label>
-              <div class="input-container">
-                <select id="supervisorId" name="supervisorId" [(ngModel)]="supervisorId" class="form-control-select">
-                  <option [ngValue]="null">Aucun superviseur</option>
-                  <option *ngFor="let s of supervisors" [value]="s.id">{{ s.username }}</option>
-                </select>
               </div>
             </div>
 
@@ -158,6 +161,19 @@ import { AuthService } from '../../services/auth.service';
 
     .error-msg { color: #ef4444; font-size: 14px; font-weight: 700; margin-bottom: 20px; text-align: center; background: #fef2f2; padding: 14px; border-radius: 12px; border-left: 4px solid #ef4444; }
 
+    .pending-approval { text-align: center; padding: 16px 0; animation: fadeIn 0.5s ease-out; }
+    .pending-icon { font-size: 56px; margin-bottom: 16px; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    .pending-approval h3 { font-size: 24px; font-weight: 900; color: #004d3d; margin: 0 0 12px; }
+    .pending-text { font-size: 15px; color: #475569; font-weight: 600; margin-bottom: 20px; line-height: 1.6; }
+    .pending-info { 
+      display: flex; align-items: flex-start; gap: 10px; 
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; 
+      padding: 14px 16px; font-size: 13px; color: #166534; font-weight: 600;
+      text-align: left; line-height: 1.5;
+    }
+    .pending-info svg { flex-shrink: 0; margin-top: 2px; color: #16a34a; }
+
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     @media (max-width: 1024px) {
@@ -184,12 +200,12 @@ export class SignupComponent implements OnInit {
   supervisors: any[] = [];
   loading = false;
   error = '';
+  successMsg = '';
 
   availableRoles = [
     { label: 'Chargé de dossier', value: 'ROLE_CHARGE_DOSSIER' },
     { label: 'Pré-validateur', value: 'ROLE_PRE_VALIDATEUR' },
-    { label: 'Validateur', value: 'ROLE_VALIDATEUR' },
-    { label: 'Super Validateur', value: 'ROLE_SUPER_VALIDATEUR' }
+    { label: 'Validateur', value: 'ROLE_VALIDATEUR' }
   ];
 
   constructor(private authService: AuthService, private router: Router) { }
@@ -210,6 +226,7 @@ export class SignupComponent implements OnInit {
   onSubmit() {
     this.loading = true;
     this.error = '';
+    this.successMsg = '';
 
     const userData = {
       username: this.email,
@@ -218,16 +235,18 @@ export class SignupComponent implements OnInit {
       fullName: this.fullName,
       role: [this.selectedRole],
       managerId: this.supervisorId,
-      isSuperValidateur: this.selectedRole === 'ROLE_SUPER_VALIDATEUR'
+      isSuperValidateur: false
     };
 
     this.authService.register(userData).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
-        this.router.navigate(['/login']);
+        // Show pending-approval screen instead of redirecting immediately
+        this.successMsg = res?.message || 'Votre demande d\'accès est en attente de validation par l\'administrateur.';
       },
       error: (err) => {
-        this.error = err.error?.message || 'Erreur lors de la création. Veuillez réessayer.';
+        // Display exact backend error message for better UX
+        this.error = err.error?.message || 'Une erreur est survenue. Veuillez réessayer.';
         this.loading = false;
       }
     });

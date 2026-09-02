@@ -14,10 +14,12 @@ public class Affaire extends BaseEntity {
     @JsonBackReference
     private Dossier dossier;
 
-    @Transient // Only for JSON mapping
+    @Transient // Only for JSON mapping (ignored by JPA but must be read by Jackson)
+    @com.fasterxml.jackson.annotation.JsonProperty("dossierId")
     private Long dossierId;
 
     @Column(unique = true, nullable = false)
+    @com.fasterxml.jackson.annotation.JsonAlias({"numAffaireUnique", "referenceJudiciaire"})
     private String referenceJudiciaire;
 
     @Column(nullable = true)

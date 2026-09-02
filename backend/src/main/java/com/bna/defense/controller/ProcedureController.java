@@ -29,6 +29,9 @@ public class ProcedureController {
     @Autowired
     private ProcedureService procedureService;
 
+    @Autowired
+    private com.bna.defense.service.AuditLogService auditLogService;
+
     private UserDetailsImpl getCurrentUser() {
         return (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
@@ -36,9 +39,12 @@ public class ProcedureController {
     @GetMapping
     public org.springframework.data.domain.Page<ProcedureJudiciaire> getAllProcedures(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) ProcedureJudiciaire.TypeProcedure type,
+            @RequestParam(required = false) ProcedureJudiciaire.StatutProcedure statut) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "id"));
-        return procedureService.getAllProcedures(getCurrentUser(), pageable);
+        return procedureService.getAllProcedures(getCurrentUser(), searchTerm, type, statut, pageable);
     }
 
     /** Business Rule: Une Procédure est toujours liée à une Affaire */
@@ -64,7 +70,10 @@ public class ProcedureController {
             return ResponseEntity.badRequest().body("Affaire with id " + affaireId + " not found");
         }
         procedure.setAffaire(affaire);
-        return ResponseEntity.ok(procedureService.createProcedure(procedure, getCurrentUser()));
+        ProcedureJudiciaire saved = procedureService.createProcedure(procedure, getCurrentUser());
+        auditLogService.log(getCurrentUser().getUsername(), "CREATION_PROCEDURE", "Procedure", saved.getId(),
+                "Création de la procédure : " + saved.getTitre() + " (Type: " + saved.getType() + ")");
+        return ResponseEntity.ok(saved);
     }
 
     @GetMapping("/{id}")
@@ -87,11 +96,16 @@ public class ProcedureController {
             if (!procedureService.canAccessProcedure(procedure, getCurrentUser())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).<ProcedureJudiciaire>build();
             }
+            String oldType = String.valueOf(procedure.getType());
+            String oldStatut = String.valueOf(procedure.getStatut());
             procedure.setTitre(details.getTitre());
             procedure.setType(details.getType());
             procedure.setStatut(details.getStatut());
             procedure.setDescription(details.getDescription());
-            return ResponseEntity.ok(procedureRepository.save(procedure));
+            ProcedureJudiciaire saved = procedureRepository.save(procedure);
+            auditLogService.log(getCurrentUser().getUsername(), "MODIFICATION_PROCEDURE", "Procedure", saved.getId(),
+                    "Modification de la procédure " + saved.getTitre() + " (Type: " + oldType + "->" + saved.getType() + ", Statut: " + oldStatut + "->" + saved.getStatut() + ")");
+            return ResponseEntity.ok(saved);
         }).orElse(ResponseEntity.notFound().build());
     }
 
@@ -105,7 +119,10 @@ public class ProcedureController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
             
-            return ResponseEntity.ok(procedureService.validateProcedure(id));
+            ProcedureJudiciaire validated = procedureService.validateProcedure(id);
+            auditLogService.log(getCurrentUser().getUsername(), "VALIDATION_PROCEDURE", "Procedure", id,
+                    "Validation de la procédure : " + validated.getTitre());
+            return ResponseEntity.ok(validated);
         } catch (Exception e) {
             return ResponseEntity.status(400).body(null);
         }
@@ -119,6 +136,8 @@ public class ProcedureController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).<Void>build();
             }
             procedureRepository.delete(procedure);
+            auditLogService.log(getCurrentUser().getUsername(), "SUPPRESSION_PROCEDURE", "Procedure", id,
+                    "Suppression de la procédure : " + procedure.getTitre());
             return ResponseEntity.ok().<Void>build();
         }).orElse(ResponseEntity.notFound().build());
     }

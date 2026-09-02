@@ -313,7 +313,9 @@ public class DossierService {
         existing.setPriorite(updatedDossier.getPriorite());
         existing.setBudgetProvisionne(updatedDossier.getBudgetProvisionne());
         existing.setDescription(updatedDossier.getDescription());
-        existing.setStatut(updatedDossier.getStatut());
+        if (updatedDossier.getStatut() != null) {
+            existing.setStatut(updatedDossier.getStatut());
+        }
 
         // Apply referential updates if provided
         if (updatedDossier.getAvocat()       != null) existing.setAvocat(updatedDossier.getAvocat());
@@ -406,8 +408,8 @@ public class DossierService {
      */
     @Transactional
     public Dossier refuser(Long id, String motif, String refuseurUsername) {
-        if (motif == null || motif.trim().length() < 5) {
-            throw new RuntimeException("Le motif du refus doit contenir au moins 5 caractères.");
+        if (motif == null || motif.trim().length() < 20) {
+            throw new RuntimeException("Le motif du refus doit contenir au moins 20 caractères.");
         }
         Dossier dossier = getDossierById(id);
         dossier.setStatut(StatutDossier.REFUSE);
@@ -626,7 +628,7 @@ public class DossierService {
         List<Dossier> result = new ArrayList<>();
         
         // 1. Dossiers I need to submit (as Chargé)
-        result.addAll(dossierRepository.findByStatutAndFinancialsFinalizedFalseAndAssignedCharge(StatutDossier.CLOTURE, user).stream()
+        result.addAll(dossierRepository.findByFinancialsFinalizedFalseAndAssignedCharge(user).stream()
             .filter(d -> d.getFinancialStatut() == Dossier.FinancialStatut.NONE || 
                          d.getFinancialStatut() == Dossier.FinancialStatut.REJETE_PAR_PREVALIDATION || 
                          d.getFinancialStatut() == Dossier.FinancialStatut.REJETE)

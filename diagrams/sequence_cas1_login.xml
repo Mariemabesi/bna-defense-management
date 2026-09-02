@@ -1,0 +1,155 @@
+<mxGraphModel dx="1422" dy="762" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" value="Cas 1 : Authentification (Login) — Diagramme de Séquence MVC avec Alt [3 Cas]" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="100" y="20" width="900" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- Lifeline headers -->
+    <mxCell id="lh1" value="Utilisateur" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="95" y="80" width="30" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh2" value="View&#xa;(login.component.html)" style="shape=umlBoundary;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="255" y="80" width="50" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh3" value="Controller&#xa;(login.component.ts)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="450" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh4" value="Service&#xa;(auth.service.ts)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="640" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh5" value="REST Controller&#xa;(AuthController.java)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="830" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh6" value="Business Service&#xa;(AuthService.java)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1020" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh7" value="Repository / DB&#xa;(UserRepository + PostgreSQL)" style="shape=umlEntity;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1220" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll1v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry x="110" y="140" width="0" height="800" as="geometry">
+        <mxPoint x="110" y="140" as="sourcePoint"/><mxPoint x="110" y="940" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="ll2v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="280" y="140" as="sourcePoint"/><mxPoint x="280" y="940" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll3v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="470" y="140" as="sourcePoint"/><mxPoint x="470" y="940" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll4v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="660" y="140" as="sourcePoint"/><mxPoint x="660" y="940" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll5v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="850" y="140" as="sourcePoint"/><mxPoint x="850" y="940" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll6v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1040" y="140" as="sourcePoint"/><mxPoint x="1040" y="940" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll7v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1240" y="140" as="sourcePoint"/><mxPoint x="1240" y="940" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Messages flow before conditional check -->
+    <mxCell id="m1" value="1. Saisit email + mot de passe" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=open;endFill=1;fontSize=10;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="110" y="180" as="sourcePoint"/><mxPoint x="280" y="180" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" value="2. submit(loginForm)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="280" y="220" as="sourcePoint"/><mxPoint x="470" y="220" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" value="3. login(email, password)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="470" y="260" as="sourcePoint"/><mxPoint x="660" y="260" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4" value="4. POST /api/auth/login (LoginRequest DTO)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="660" y="300" as="sourcePoint"/><mxPoint x="850" y="300" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5" value="5. authenticate(LoginRequest)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="850" y="340" as="sourcePoint"/><mxPoint x="1040" y="340" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6" value="6. findByEmail(email)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1040" y="380" as="sourcePoint"/><mxPoint x="1240" y="380" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ALTERNATIVE FRAME START -->
+    <mxCell id="altFrame" value="alt [3 Cas d'Authentification]" style="shape=umlFrame;whiteSpace=wrap;html=1;width=180;height=30;fontSize=10;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;fillColor=none;strokeColor=#ff0000;strokeWidth=1.5;" vertex="1" parent="1">
+      <mxGeometry x="50" y="415" width="1220" height="510" as="geometry" />
+    </mxCell>
+
+    <!-- CAS 1: L'utilisateur existe et est ACTIF -->
+    <mxCell id="cas1Text" value="[Cas 1 : Utilisateur existe et est actif]" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#008766;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="420" width="300" height="20" as="geometry" />
+    </mxCell>
+    <mxCell id="m7_c1" value="7. User entity (active = true, suspended = false)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1240" y="450" as="sourcePoint"/><mxPoint x="1040" y="450" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8_c1" value="8. vérifier mot de passe (BCrypt) &amp; générer JWT" style="text;html=1;strokeColor=#9673a6;fillColor=#e1d5e7;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="980" y="475" width="220" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m9_c1" value="9. LoginResponse DTO (token, rôle)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1040" y="515" as="sourcePoint"/><mxPoint x="850" y="515" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10_c1" value="10. HTTP 200 OK + JSON Token" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="850" y="540" as="sourcePoint"/><mxPoint x="660" y="540" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m11_c1" value="11. naviguer vers /dashboard" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=9;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="470" y="565" as="sourcePoint"/><mxPoint x="280" y="565" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ALTERNATIVE SEPARATOR 1 -->
+    <mxCell id="altSep1" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#ff0000;strokeWidth=1.5;" edge="1" parent="1">
+      <mxGeometry as="geometry">
+        <mxPoint x="50" y="595" as="sourcePoint"/>
+        <mxPoint x="1270" y="595" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- CAS 2: L'utilisateur existe mais est SUSPENDU -->
+    <mxCell id="cas2Text" value="[Cas 2 : Utilisateur suspendu]" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#c2410c;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="605" width="200" height="20" as="geometry" />
+    </mxCell>
+    <mxCell id="m7_c2" value="7. User entity (suspended = true)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1240" y="635" as="sourcePoint"/><mxPoint x="1040" y="635" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8_c2" value="8. Lever exception UserSuspendedException" style="text;html=1;strokeColor=#9673a6;fillColor=#f8d7da;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;fontColor=#721c24;" vertex="1" parent="1">
+      <mxGeometry x="980" y="660" width="220" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m9_c2" value="9. HTTP 403 Forbidden (Compte suspendu)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="850" y="700" as="sourcePoint"/><mxPoint x="660" y="700" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10_c2" value="10. Afficher message 'Votre compte est suspendu'" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="470" y="725" as="sourcePoint"/><mxPoint x="280" y="725" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ALTERNATIVE SEPARATOR 2 -->
+    <mxCell id="altSep2" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#ff0000;strokeWidth=1.5;" edge="1" parent="1">
+      <mxGeometry as="geometry">
+        <mxPoint x="50" y="755" as="sourcePoint"/>
+        <mxPoint x="1270" y="755" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- CAS 3: L'utilisateur n'existe pas / Identifiants incorrects -->
+    <mxCell id="cas3Text" value="[Cas 3 : Utilisateur n'existe pas / Identifiants invalides]" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#b91c1c;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="765" width="350" height="20" as="geometry" />
+    </mxCell>
+    <mxCell id="m7_c3" value="7. Optional.empty() (User non trouvé)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1240" y="795" as="sourcePoint"/><mxPoint x="1040" y="795" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8_c3" value="8. Lever exception UsernameNotFoundException" style="text;html=1;strokeColor=#9673a6;fillColor=#f8d7da;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;fontColor=#721c24;" vertex="1" parent="1">
+      <mxGeometry x="980" y="820" width="220" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m9_c3" value="9. HTTP 401 Unauthorized (Identifiants invalides)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="850" y="860" as="sourcePoint"/><mxPoint x="660" y="860" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10_c3" value="10. Afficher message 'Email ou mot de passe incorrect'" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="470" y="885" as="sourcePoint"/><mxPoint x="280" y="885" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

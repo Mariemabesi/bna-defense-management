@@ -23,6 +23,21 @@ public class ExportService {
     private static final Color BNA_GREEN = new Color(0, 98, 51);
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
+    private void addLogo(Document document) {
+        try (java.io.InputStream is = getClass().getResourceAsStream("/images/cleanly.png")) {
+            if (is != null) {
+                byte[] bytes = is.readAllBytes();
+                Image logo = Image.getInstance(bytes);
+                logo.scaleToFit(140, 70);
+                logo.setAlignment(Element.ALIGN_CENTER);
+                logo.setSpacingAfter(10);
+                document.add(logo);
+            }
+        } catch (Exception e) {
+            System.err.println("Could not add PDF logo: " + e.getMessage());
+        }
+    }
+
     /**
      * Generate PDF export of dossier list for current user (RBAC-filtered)
      */
@@ -32,13 +47,16 @@ public class ExportService {
         PdfWriter.getInstance(document, baos);
         document.open();
 
+        // Add Logo
+        addLogo(document);
+
         // Header
         Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD, BNA_GREEN);
         Font headerFont = new Font(Font.HELVETICA, 10, Font.BOLD, Color.WHITE);
         Font cellFont = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
         Font subtitleFont = new Font(Font.HELVETICA, 11, Font.ITALIC, Color.GRAY);
 
-        Paragraph title = new Paragraph("BNA — Liste des Dossiers Juridiques", titleFont);
+        Paragraph title = new Paragraph("Liste des Dossiers Juridiques", titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
 
@@ -123,14 +141,51 @@ public class ExportService {
             redFont.setColor(IndexedColors.RED.getIndex());
             redStyle.setFont(redFont);
 
-            // Title row
-            org.apache.poi.ss.usermodel.Row titleRow = sheet.createRow(0);
-            Cell titleCell = titleRow.createCell(0);
-            titleCell.setCellValue("BNA — Liste des Dossiers Juridiques — " + LocalDateTime.now().format(FMT));
-            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 6));
+            // Add Logo to Excel
+            try (java.io.InputStream is = getClass().getResourceAsStream("/images/cleanly.png")) {
+                if (is != null) {
+                    byte[] bytes = is.readAllBytes();
+                    int pictureIdx = workbook.addPicture(bytes, Workbook.PICTURE_TYPE_PNG);
+                    CreationHelper helper = workbook.getCreationHelper();
+                    Drawing<?> drawing = sheet.createDrawingPatriarch();
+                    ClientAnchor anchor = helper.createClientAnchor();
+                    anchor.setCol1(0);
+                    anchor.setRow1(0);
+                    anchor.setCol2(2);
+                    anchor.setRow2(3);
+                    Picture pict = drawing.createPicture(anchor, pictureIdx);
+                    pict.resize(0.85);
+                }
+            } catch (Exception e) {
+                System.err.println("Could not add Excel logo: " + e.getMessage());
+            }
 
-            // Header row
-            org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(1);
+            // Title row at Row 1 (Index 1) and Col 3
+            org.apache.poi.ss.usermodel.Row titleRow = sheet.createRow(1);
+            Cell titleCell = titleRow.createCell(3);
+            titleCell.setCellValue("Liste des Dossiers Juridiques");
+            CellStyle titleStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font excelTitleFont = workbook.createFont();
+            excelTitleFont.setBold(true);
+            excelTitleFont.setFontHeightInPoints((short) 16);
+            excelTitleFont.setColor(IndexedColors.DARK_GREEN.getIndex());
+            titleStyle.setFont(excelTitleFont);
+            titleCell.setCellStyle(titleStyle);
+
+            // Subtitle row at Row 2 (Index 2) and Col 3
+            org.apache.poi.ss.usermodel.Row subRow = sheet.createRow(2);
+            Cell subCell = subRow.createCell(3);
+            subCell.setCellValue("Exporté le " + LocalDateTime.now().format(FMT) + " par " + currentUser.getUsername());
+            CellStyle subStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font excelSubFont = workbook.createFont();
+            excelSubFont.setItalic(true);
+            excelSubFont.setFontHeightInPoints((short) 10);
+            excelSubFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
+            subStyle.setFont(excelSubFont);
+            subCell.setCellStyle(subStyle);
+
+            // Header row at Row 4 (Index 4)
+            org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(4);
             String[] cols = { "Référence", "Titre", "Priorité", "Statut", "Chargé", "Frais Initial (TND)", "Frais Réel (TND)", "Dépassement (TND)" };
             for (int i = 0; i < cols.length; i++) {
                 Cell cell = headerRow.createCell(i);
@@ -138,8 +193,8 @@ public class ExportService {
                 cell.setCellStyle(headerStyle);
             }
 
-            // Data rows
-            int rowIdx = 2;
+            // Data rows starting from Row 5
+            int rowIdx = 5;
             for (Dossier d : dossiers) {
                 org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowIdx);
                 BigDecimal fraisInitial = d.getFraisInitial() != null ? d.getFraisInitial() : BigDecimal.ZERO;
@@ -163,8 +218,8 @@ public class ExportService {
                 }
 
                 if (rowIdx % 2 == 0) {
-                    for (int col = 0; col < 7; col++) {
-                        if (row.getCell(col) != null) row.getCell(col).setCellStyle(altStyle);
+                    for (int col = 0; col < 8; col++) {
+                        if (row.getCell(col) != null && col != 7) row.getCell(col).setCellStyle(altStyle);
                     }
                 }
                 rowIdx++;

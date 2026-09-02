@@ -65,6 +65,13 @@ public class ProcedureJudiciaire extends BaseEntity {
     public User getCreator() { return creator; }
     public void setCreator(User creator) { this.creator = creator; }
 
+    @PostLoad
+    public void populateAffaireId() {
+        if (this.affaire != null) {
+            this.affaireId = this.affaire.getId();
+        }
+    }
+
     public enum TypeProcedure {
         ASSIGNATION, REQUETE, APPEL, CASSATION, REFERE, AUTRE
     }

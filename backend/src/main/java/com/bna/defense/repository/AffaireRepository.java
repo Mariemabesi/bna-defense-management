@@ -19,8 +19,8 @@ public interface AffaireRepository extends JpaRepository<Affaire, Long> {
             "  OR ac.username = :username " +
             "  OR (:isPreVal = true AND m.id = :userId) " +
             ") " +
-            "AND (:searchTerm IS NULL OR a.referenceJudiciaire LIKE CONCAT('%', :searchTerm, '%') OR a.titre LIKE CONCAT('%', :searchTerm, '%')) " +
-            "AND (:type IS NULL OR CAST(a.type AS string) = :type) " +
+            "AND (:searchTerm IS NULL OR a.referenceJudiciaire LIKE :searchTerm OR a.titre LIKE :searchTerm) " +
+            "AND (:type IS NULL OR a.type = :type) " +
             "AND (:statut IS NULL OR a.statut = :statut)")
     org.springframework.data.domain.Page<Affaire> findAllWithRBAC(
             @org.springframework.data.repository.query.Param("username") String username,
@@ -28,7 +28,7 @@ public interface AffaireRepository extends JpaRepository<Affaire, Long> {
             @org.springframework.data.repository.query.Param("isSuper") boolean isSuper,
             @org.springframework.data.repository.query.Param("isPreVal") boolean isPreVal,
             @org.springframework.data.repository.query.Param("searchTerm") String searchTerm,
-            @org.springframework.data.repository.query.Param("type") String type,
+            @org.springframework.data.repository.query.Param("type") Affaire.TypeAffaire type,
             @org.springframework.data.repository.query.Param("statut") Affaire.StatutAffaire statut,
             org.springframework.data.domain.Pageable pageable);
 

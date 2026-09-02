@@ -1,0 +1,110 @@
+<mxGraphModel dx="1422" dy="762" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" value="Cas 4 : Déclaration et Soumission de Frais — Diagramme de Séquence MVC" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="100" y="20" width="1000" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- Lifeline headers -->
+    <mxCell id="lh1" value="👤 Chargé de Dossier" style="shape=mxgraph.sequence.actor;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="30" y="80" width="110" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh2" value="View&#xa;(frais-declaration-form.html)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="185" y="80" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh3" value="Controller&#xa;(frais-declaration-form.ts)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="370" y="80" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh4" value="Service&#xa;(frais.service.ts)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="555" y="80" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh5" value="REST Controller&#xa;(FraisController.java)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="740" y="80" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh6" value="Business Service&#xa;(FraisService.java)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="930" y="80" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh7" value="Repository / DB&#xa;(FraisRepository + PostgreSQL)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1120" y="80" width="170" height="60" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll1v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="85" y="140" as="sourcePoint"/><mxPoint x="85" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll2v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="255" y="140" as="sourcePoint"/><mxPoint x="255" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll3v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="140" as="sourcePoint"/><mxPoint x="440" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll4v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="625" y="140" as="sourcePoint"/><mxPoint x="625" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll5v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="810" y="140" as="sourcePoint"/><mxPoint x="810" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll6v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="140" as="sourcePoint"/><mxPoint x="1000" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll7v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1205" y="140" as="sourcePoint"/><mxPoint x="1205" y="880" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Messages -->
+    <mxCell id="m1" value="1. Saisit les données &amp; fichier de frais" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="85" y="180" as="sourcePoint"/><mxPoint x="255" y="180" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" value="2. submitForm()" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="255" y="220" as="sourcePoint"/><mxPoint x="440" y="220" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" value="3. valider les champs requis" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="360" y="243" width="220" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="m4" value="4. createFraisWithFiles(formData)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="295" as="sourcePoint"/><mxPoint x="625" y="295" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5" value="5. POST /api/frais (Multipart)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="625" y="335" as="sourcePoint"/><mxPoint x="810" y="335" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6" value="6. vérifier droits (ROLE_CHARGE_DOSSIER)" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="735" y="358" width="250" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="m7" value="7. demandFrais(dto, files)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="810" y="400" as="sourcePoint"/><mxPoint x="1000" y="400" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8" value="8. findByReference(dossierRef)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="440" as="sourcePoint"/><mxPoint x="1205" y="440" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9" value="9. Dossier entity" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1205" y="480" as="sourcePoint"/><mxPoint x="1000" y="480" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10" value="10. Instancier Frais &amp; stocker fichiers" style="text;html=1;strokeColor=#9673a6;fillColor=#e1d5e7;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="920" y="505" width="250" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="m11" value="11. save(Frais entity)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="555" as="sourcePoint"/><mxPoint x="1205" y="555" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m12" value="12. Frais sauvegardé" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1205" y="595" as="sourcePoint"/><mxPoint x="1000" y="595" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m13" value="13. Frais entity (statut = EN_ATTENTE_PREVALIDATION)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="640" as="sourcePoint"/><mxPoint x="810" y="640" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m14" value="14. HTTP 201 + JSON Frais" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="810" y="680" as="sourcePoint"/><mxPoint x="625" y="680" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m15" value="15. Observable&lt;Frais&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="625" y="720" as="sourcePoint"/><mxPoint x="440" y="720" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m16" value="16. addNotification() &amp; loadFrais() refresh" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="760" as="sourcePoint"/><mxPoint x="255" y="760" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m17" value="17. ✅ Dépense déclarée et ajoutée à l'historique" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=10;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="255" y="800" as="sourcePoint"/><mxPoint x="85" y="800" as="targetPoint"/></mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

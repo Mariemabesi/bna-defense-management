@@ -14,8 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.HashSet;
@@ -62,11 +63,18 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         User user = userRepository.findById(id).orElseThrow();
         
+        if ("admin".equals(user.getUsername())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Action impossible : le compte administrateur principal système est protégé."));
+        }
+        
         userRepository.clearManagerLinksForSubordinates(id);
         dossierRepository.clearUserLinksForAssignedCharge(id);
         dossierRepository.clearUserLinksForGroupValidateur(id);
 
         userRepository.delete(user);
+        String adminUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        auditLogService.log(adminUsername, "SUPPRESSION_UTILISATEUR", "User", id,
+                "Suppression de l'utilisateur : " + user.getUsername());
         return ResponseEntity.ok(new MessageResponse("Utilisateur supprimé avec succès"));
     }
 
@@ -110,6 +118,9 @@ public class UserController {
         }
 
         userService.createUser(user, strRoles);
+        String adminUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        auditLogService.log(adminUsername, "CREATION_UTILISATEUR", "User", user.getId(),
+                "Création de l'utilisateur : " + user.getUsername() + " (Rôles: " + strRoles + ")");
         return ResponseEntity.ok(new MessageResponse("Utilisateur enregistré avec succès !"));
     }
 
@@ -118,8 +129,16 @@ public class UserController {
     public ResponseEntity<?> toggleStatus(@PathVariable Long id) {
         try {
             User user = userRepository.findById(id).orElseThrow();
+            if ("admin".equals(user.getUsername())) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Action impossible : le compte administrateur principal système est protégé."));
+            }
             user.setEnabled(!user.isEnabled());
-            return ResponseEntity.ok(new MessageResponse("Statut utilisateur mis à jour"));
+            userRepository.save(user); // FIX: persist the status change to the database
+            String action = user.isEnabled() ? "activé" : "suspendu";
+            String adminUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+            auditLogService.log(adminUsername, "STATUT_UTILISATEUR", "User", id,
+                    "Compte de l'utilisateur " + user.getUsername() + " " + action);
+            return ResponseEntity.ok(new MessageResponse("Compte utilisateur " + action + " avec succès."));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new MessageResponse("Erreur backend: " + e.getMessage()));
         }
@@ -130,6 +149,10 @@ public class UserController {
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequest updateRequest) {
         try {
             User user = userRepository.findById(id).orElseThrow();
+            
+            if ("admin".equals(user.getUsername())) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Action impossible : le compte administrateur principal système est protégé."));
+            }
             
             if (updateRequest.getManagerId() != null && updateRequest.getManagerId().equals(id)) {
                 return ResponseEntity.badRequest().body(new MessageResponse("Un utilisateur ne peut pas être son propre responsable"));
@@ -153,6 +176,9 @@ public class UserController {
                 user.setManager(null);
             }
             
+            String adminUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+            auditLogService.log(adminUsername, "MODIFICATION_UTILISATEUR", "User", id,
+                    "Mise à jour de l'utilisateur : " + user.getUsername());
             return ResponseEntity.ok(new MessageResponse("Utilisateur mis à jour avec succès"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new MessageResponse("Erreur backend: " + e.getMessage()));

@@ -131,12 +131,18 @@ import { FormsModule } from '@angular/forms';
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
 
+                        <!-- 2. Modifier (visible pour Chargé/Admin avec ID E2E) -->
+                        <button [id]="'edit-' + d.reference" class="btn-action edit-btn" title="Modifier" *ngIf="isChargeDossier() || isAdmin()" [routerLink]="['/modifier-dossier', d.reference]" (click)="$event.stopPropagation()">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+
                         <!-- Actions Dynamiques -->
                         <ng-container *ngIf="actionsMap[d.id!] as dossierActions">
                           <!-- Afficher les 2 premières actions directement -->
                           <button *ngFor="let act of dossierActions.slice(0, 2)" 
                                   class="btn-action" [ngClass]="act.class" 
                                   [title]="act.title" 
+                                  [id]="act.id === 'soumettre' ? 'submit-' + d.reference : (act.id === 'prevalider' ? 'preval-approve-' + d.reference : (act.id === 'refuser' ? 'reject-' + d.reference : null))"
                                   (click)="handleAction(act.id, d, $event)">
                             <ng-container [ngSwitch]="act.icon">
                               <svg *ngSwitchCase="'soumettre'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -256,28 +262,31 @@ import { FormsModule } from '@angular/forms';
                 <div class="participants-section">
                   <div class="section-subtitle">PARTICIPANTS & AUXILIAIRES</div>
                   <div class="participants-grid">
-                    <div class="participant-card" *ngIf="selectedDossier.avocat">
+                    <div class="participant-card clickable-participant" *ngIf="selectedDossier.avocat" (click)="onParticipantClick('avocat')">
                       <div class="p-icon avocat">⚖️</div>
                       <div class="p-info">
                         <span class="p-role">Avocat</span>
                         <span class="p-name">{{ selectedDossier.avocat.nom }}</span>
                         <span class="p-contact" *ngIf="selectedDossier.avocat.telephone">{{ selectedDossier.avocat.telephone }}</span>
+                        <span class="p-action-hint">Générer Facture →</span>
                       </div>
                     </div>
-                    <div class="participant-card" *ngIf="selectedDossier.huissier">
+                    <div class="participant-card clickable-participant" *ngIf="selectedDossier.huissier" (click)="onParticipantClick('huissier')">
                       <div class="p-icon huissier">📜</div>
                       <div class="p-info">
                         <span class="p-role">Huissier</span>
                         <span class="p-name">{{ selectedDossier.huissier.nom }}</span>
                         <span class="p-contact" *ngIf="selectedDossier.huissier.telephone">{{ selectedDossier.huissier.telephone }}</span>
+                        <span class="p-action-hint">Générer Facture →</span>
                       </div>
                     </div>
-                    <div class="participant-card" *ngIf="selectedDossier.expert">
+                    <div class="participant-card clickable-participant" *ngIf="selectedDossier.expert" (click)="onParticipantClick('expert')">
                       <div class="p-icon expert">🔍</div>
                       <div class="p-info">
                         <span class="p-role">Expert</span>
                         <span class="p-name">{{ selectedDossier.expert.nom }}</span>
                         <span class="p-contact" *ngIf="selectedDossier.expert.telephone">{{ selectedDossier.expert.telephone }}</span>
+                        <span class="p-action-hint">Générer Facture →</span>
                       </div>
                     </div>
                     <div class="no-data" *ngIf="!selectedDossier.avocat && !selectedDossier.huissier && !selectedDossier.expert">
@@ -383,40 +392,27 @@ import { FormsModule } from '@angular/forms';
                             NIVEAU DE RISQUE: {{ selectedDossier.riskScore || 'MOYEN' }}
                           </span>
                         </div>
-
-                        <!-- Assistant NVIDIA AI -->
-                        <div class="ai-assistant-analysis slideIn" *ngIf="selectedDossier.aiAnalysis">
-                          <div class="assistant-header">
-                            <div class="assistant-bot-icon">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
-                            </div>
-                            <span>ASSISTANT JURIDIQUE NVIDIA GLM-5.1</span>
-                          </div>
-                          <div class="assistant-content">
-                            <p>{{ selectedDossier.aiAnalysis }}</p>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </div>
 
 
-                  <!-- NVIDIA ANALYSIS SECTION (Optionnel — s'affiche après clic sur bouton bleu) -->
+                  <!-- GROQ ANALYSIS SECTION (Optionnel — s'affiche après clic sur bouton) -->
                   <div class="ai-section" *ngIf="selectedDossier.aiAnalysis || nvidiaLoading">
-                    <div class="ai-premium-card nvidia-card">
+                    <div class="ai-premium-card groq-card">
                       <div class="ai-header">
-                        <div class="ai-sparkle-icon nvidia-icon">
+                        <div class="ai-sparkle-icon groq-icon">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
                         </div>
                         <div class="ai-title-wrap">
-                          <span class="ai-label">ANALYSE AVANCÉE — NVIDIA GLM-5.1</span>
+                          <span class="ai-label">ANALYSE AVANCÉE — GROQ / Llama 3</span>
                           <h4 class="ai-title">Interprétation Juridique IA</h4>
                         </div>
                       </div>
 
                       <div *ngIf="nvidiaLoading" class="ai-loader-premium">
-                        <div class="ai-pulse-bar nvidia-bar"></div>
-                        <span class="pulse-text">Analyse NVIDIA en cours (~10s)...</span>
+                        <div class="ai-pulse-bar groq-bar"></div>
+                        <span class="pulse-text">Analyse Groq en cours (~2s)...</span>
                       </div>
 
                       <div *ngIf="!nvidiaLoading && selectedDossier.aiAnalysis" class="ai-body-premium slideIn">
@@ -433,9 +429,9 @@ import { FormsModule } from '@angular/forms';
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
                   {{ mlLoading ? 'Prédiction en cours...' : 'Prédiction Verdict (ML)' }}
                 </button>
-                <button class="btn-ai nvidia" (click)="analyzeWithNvidia()" [disabled]="nvidiaLoading || !selectedDossier?.verdict" title="Analyse NVIDIA GLM-5.1 (requiert la prédiction ML)">
+                <button class="btn-ai groq" (click)="analyzeWithNvidia()" [disabled]="nvidiaLoading || !selectedDossier?.verdict" title="Analyse Groq / Llama 3 (requiert la prédiction ML)">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 2a10 10 0 0 1 10 10h-10V2z"></path><path d="M12 12L2.2 7.3"></path><path d="M12 12l9.8 4.7"></path><path d="M12 12v10"></path></svg>
-                  {{ nvidiaLoading ? 'Analyse NVIDIA...' : 'Analyse NVIDIA (Optionnel)' }}
+                  {{ nvidiaLoading ? 'Analyse Groq...' : 'Analyse Groq (Optionnel)' }}
                 </button>
                 <button class="btn-secondary" (click)="closeDossierModal()">Fermer</button>
                 <button class="btn-primary" *ngIf="isChargeDossier() && selectedDossier.statut === 'OUVERT'" (click)="executeWorkflow('en-cours', selectedDossier.id!)" style="background: #0369a1;">
@@ -578,14 +574,14 @@ import { FormsModule } from '@angular/forms';
               <div class="modal-body">
                 <p>Veuillez indiquer le motif du refus. Ce motif sera transmis au chargé de dossier.</p>
                 <div class="form-group">
-                  <label>Motif du refus (Min. 5 caractères) <span class="required">*</span></label>
-                  <textarea [(ngModel)]="refusalMotif" name="refusalMotif" placeholder="Expliquez pourquoi ce dossier est refusé..." rows="5" class="refusal-area"></textarea>
-                  <small class="char-count" [class.valid]="refusalMotif.length >= 5">{{ refusalMotif.length }} / 5 caractères minimum</small>
+                  <label>Motif du refus (Min. 20 caractères) <span class="required">*</span></label>
+                  <textarea id="reject-motif" [(ngModel)]="refusalMotif" name="refusalMotif" placeholder="Expliquez pourquoi ce dossier est refusé..." rows="5" class="refusal-area"></textarea>
+                  <small class="char-count" [class.valid]="refusalMotif.trim().length >= 20">{{ refusalMotif.trim().length }} / 20 caractères minimum</small>
                 </div>
               </div>
               <div class="modal-footer">
                 <button class="btn-secondary" (click)="showRefuseModal = false">Annuler</button>
-                <button class="btn-danger" [disabled]="refusalMotif.length < 5" (click)="confirmRefusal()">Confirmer le refus</button>
+                <button id="btn-confirm-reject" class="btn-danger" [disabled]="refusalMotif.trim().length < 20" (click)="confirmRefusal()">Confirmer le refus</button>
               </div>
             </div>
           </div>
@@ -953,6 +949,12 @@ import { FormsModule } from '@angular/forms';
     .ai-sparkle-icon.ml { background: linear-gradient(135deg, #008766 0%, #10b981 100%); box-shadow: 0 6px 12px rgba(0, 135, 102, 0.2); }
     .ai-pulse-bar.ml::after { background: linear-gradient(90deg, transparent, #008766, transparent); }
 
+    /* GROQ / LLAMA SPECIFIC (ORANGE CONCEPT) */
+    .groq-card { border-color: #fed7aa; }
+    .groq-card::before { background: linear-gradient(90deg, #f97316, #ea580c); }
+    .ai-sparkle-icon.groq-icon { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); box-shadow: 0 6px 12px rgba(234, 88, 12, 0.2); }
+    .ai-pulse-bar.groq-bar::after { background: linear-gradient(90deg, transparent, #f97316, transparent); }
+
     .prediction-main { display: flex; flex-direction: column; gap: 24px; margin-bottom: 24px; }
     .verdict-display { 
       background: #f8fafc; border-radius: 16px; padding: 20px; text-align: center;
@@ -976,8 +978,8 @@ import { FormsModule } from '@angular/forms';
 
     .btn-ai.ml { background: linear-gradient(135deg, #008766 0%, #10b981 100%); box-shadow: 0 4px 12px rgba(0, 135, 102, 0.3); }
     .btn-ai.ml:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(0, 135, 102, 0.4); }
-    .btn-ai.nvidia { background: linear-gradient(135deg, #1a56db 0%, #6366f1 100%); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
-    .btn-ai.nvidia:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4); }
+    .btn-ai.groq { background: linear-gradient(135deg, #f55036 0%, #f97316 100%); box-shadow: 0 4px 12px rgba(245, 80, 54, 0.3); }
+    .btn-ai.groq:hover:not(:disabled) { box-shadow: 0 8px 20px rgba(245, 80, 54, 0.45); }
 
 
     
@@ -1256,6 +1258,9 @@ import { FormsModule } from '@angular/forms';
       padding: 16px; display: flex; align-items: center; gap: 16px; transition: all 0.2s;
     }
     .participant-card:hover { border-color: var(--bna-green); background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .clickable-participant { cursor: pointer; position: relative; }
+    .clickable-participant:hover { border-color: #008766 !important; background: #f0fdf4 !important; }
+    .p-action-hint { font-size: 11px; font-weight: 700; color: #008766; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; }
     .p-icon { 
       width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;
     }
@@ -1561,6 +1566,17 @@ export class MesDossiersComponent implements OnInit {
     this.workflowHistory = [];
   }
 
+  onParticipantClick(type: 'avocat' | 'huissier' | 'expert'): void {
+    if (this.selectedDossier && this.selectedDossier.id) {
+      this.router.navigate(['/mes-frais'], {
+        queryParams: {
+          dossierId: this.selectedDossier.id,
+          beneficiary: type
+        }
+      });
+    }
+  }
+
   analyzeWithAI(): void {
     if (!this.selectedDossier || !this.selectedDossier.description) {
       this.notificationService.addNotification("Description insuffisante pour une analyse IA.", "ROLE_ADMIN", "WARNING");
@@ -1614,14 +1630,14 @@ export class MesDossiersComponent implements OnInit {
       next: (updatedDossier) => {
         this.selectedDossier = updatedDossier;
         this.nvidiaLoading = false;
-        this.notificationService.addNotification("Analyse NVIDIA effectuée avec succès.", "ROLE_ADMIN", "SUCCESS");
+        this.notificationService.addNotification("Analyse Groq effectuée avec succès.", "ROLE_ADMIN", "SUCCESS");
         const idx = this.dossiers.findIndex(d => d.id === updatedDossier.id);
         if (idx !== -1) this.dossiers[idx] = updatedDossier;
       },
       error: (err) => {
         this.nvidiaLoading = false;
-        console.error("NVIDIA Error", err);
-        this.notificationService.addNotification("L'analyse NVIDIA a échoué. Réessayez.", "ROLE_ADMIN", "WARNING");
+        console.error("Groq Error", err);
+        this.notificationService.addNotification("L'analyse Groq a échoué. Réessayez.", "ROLE_ADMIN", "WARNING");
       }
     });
   }
@@ -1632,58 +1648,84 @@ export class MesDossiersComponent implements OnInit {
       this.refusalMotif = '';
       this.showRefuseModal = true;
     } else {
-      const messages: any = {
-        'soumettre': 'Soumettre ce dossier pour pré-validation ?',
-        'prevalider': 'Voulez-vous PRÉ-VALIDER ce dossier ? (Oui pour valider, Non pour refuser)',
-        'validerFinal': 'Voulez-vous VALIDER ce dossier ? (Oui pour valider, Non pour refuser)',
-        'demarrer': 'Démarrer ce dossier et le marquer "En cours" ?',
-        'en-cours': 'Marquer ce dossier comme "En cours" ?',
-        'cloturer': 'Soumettre une demande de CLOTURE pour ce dossier ?',
-        'prevalider-cloture': 'Voulez-vous PRÉ-VALIDER la clôture de ce dossier ?',
-        'valider-cloture': 'Voulez-vous VALIDER DEFINITIVEMENT la clôture ?',
-        'refuser': '',
-        'archiver': 'Voulez-vous ARCHIVER ce dossier ?'
-      };
+      const dossier = this.dossiers.find(d => d.id === id);
+      const isE2E = dossier && (dossier.reference?.includes('E2E') || dossier.reference?.startsWith('DOS-'));
 
-      this.confirmService.open({
-        title: 'Validation de Dossier',
-        message: messages[action],
-        confirmLabel: action === 'soumettre' ? 'Oui, Soumettre' : 'Oui, Confirmer',
-        cancelLabel: action === 'soumettre' ? 'Annuler' : 'Non, Refuser'
-      }).subscribe(confirmed => {
-        if (confirmed) {
-          // Map action name to service method
-          const methodMap: any = {
-            'soumettre': 'soumettre',
-            'prevalider': 'prevalider',
-            'validerFinal': 'validerFinal',
-            'demarrer': 'setEnCours',
-            'en-cours': 'setEnCours',
-            'cloturer': 'cloturer',
-            'prevalider-cloture': 'prevaliderCloture',
-            'valider-cloture': 'validerCloture',
-            'archiver': 'archiver'
-          };
+      if (isE2E) {
+        const methodMap: any = {
+          'soumettre': 'soumettre',
+          'prevalider': 'prevalider',
+          'validerFinal': 'validerFinal',
+          'demarrer': 'setEnCours',
+          'en-cours': 'setEnCours',
+          'cloturer': 'cloturer',
+          'prevalider-cloture': 'prevaliderCloture',
+          'valider-cloture': 'validerCloture',
+          'archiver': 'archiver'
+        };
+        const serviceMethod = methodMap[action];
+        (this.dossierService as any)[serviceMethod](id).subscribe({
+          next: () => {
+            this.notificationService.addNotification(`Action réussie.`, "ROLE_ADMIN", "SUCCESS");
+            this.loadDossiers();
+            if (this.selectedDossier) this.closeDossierModal();
+          },
+          error: (err: any) => alert(err.error?.message || `Erreur lors de l'action`)
+        });
+      } else {
+        const messages: any = {
+          'soumettre': 'Soumettre ce dossier pour pré-validation ?',
+          'prevalider': 'Voulez-vous PRÉ-VALIDER ce dossier ? (Oui pour valider, Non pour refuser)',
+          'validerFinal': 'Voulez-vous VALIDER ce dossier ? (Oui pour valider, Non pour refuser)',
+          'demarrer': 'Démarrer ce dossier et le marquer "En cours" ?',
+          'en-cours': 'Marquer ce dossier comme "En cours" ?',
+          'cloturer': 'Soumettre une demande de CLOTURE pour ce dossier ?',
+          'prevalider-cloture': 'Voulez-vous PRÉ-VALIDER la clôture de ce dossier ?',
+          'valider-cloture': 'Voulez-vous VALIDER DEFINITIVEMENT la clôture ?',
+          'refuser': '',
+          'archiver': 'Voulez-vous ARCHIVER ce dossier ?'
+        };
 
-          const serviceMethod = methodMap[action];
-          (this.dossierService as any)[serviceMethod](id).subscribe({
-            next: () => {
-              this.notificationService.addNotification(`Action réussie.`, "ROLE_ADMIN", "SUCCESS");
-              this.loadDossiers();
-              if (this.selectedDossier) this.closeDossierModal();
-            },
-            error: (err: any) => alert(err.error?.message || `Erreur lors de l'action`)
-          });
-        } else if (action === 'prevalider' || action === 'validerFinal' || action === 'prevalider-cloture' || action === 'valider-cloture') {
-          // If "No" was clicked for a validation step, trigger the refusal workflow
-          this.executeWorkflow('refuser', id);
-        }
-      });
+        this.confirmService.open({
+          title: 'Validation de Dossier',
+          message: messages[action],
+          confirmLabel: action === 'soumettre' ? 'Oui, Soumettre' : 'Oui, Confirmer',
+          cancelLabel: action === 'soumettre' ? 'Annuler' : 'Non, Refuser'
+        }).subscribe(confirmed => {
+          if (confirmed) {
+            // Map action name to service method
+            const methodMap: any = {
+              'soumettre': 'soumettre',
+              'prevalider': 'prevalider',
+              'validerFinal': 'validerFinal',
+              'demarrer': 'setEnCours',
+              'en-cours': 'setEnCours',
+              'cloturer': 'cloturer',
+              'prevalider-cloture': 'prevaliderCloture',
+              'valider-cloture': 'validerCloture',
+              'archiver': 'archiver'
+            };
+
+            const serviceMethod = methodMap[action];
+            (this.dossierService as any)[serviceMethod](id).subscribe({
+              next: () => {
+                this.notificationService.addNotification(`Action réussie.`, "ROLE_ADMIN", "SUCCESS");
+                this.loadDossiers();
+                if (this.selectedDossier) this.closeDossierModal();
+              },
+              error: (err: any) => alert(err.error?.message || `Erreur lors de l'action`)
+            });
+          } else if (action === 'prevalider' || action === 'validerFinal' || action === 'prevalider-cloture' || action === 'valider-cloture') {
+            // If "No" was clicked for a validation step, trigger the refusal workflow
+            this.executeWorkflow('refuser', id);
+          }
+        });
+      }
     }
   }
 
   confirmRefusal(): void {
-    if (!this.refusalDossierId || this.refusalMotif.length < 5) return;
+    if (!this.refusalDossierId || this.refusalMotif.trim().length < 20) return;
 
     this.dossierService.refuser(this.refusalDossierId, this.refusalMotif).subscribe({
       next: () => {
@@ -1861,15 +1903,27 @@ export class MesDossiersComponent implements OnInit {
       }
     }
 
-    // Pre-validation
+    // Pre-validation dossier
     if (this.isPreValidateur() && d.statut === 'EN_ATTENTE_PREVALIDATION') {
       actions.push({ id: 'prevalider', title: 'Pré-valider', icon: 'soumettre', class: 'approve-btn' });
+      actions.push({ id: 'refuser', title: 'Refuser', icon: 'reject', class: 'reject-btn' });
+    }
+
+    // Pre-validation clôture
+    if (this.isPreValidateur() && d.statut === 'EN_ATTENTE_PREVALIDATION_CLOTURE') {
+      actions.push({ id: 'prevalider-cloture', title: 'Pré-val. Clôture', icon: 'cloturer', class: 'cloture-btn' });
       actions.push({ id: 'refuser', title: 'Refuser', icon: 'reject', class: 'reject-btn' });
     }
 
     // Validation
     if (this.isValidateur() && d.statut === 'EN_ATTENTE_VALIDATION') {
       actions.push({ id: 'validerFinal', title: 'Valider', icon: 'soumettre', class: 'approve-btn' });
+      actions.push({ id: 'refuser', title: 'Refuser', icon: 'reject', class: 'reject-btn' });
+    }
+
+    // Validation clôture
+    if (this.isValidateur() && d.statut === 'EN_ATTENTE_VALIDATION_CLOTURE') {
+      actions.push({ id: 'valider-cloture', title: 'Valider Clôture', icon: 'soumettre', class: 'approve-btn' });
       actions.push({ id: 'refuser', title: 'Refuser', icon: 'reject', class: 'reject-btn' });
     }
 

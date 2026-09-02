@@ -160,6 +160,7 @@ public class AiClient {
                 .bodyValue(payload)
                 .retrieve()
                 .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
+                .timeout(Duration.ofSeconds(60))
                 .onErrorResume(e -> {
                     System.err.println("NVIDIA Analysis Error: " + e.getMessage());
                     return Mono.empty();

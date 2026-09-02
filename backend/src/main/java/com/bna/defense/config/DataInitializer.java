@@ -53,10 +53,15 @@ public class DataInitializer {
                     userRepository.save(admin);
                 });
 
-            seedUser(userRepository, roleRepository, passwordEncoder, "validateur@bna.tn", "validateur@bna.tn", Role.RoleType.ROLE_VALIDATEUR);
-            seedUser(userRepository, roleRepository, passwordEncoder, "prevalidateur@bna.tn", "prevalidateur@bna.tn", Role.RoleType.ROLE_PRE_VALIDATEUR);
-            seedUser(userRepository, roleRepository, passwordEncoder, "profil@bna.tn", "profil@bna.tn", Role.RoleType.ROLE_CHARGE_DOSSIER);
-            seedUser(userRepository, roleRepository, passwordEncoder, "charge@bna.tn", "charge@bna.tn", Role.RoleType.ROLE_CHARGE_DOSSIER);
+            seedUser(userRepository, roleRepository, passwordEncoder, "validateur@bna.tn", "validateur@bna.tn", Role.RoleType.ROLE_VALIDATEUR, "validateur@bna.tn");
+            seedUser(userRepository, roleRepository, passwordEncoder, "prevalidateur@bna.tn", "prevalidateur@bna.tn", Role.RoleType.ROLE_PRE_VALIDATEUR, "prevalidateur@bna.tn");
+            seedUser(userRepository, roleRepository, passwordEncoder, "profil@bna.tn", "profil@bna.tn", Role.RoleType.ROLE_CHARGE_DOSSIER, "profil@bna.tn");
+            seedUser(userRepository, roleRepository, passwordEncoder, "charge@bna.tn", "charge@bna.tn", Role.RoleType.ROLE_CHARGE_DOSSIER, "charge@bna.tn");
+
+            // Comptes requis pour la suite de tests QA
+            seedUser(userRepository, roleRepository, passwordEncoder, "charge", "charge@bna.com.tn", Role.RoleType.ROLE_CHARGE_DOSSIER, "password123");
+            seedUser(userRepository, roleRepository, passwordEncoder, "preval", "preval@bna.com.tn", Role.RoleType.ROLE_PRE_VALIDATEUR, "password123");
+            seedUser(userRepository, roleRepository, passwordEncoder, "val", "val@bna.com.tn", Role.RoleType.ROLE_VALIDATEUR, "password123");
 
             User validator = userRepository.findByUsername("validateur@bna.tn").orElse(null);
             Groupe groupTunis = groupeRepository.findByNom("Direction Contentieux Tunis").orElseGet(() -> {
@@ -132,16 +137,16 @@ public class DataInitializer {
         };
     }
 
-    private User seedUser(UserRepository userRepo, RoleRepository roleRepo, PasswordEncoder encoder, String username, String email, Role.RoleType roleType) {
+    private User seedUser(UserRepository userRepo, RoleRepository roleRepo, PasswordEncoder encoder, String username, String email, Role.RoleType roleType, String password) {
         Role role = roleRepo.findByName(roleType).orElseThrow();
         User user = userRepo.findByUsername(username).orElseGet(() -> {
             User newUser = new User();
             newUser.setUsername(username);
             return newUser;
         });
-        user.setPassword(encoder.encode(username));
+        user.setPassword(encoder.encode(password));
         user.setEmail(email);
-        user.setFirstName(username.split("@")[0]);
+        user.setFirstName(username.contains("@") ? username.split("@")[0] : username);
         user.setLastName("BNA");
         user.setEnabled(true);
         user.setRoles(new HashSet<>(Collections.singletonList(role)));

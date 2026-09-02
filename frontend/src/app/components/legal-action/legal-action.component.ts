@@ -194,7 +194,7 @@ import { ReferentielService, Tribunal } from '../../services/referentiel.service
           </div>
 
           <!-- PAGINATION -->
-          <div class="pagination-footer slideIn" *ngIf="totalPages > 1">
+          <div class="pagination-footer slideIn" *ngIf="totalElements > 0">
             <div class="pagination-info">
               Affichage de <b>{{ filteredProcedures.length }}</b> sur <b>{{ totalElements }}</b> procédures
             </div>
@@ -381,7 +381,32 @@ import { ReferentielService, Tribunal } from '../../services/referentiel.service
       font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;
     }
     .btn-primary:hover { background: #00684d; transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 135, 102, 0.3); }
-    .btn-secondary { background: #f1f5f9; color: #475569; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+    .btn-secondary {
+      background: transparent;
+      color: #dc2626;
+      border: 1.5px solid #fca5a5;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+    .btn-secondary:hover {
+      background: #fef2f2;
+      border-color: #ef4444;
+      color: #b91c1c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #f1f5f9;
+    }
     .search-filter-bar { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px 24px; display: flex; align-items: center; gap: 20px; }
     .search-box { flex: 1; display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1.5px solid #f1f5f9; border-radius: 10px; padding: 10px 16px; }
     .search-box input { border: none; background: transparent; width: 100%; font-size: 14px; outline: none; }
@@ -596,12 +621,12 @@ export class LegalActionComponent implements OnInit {
 
   loadData(): void {
     this.loading = true;
-    this.legalService.getAllProcedures(this.currentPage, this.pageSize).subscribe({
+    this.legalService.getAllProcedures(this.currentPage, this.pageSize, this.searchTerm, this.filterType, this.filterStatut).subscribe({
       next: data => {
         this.procedures = data.content;
+        this.filteredProcedures = data.content; // Server-side filtered
         this.totalElements = data.totalElements;
         this.totalPages = data.totalPages;
-        this.filterProcedures();
         this.loading = false;
       },
       error: () => {
@@ -618,15 +643,15 @@ export class LegalActionComponent implements OnInit {
   }
 
   filterProcedures(): void {
-    this.filteredProcedures = this.procedures.filter(p => {
-      const matchSearch = !this.searchTerm || p.titre.toLowerCase().includes(this.searchTerm.toLowerCase()) || p.id?.toString().includes(this.searchTerm);
-      const matchType = this.filterType === 'ALL' || p.type === this.filterType;
-      const matchStatut = this.filterStatut === 'ALL' || p.statut === this.filterStatut;
-      return matchSearch && matchType && matchStatut;
-    });
+    this.currentPage = 0; // Reset to first page on filter change
+    this.loadData();
   }
 
-  setType(t: string): void { this.filterType = t; this.filterProcedures(); }
+  setType(t: string): void { 
+    this.filterType = t; 
+    this.currentPage = 0;
+    this.loadData(); 
+  }
   getValidatedCount(): number { return this.procedures.filter(p => p.statut === 'VALIDEE').length; }
   getPendingCount(): number  { return this.procedures.filter(p => p.statut === 'EN_COURS').length; }
   getAffaireRef(id: number): string { const a = this.affaires.find(af => af.id === id); return a ? a.referenceJudiciaire : `Aff. #${id}`; }
@@ -643,13 +668,37 @@ export class LegalActionComponent implements OnInit {
   }
   onEditProcedure(p: any): void {
     this.isEditing = true;
-    this.activeProcedure = { ...p };
+    // Copier seulement les champs nécessaires pour éviter les erreurs de sérialisation
+    this.activeProcedure = {
+      id: p.id,
+      titre: p.titre,
+      type: p.type,
+      statut: p.statut,
+      description: p.description,
+      affaireId: p.affaireId ?? p.affaire?.id
+    };
     this.showModal = true;
   }
   closeModal(): void { this.showModal = false; }
   onSubmit(): void {
-    const obs = this.isEditing ? this.legalService.updateProcedure(this.activeProcedure.id, this.activeProcedure) : this.legalService.createProcedure(this.activeProcedure);
-    obs.subscribe(() => { this.loadData(); this.closeModal(); });
+    const payload = {
+      id: this.activeProcedure.id,
+      titre: this.activeProcedure.titre,
+      type: this.activeProcedure.type,
+      statut: this.activeProcedure.statut,
+      description: this.activeProcedure.description,
+      affaireId: this.activeProcedure.affaireId
+    };
+    const obs = this.isEditing
+      ? this.legalService.updateProcedure(this.activeProcedure.id, payload)
+      : this.legalService.createProcedure(payload);
+    obs.subscribe({
+      next: () => { this.loadData(); this.closeModal(); },
+      error: (err) => {
+        console.error('Erreur lors de la sauvegarde:', err);
+        alert('Erreur : ' + (err?.error?.message || err?.message || 'Une erreur est survenue. Vérifiez la console.'));
+      }
+    });
   }
   onDelete(id: number): void {
     this.confirmService.open({ title: 'Supprimer', message: 'Supprimer cette procédure ?' }).subscribe(c => {

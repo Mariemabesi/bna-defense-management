@@ -24,10 +24,9 @@ public class PermissionService {
         User currentUser = getCurrentUser(authentication);
         if (isSuper(currentUser)) return true;
 
-        Dossier dossier = dossierRepository.findById(dossierId)
-                .orElseThrow(() -> new RuntimeException("Dossier non trouvé"));
-
-        return isOwnerOrManager(currentUser, dossier.getAssignedCharge());
+        return dossierRepository.findById(dossierId)
+                .map(d -> isOwnerOrManager(currentUser, d.getAssignedCharge()))
+                .orElse(true);
     }
 
     public boolean canPreValidateFrais(Authentication authentication, Long fraisId) {
@@ -41,14 +40,9 @@ public class PermissionService {
             return false;
         }
 
-        com.bna.defense.entity.Frais frais = fraisRepository.findById(fraisId)
-                .orElseThrow(() -> new RuntimeException("Frais non trouvé"));
-        
-        User assignedCharge = frais.getAffaire().getDossier().getAssignedCharge();
-        
-        // A Pré-validateur can only pre-validate for their assigned Chargés
-        // A Validateur can also pre-validate if they want (they oversee the whole branch)
-        return isOwnerOrManager(currentUser, assignedCharge);
+        return fraisRepository.findById(fraisId)
+                .map(f -> isOwnerOrManager(currentUser, f.getAffaire().getDossier().getAssignedCharge()))
+                .orElse(true);
     }
 
     public boolean canValidateFrais(Authentication authentication, Long fraisId) {
@@ -61,13 +55,9 @@ public class PermissionService {
             return false;
         }
 
-        com.bna.defense.entity.Frais frais = fraisRepository.findById(fraisId)
-                .orElseThrow(() -> new RuntimeException("Frais non trouvé"));
-        
-        User assignedCharge = frais.getAffaire().getDossier().getAssignedCharge();
-        
-        // A Validateur can validate for anyone in their hierarchy branch
-        return isOwnerOrManager(currentUser, assignedCharge);
+        return fraisRepository.findById(fraisId)
+                .map(f -> isOwnerOrManager(currentUser, f.getAffaire().getDossier().getAssignedCharge()))
+                .orElse(true);
     }
 
     private User getCurrentUser(Authentication authentication) {

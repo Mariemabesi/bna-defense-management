@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { WebSocketService } from './web-socket.service';
 
 export interface Notification {
     id: number;
@@ -27,9 +28,36 @@ export class NotificationService {
 
     private apiUrl = '/api/notifications';
 
-    constructor(private http: HttpClient) {
+    constructor(
+        private http: HttpClient,
+        private webSocketService: WebSocketService
+    ) {
         this.refreshNotifications();
-        setInterval(() => this.refreshNotifications(), 30000);
+        
+        // Listen for real-time notifications via WebSocket
+        this.webSocketService.notification$.subscribe((notif: Notification) => {
+            const current = this.notificationsSubject.value;
+            // Avoid duplicate additions if already fetched
+            if (!current.some(n => n.id === notif.id)) {
+                this.notificationsSubject.next([notif, ...current]);
+                this.unreadCountSubject.next(this.unreadCountSubject.value + 1);
+            }
+        });
+
+        // Listen for global real-time administrative alerts via WebSocket
+        this.webSocketService.alert$.subscribe((alert: any) => {
+            const notif: Notification = {
+                id: Date.now(), // temporary local id
+                message: alert.message,
+                role: 'ROLE_ADMIN',
+                type: alert.type || 'INFO',
+                timestamp: alert.timestamp || new Date().toISOString(),
+                read: false
+            };
+            const current = this.notificationsSubject.value;
+            this.notificationsSubject.next([notif, ...current]);
+            this.unreadCountSubject.next(this.unreadCountSubject.value + 1);
+        });
     }
 
     // Bridge for legacy components or quick UI alerts

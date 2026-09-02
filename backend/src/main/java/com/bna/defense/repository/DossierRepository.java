@@ -120,6 +120,13 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
            "WHERE d.statut = :statut AND d.financialsFinalized = false AND d.assignedCharge = :user")
     List<Dossier> findByStatutAndFinancialsFinalizedFalseAndAssignedCharge(Dossier.StatutDossier statut, User user);
 
+    @Query("SELECT d FROM Dossier d " +
+           "LEFT JOIN FETCH d.avocat " +
+           "LEFT JOIN FETCH d.huissier " +
+           "LEFT JOIN FETCH d.expert " +
+           "WHERE d.financialsFinalized = false AND d.assignedCharge = :user")
+    List<Dossier> findByFinancialsFinalizedFalseAndAssignedCharge(User user);
+
     @Query("SELECT d FROM Dossier d LEFT JOIN d.assignedCharge ac " +
            "WHERE d.financialStatut = :statut AND ac.manager = :user")
     List<Dossier> findByFinancialStatutForPreValidateur(@Param("statut") Dossier.FinancialStatut statut, @Param("user") User user);
@@ -142,4 +149,11 @@ public interface DossierRepository extends JpaRepository<Dossier, Long> {
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.data.jpa.repository.Query("UPDATE Dossier d SET d.groupValidateur = null WHERE d.groupValidateur.id = :userId")
     void clearUserLinksForGroupValidateur(@Param("userId") Long userId);
+
+    /**
+     * Find all dossiers linked to a specific PartieLitige (client) by their ID.
+     * Used for the litigation identification feature on the client detail panel.
+     */
+    @Query("SELECT d FROM Dossier d WHERE d.partieLitige.id = :partieLitigeId ORDER BY d.createdAt DESC")
+    List<Dossier> findByPartieLitige_Id(@Param("partieLitigeId") Long partieLitigeId);
 }

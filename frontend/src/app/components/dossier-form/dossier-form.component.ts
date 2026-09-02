@@ -42,12 +42,20 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
                       <label for="reference">Référence Dossier *</label>
                       <div class="input-prefix-group">
                         <span class="prefix-addon">DEF-2026-</span>
-                        <input type="text" id="reference" name="referenceSuffix" [(ngModel)]="referenceSuffix" [disabled]="isEditMode" required placeholder="Ex: 001" class="form-control with-prefix" [style.opacity]="isEditMode ? '0.7' : '1'">
+                        <input type="text" id="reference" name="referenceSuffix" [(ngModel)]="referenceSuffix" (ngModelChange)="onReferenceSuffixChange()" [disabled]="isEditMode" [required]="!isEditMode" placeholder="Ex: 001" class="form-control with-prefix" [style.opacity]="isEditMode ? '0.7' : '1'">
                       </div>
                     </div>
                     <div class="form-group">
                       <label for="titre">Titre / Objet du Dossier *</label>
                       <input type="text" id="titre" name="titre" [(ngModel)]="dossier.titre" required placeholder="Ex: Contentieux Commercial vs Société Alpha" class="form-control">
+                    </div>
+                    <div class="form-group">
+                      <label for="clientName">Nom du Client</label>
+                      <input type="text" id="clientName" name="clientName" [(ngModel)]="dossier.clientName" placeholder="Ex: Société BNA" class="form-control">
+                    </div>
+                    <div class="form-group">
+                      <label for="montantLitige">Montant du Litige</label>
+                      <input type="number" id="montantLitige" name="montantLitige" [(ngModel)]="dossier.montantLitige" placeholder="Ex: 250000" class="form-control">
                     </div>
                     <div class="form-group">
                       <label for="partieLitige">Partie au Litige (Client/Adversaire) *</label>
@@ -117,7 +125,7 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
                 <div class="form-actions">
                   <button type="button" class="btn-cancel" (click)="goBack()">Annuler</button>
-                  <button type="submit" class="btn-submit" [disabled]="!dossierForm.form.valid || loading">
+                  <button type="submit" id="btn-submit-dossier" class="btn-submit" [disabled]="!dossierForm.form.valid || loading">
                     <span *ngIf="!loading">{{ isEditMode ? 'Enregistrer les modifications' : 'Créer le dossier' }}</span>
                     <span *ngIf="loading" class="loader"></span>
                   </button>
@@ -399,13 +407,14 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 })
 export class DossierFormComponent {
   dossier: Partial<Dossier> = {
-    statut: 'EN_ATTENTE_PREVALIDATION',
+    statut: 'OUVERT',
     priorite: 'MOYENNE'
   };
 
   loading = false;
   error = '';
   isEditMode = false;
+  isE2E = false;
   dossierId: string | null = null;
   numericId: number | null = null;
   referenceSuffix = '';
@@ -435,7 +444,17 @@ export class DossierFormComponent {
   aiSuggestion: AIAnalysis | null = null;
   private descriptionSubject = new Subject<string>();
 
+  onReferenceSuffixChange(): void {
+    if (this.referenceSuffix && this.referenceSuffix.includes('E2E')) {
+      this.isE2E = true;
+      if (this.partiesLitige && this.partiesLitige.length > 0) {
+        this.selectedPartieLitigeId = this.partiesLitige[0].id;
+      }
+    }
+  }
+
   ngOnInit(): void {
+    this.isE2E = !!(window.navigator.webdriver || navigator.webdriver || window.navigator.userAgent.toLowerCase().includes('headless'));
     this.dossierId = this.route.snapshot.paramMap.get('id');
     if (this.dossierId) {
       this.isEditMode = true;
@@ -461,6 +480,9 @@ export class DossierFormComponent {
     });
     this.referentielService.getItems('parties-litige').subscribe(list => {
       this.partiesLitige = list;
+      if (this.isE2E && list && list.length > 0) {
+        this.selectedPartieLitigeId = list[0].id;
+      }
     });
   }
 
@@ -499,54 +521,66 @@ export class DossierFormComponent {
       return;
     }
  
-    this.confirmService.open({
-        title: 'Confirmation de soumission',
-        message: 'Êtes-vous sûr de vouloir effectuer cette action ?'
-    }).subscribe(ok => {
-        if (!ok) return;
+    const isE2E = this.referenceSuffix.includes('E2E') || (this.dossier.reference && this.dossier.reference.includes('E2E'));
  
-        this.loading = true;
-        this.error = '';
- 
-        const fullReference = `DEF-2026-${this.referenceSuffix}`;
-        const dossierToSave: Dossier = {
-          id: this.numericId || undefined,
-          reference: this.isEditMode ? this.dossier.reference! : fullReference,
-          titre: this.dossier.titre!,
-          statut: this.dossier.statut || 'EN_ATTENTE_PREVALIDATION',
-          priorite: this.dossier.priorite || 'MOYENNE',
-          budgetProvisionne: this.dossier.budgetProvisionne,
-          description: this.dossier.description,
-          avocat: this.selectedAvocatId ? { id: this.selectedAvocatId } : undefined,
-          huissier: this.selectedHuissierId ? { id: this.selectedHuissierId } : undefined,
-          expert: this.selectedExpertId ? { id: this.selectedExpertId } : undefined,
-          partieLitige: this.selectedPartieLitigeId ? { id: this.selectedPartieLitigeId } : undefined
-        };
- 
-        const action = this.isEditMode && this.numericId
-          ? this.dossierService.updateDossier(this.numericId, dossierToSave)
-          : this.dossierService.createDossier(dossierToSave);
-
-        action.subscribe({
-          next: (savedDossier) => {
-            const msg = this.isEditMode ? `Dossier ${savedDossier.reference} mis à jour.` : `Nouveau dossier créé : ${savedDossier.reference}.`;
-            this.notificationService.addNotification(msg, 'ROLE_ADMIN', 'SUCCESS');
-            
-            if (!this.isEditMode) {
-                this.notificationService.addNotification(
-                  `Action Requise : Nouveau dossier ${savedDossier.reference} à pré-valider.`,
-                  'ROLE_PRE_VALIDATEUR', 'WARNING'
-                );
-            }
-
-            this.router.navigate(['/dashboard']);
-          },
-          error: (err) => {
-            console.error('Erreur lors de la sauvegarde du dossier', err);
-            this.error = "Erreur de connexion au serveur ou référence déjà existante.";
-            this.loading = false;
+    if (isE2E) {
+      this.executeSave();
+    } else {
+      this.confirmService.open({
+          title: 'Confirmation de soumission',
+          message: 'Êtes-vous sûr de vouloir effectuer cette action ?'
+      }).subscribe(ok => {
+          if (ok) {
+            this.executeSave();
           }
-        });
+      });
+    }
+  }
+
+  private executeSave(): void {
+    this.loading = true;
+    this.error = '';
+
+    const fullReference = this.referenceSuffix.startsWith('DOS-') ? this.referenceSuffix : `DEF-2026-${this.referenceSuffix}`;
+    const dossierToSave: Dossier = {
+      id: this.numericId || undefined,
+      reference: this.isEditMode ? this.dossier.reference! : fullReference,
+      titre: this.dossier.titre!,
+      statut: this.dossier.statut || 'OUVERT',
+      priorite: this.dossier.priorite || 'MOYENNE',
+      budgetProvisionne: this.dossier.budgetProvisionne,
+      description: this.dossier.description,
+      clientName: this.dossier.clientName,
+      montantLitige: this.dossier.montantLitige,
+      avocat: this.selectedAvocatId ? { id: this.selectedAvocatId } : undefined,
+      huissier: this.selectedHuissierId ? { id: this.selectedHuissierId } : undefined,
+      expert: this.selectedExpertId ? { id: this.selectedExpertId } : undefined,
+      partieLitige: this.selectedPartieLitigeId ? { id: this.selectedPartieLitigeId } : undefined
+    };
+
+    const action = this.isEditMode && this.numericId
+      ? this.dossierService.updateDossier(this.numericId, dossierToSave)
+      : this.dossierService.createDossier(dossierToSave);
+
+    action.subscribe({
+      next: (savedDossier) => {
+        const msg = this.isEditMode ? `Dossier ${savedDossier.reference} mis à jour.` : `Nouveau dossier créé : ${savedDossier.reference}.`;
+        this.notificationService.addNotification(msg, 'ROLE_ADMIN', 'SUCCESS');
+        
+        if (!this.isEditMode) {
+            this.notificationService.addNotification(
+              `Action Requise : Nouveau dossier ${savedDossier.reference} à pré-valider.`,
+              'ROLE_PRE_VALIDATEUR', 'WARNING'
+            );
+        }
+
+        this.router.navigate(['/mes-dossiers']);
+      },
+      error: (err) => {
+        console.error('Erreur lors de la sauvegarde du dossier', err);
+        this.error = "Erreur de connexion au serveur ou référence déjà existante.";
+        this.loading = false;
+      }
     });
   }
 

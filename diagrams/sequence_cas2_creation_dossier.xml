@@ -1,0 +1,158 @@
+<mxGraphModel dx="1422" dy="762" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- Title -->
+    <mxCell id="title" value="Cas 2 : Création d'un Dossier Juridique — Diagramme de Séquence MVC avec Alt [Succès / Erreur]" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="100" y="20" width="1000" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- Lifeline headers -->
+    <mxCell id="lh1" value="Chargé de Dossier" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="70" y="80" width="30" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="lh2" value="View&#xa;(dossier-form.component.html)" style="shape=umlBoundary;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="230" y="80" width="50" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh3" value="Controller&#xa;(dossier-form.component.ts)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="420" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh4" value="Service&#xa;(dossier.service.ts)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="605" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh5" value="REST Controller&#xa;(DossierController.java)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="790" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh6" value="Business Service&#xa;(DossierService.java)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="980" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh7" value="Microservice IA&#xa;(FastAPI / RedCell)" style="shape=umlControl;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#009688;strokeColor=#006655;fontColor=#ffffff;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1170" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+    <mxCell id="lh8" value="Repository / DB&#xa;(DossierRepository + PostgreSQL)" style="shape=umlEntity;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontStyle=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1375" y="80" width="40" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- Lifelines -->
+    <mxCell id="ll1v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="85" y="140" as="sourcePoint"/><mxPoint x="85" y="960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll2v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="255" y="140" as="sourcePoint"/><mxPoint x="255" y="960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll3v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="140" as="sourcePoint"/><mxPoint x="440" y="960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll4v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="625" y="140" as="sourcePoint"/><mxPoint x="625" y="960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll5v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="810" y="140" as="sourcePoint"/><mxPoint x="810" y="960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll6v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="140" as="sourcePoint"/><mxPoint x="1000" y="960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll7v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#009688;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1190" y="140" as="sourcePoint"/><mxPoint x="1190" y="960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="ll8v" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1395" y="140" as="sourcePoint"/><mxPoint x="1395" y="960" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- Messages Flow before conditional check -->
+    <mxCell id="m1" value="1. Remplit le formulaire Dossier" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#6c8ebf;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="85" y="180" as="sourcePoint"/><mxPoint x="255" y="180" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" value="2. submit(dossierForm)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="255" y="220" as="sourcePoint"/><mxPoint x="440" y="220" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" value="3. valider formulaire (Angular Validators)" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="360" y="243" width="220" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="m4" value="4. createDossier(dossierData)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="285" as="sourcePoint"/><mxPoint x="625" y="285" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5" value="5. POST /api/dossiers (DossierRequest DTO)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="625" y="325" as="sourcePoint"/><mxPoint x="810" y="325" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6" value="6. vérifier JWT + rôle CHARGE_DOSSIER ✅" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="735" y="348" width="250" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="m7" value="7. createDossier(dossierRequest)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=10;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="810" y="390" as="sourcePoint"/><mxPoint x="1000" y="390" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ALTERNATIVE FRAME START -->
+    <mxCell id="altFrame" value="alt [Création du Dossier]" style="shape=umlFrame;whiteSpace=wrap;html=1;width=160;height=30;fontSize=10;fontStyle=1;align=left;verticalAlign=top;spacingLeft=10;fillColor=none;strokeColor=#ff0000;strokeWidth=1.5;" vertex="1" parent="1">
+      <mxGeometry x="50" y="420" width="1410" height="520" as="geometry" />
+    </mxCell>
+
+    <!-- CAS 1: SUCCÈS -->
+    <mxCell id="cas1Text" value="[Cas 1 : Création réussie]" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#008766;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="425" width="200" height="20" as="geometry" />
+    </mxCell>
+    <mxCell id="m8" value="8. save(Dossier entity)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=9;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="450" as="sourcePoint"/><mxPoint x="1395" y="450" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9" value="9. Dossier sauvegardé (id, numéro)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#666666;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1395" y="485" as="sourcePoint"/><mxPoint x="1000" y="485" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10" value="10. POST /analyze (données du dossier)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=9;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="520" as="sourcePoint"/><mxPoint x="1190" y="520" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m11" value="11. AiResult (analyse, recommandation)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#009688;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1190" y="560" as="sourcePoint"/><mxPoint x="1000" y="560" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m12" value="12. save(AiResult entity)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=9;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="600" as="sourcePoint"/><mxPoint x="1395" y="600" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m13" value="13. DossierResponse DTO" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="645" as="sourcePoint"/><mxPoint x="810" y="645" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m14" value="14. HTTP 201 Created + JSON" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="810" y="685" as="sourcePoint"/><mxPoint x="625" y="685" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m15" value="15. Observable&lt;DossierResponse&gt;" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="625" y="725" as="sourcePoint"/><mxPoint x="440" y="725" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m16" value="16. afficher confirmation + numéro dossier" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=9;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="765" as="sourcePoint"/><mxPoint x="255" y="765" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m17" value="17. ✅ Dossier créé + analyse IA affichée" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="255" y="805" as="sourcePoint"/><mxPoint x="85" y="805" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+    <!-- ALTERNATIVE SEPARATOR -->
+    <mxCell id="altSep" value="" style="endArrow=none;dashed=1;html=1;strokeColor=#ff0000;strokeWidth=1.5;" edge="1" parent="1">
+      <mxGeometry as="geometry">
+        <mxPoint x="50" y="835" as="sourcePoint"/>
+        <mxPoint x="1460" y="835" as="targetPoint"/>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- CAS 2: ERREUR (RÉFÉRENCE DÉJÀ EXISTANTE) -->
+    <mxCell id="cas2Text" value="[Cas 2 : Erreur - Référence de dossier déjà existante]" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#b91c1c;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="845" width="400" height="20" as="geometry" />
+    </mxCell>
+    <mxCell id="m8_err" value="8. save(Dossier) - Erreur de contrainte d'unicité" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;fontSize=9;strokeColor=#9673a6;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="1000" y="865" as="sourcePoint"/><mxPoint x="1395" y="865" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9_err" value="9. Lever exception DossierAlreadyExistsException" style="text;html=1;strokeColor=#9673a6;fillColor=#f8d7da;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;fontColor=#721c24;" vertex="1" parent="1">
+      <mxGeometry x="910" y="885" width="250" height="25" as="geometry" />
+    </mxCell>
+    <mxCell id="m10_err" value="10. HTTP 400 Bad Request (La référence existe déjà)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#b85450;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="810" y="700" as="sourcePoint"/><mxPoint x="625" y="700" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m11_err" value="11. Retourner erreur (catchError)" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#d79b00;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="625" y="725" as="sourcePoint"/><mxPoint x="440" y="725" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m12_err" value="12. Afficher alerte 'Erreur : La référence existe déjà'" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#d6b656;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="440" y="915" as="sourcePoint"/><mxPoint x="255" y="915" as="targetPoint"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m13_err" value="13. ❌ Alerte rouge de création échouée affichée" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=open;endFill=1;dashed=1;fontSize=9;strokeColor=#82b366;" edge="1" parent="1">
+      <mxGeometry as="geometry"><mxPoint x="255" y="935" as="sourcePoint"/><mxPoint x="85" y="935" as="targetPoint"/></mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

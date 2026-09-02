@@ -1,5 +1,6 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FraisService, Frais } from '../../services/frais.service';
 import { DossierService } from '../../services/dossier.service';
 import { AuthService } from '../../services/auth.service';
@@ -154,6 +155,9 @@ import { FraisDeclarationFormComponent } from './frais-declaration-form.componen
                        <button class="btn-action view-btn" title="Télécharger" (click)="onDownloadAttachment(f)" *ngIf="f.attachments?.length">
                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                        </button>
+                       <button class="btn-action send-treasury-btn" title="Envoyer à la trésorerie" (click)="onSendToTreasury(f)" *ngIf="f.statut === 'VALIDE' && (isValidateur() || isAdmin())">
+                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                       </button>
                     </div>
                   </td>
                 </tr>
@@ -199,7 +203,8 @@ import { FraisDeclarationFormComponent } from './frais-declaration-form.componen
         <app-frais-finalisation-form 
           *ngIf="selectedDossier" 
           [dossier]="selectedDossier" 
-          (close)="selectedDossier = null"
+          [initialBeneficiary]="presetBeneficiary"
+          (close)="onFinalizeClose()"
           (workflowAction)="onWorkflowAction($event)">
         </app-frais-finalisation-form>
 
@@ -291,6 +296,9 @@ import { FraisDeclarationFormComponent } from './frais-declaration-form.componen
     .approve-btn { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
     .approve-btn:hover { background: #16a34a; color: white; border-color: #16a34a; }
 
+    .send-treasury-btn { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
+    .send-treasury-btn:hover { background: #7c3aed; color: white; border-color: #7c3aed; }
+
     .more-actions-wrapper { position: relative; display: flex; align-items: center; }
     .actions-dropdown {
       position: absolute;
@@ -359,6 +367,7 @@ export class MesFraisComponent implements OnInit {
   myDossiers: Dossier[] = [];
   activeTab: 'FINAL' | 'BUDGET' | 'LIST' = 'FINAL';
   selectedDossier: Dossier | null = null;
+  presetBeneficiary?: 'avocat' | 'huissier' | 'expert';
   showDeclaration = false;
   showHistory = false;
   historyList: any[] = [];
@@ -369,6 +378,7 @@ export class MesFraisComponent implements OnInit {
   totalElements = 0;
 
   constructor(
+    private route: ActivatedRoute,
     private fraisService: FraisService,
     private dossierService: DossierService,
     private authService: AuthService,
@@ -381,7 +391,25 @@ export class MesFraisComponent implements OnInit {
       this.loadFrais();
       this.loadDossiersToFinalize();
       this.loadMyDossiers();
+
+      this.route.queryParams.subscribe(params => {
+        const dossierId = params['dossierId'];
+        const beneficiary = params['beneficiary'];
+        if (dossierId) {
+          this.dossierService.getDossierById(+dossierId).subscribe(d => {
+            this.selectedDossier = d;
+            if (beneficiary === 'avocat' || beneficiary === 'huissier' || beneficiary === 'expert') {
+              this.presetBeneficiary = beneficiary;
+            }
+          });
+        }
+      });
     }
+  }
+
+  onFinalizeClose() {
+    this.selectedDossier = null;
+    this.presetBeneficiary = undefined;
   }
 
   toggleActionMenu(event: Event, id: number) {
@@ -509,5 +537,27 @@ export class MesFraisComponent implements OnInit {
   isCharge(): boolean { return this.authService.hasRole('ROLE_CHARGE_DOSSIER'); }
   isPreValidateur(): boolean { return this.authService.hasRole('ROLE_PRE_VALIDATEUR'); }
   isValidateur(): boolean { return this.authService.hasRole('ROLE_VALIDATEUR'); }
+  isAdmin(): boolean { return this.authService.hasRole('ROLE_ADMIN'); }
   getBadgeClass(s: string): string { return s; }
+
+  onSendToTreasury(f: any): void {
+    this.confirmService.open({
+      title: 'Envoi à la trésorerie',
+      message: `Voulez-vous envoyer les frais "${f.libelle}" (${f.montant} TND) à la trésorerie ?`,
+      confirmLabel: 'Oui, envoyer',
+      cancelLabel: 'Annuler'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.fraisService.sendToTreasury(f.id!).subscribe({
+          next: () => {
+            this.notificationService.addNotification("Opération réussie. Les frais ont été envoyés à la trésorerie.", "ROLE_ADMIN", "SUCCESS");
+            this.loadFrais();
+          },
+          error: (err) => {
+            this.notificationService.addNotification("Erreur lors de l'envoi : " + (err.error?.message || "Échec de l'action"), "ROLE_ADMIN", "WARNING");
+          }
+        });
+      }
+    });
+  }
 }

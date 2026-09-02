@@ -2,6 +2,8 @@ export interface Dossier {
     id?: number;
     reference: string;
     titre: string;
+    clientName?: string;
+    montantLitige?: number;
     priorite?: 'HAUTE' | 'MOYENNE' | 'BASSE';
     budgetProvisionne?: number;
     fraisInitial?: number;

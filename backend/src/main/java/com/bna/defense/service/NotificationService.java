@@ -4,6 +4,7 @@ import com.bna.defense.entity.Dossier;
 import com.bna.defense.entity.Notification;
 import com.bna.defense.entity.User;
 import com.bna.defense.repository.NotificationRepository;
+import com.bna.defense.websocket.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +17,20 @@ public class NotificationService {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    @Autowired
+    private WebSocketService webSocketService;
+
     @Transactional
     public Notification create(User recipient, String message, String type, Dossier dossier) {
         Notification n = new Notification(recipient, message, type, dossier);
-        return notificationRepository.save(n);
+        Notification saved = notificationRepository.save(n);
+        
+        // Push in real-time over WebSocket
+        if (recipient != null && recipient.getUsername() != null) {
+            webSocketService.sendNotification(recipient.getUsername(), saved.getId(), message, type);
+        }
+        
+        return saved;
     }
 
     public List<Notification> getForUser(User user) {

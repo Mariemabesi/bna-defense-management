@@ -29,15 +29,25 @@ public class ProcedureService {
         this.userRepository = userRepository;
     }
 
-    public org.springframework.data.domain.Page<ProcedureJudiciaire> getAllProcedures(UserDetailsImpl userDetails, org.springframework.data.domain.Pageable pageable) {
+    public org.springframework.data.domain.Page<ProcedureJudiciaire> getAllProcedures(
+            UserDetailsImpl userDetails, 
+            String searchTerm, 
+            ProcedureJudiciaire.TypeProcedure type, 
+            ProcedureJudiciaire.StatutProcedure statut, 
+            org.springframework.data.domain.Pageable pageable) {
         boolean isSuper = isGlobalSupervisor(userDetails);
         boolean isPreVal = hasRole(userDetails, "ROLE_PRE_VALIDATEUR");
         
+        String wildcardSearch = (searchTerm != null && !searchTerm.isBlank()) ? "%" + searchTerm + "%" : null;
+
         return procedureRepository.findAllPaginated(
             userDetails.getId(),
             userDetails.getUsername(),
             isSuper,
             isPreVal,
+            wildcardSearch,
+            type,
+            statut,
             pageable
         );
     }

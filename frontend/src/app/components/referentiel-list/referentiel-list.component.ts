@@ -130,11 +130,28 @@ interface RefConfig {
                 </tbody>
              </table>
 
-             <div class="registry-footer" *ngIf="totalPages > 1">
-                <div class="pagination-info">Page {{ page + 1 }} / {{ totalPages }}</div>
+             <div class="registry-footer" *ngIf="totalItems > 0">
+                <div class="pagination-info">
+                   Affichage de <b>{{ items.length }}</b> sur <b>{{ totalItems }}</b> entrées
+                </div>
                 <div class="pagination-controls">
-                   <button [disabled]="page === 0" (click)="goToPage(page - 1)">‹</button>
-                   <button [disabled]="page >= totalPages - 1" (click)="goToPage(page + 1)">›</button>
+                   <button class="btn-page" [disabled]="page === 0" (click)="goToPage(page - 1)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                      Précédent
+                   </button>
+                   <div class="page-numbers">
+                      <button
+                         *ngFor="let n of getPageArray()"
+                         class="btn-number"
+                         [class.active]="n === page"
+                         (click)="goToPage(n)">
+                         {{ n + 1 }}
+                      </button>
+                   </div>
+                   <button class="btn-page" [disabled]="page >= totalPages - 1" (click)="goToPage(page + 1)">
+                      Suivant
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                   </button>
                 </div>
              </div>
 
@@ -389,6 +406,27 @@ interface RefConfig {
     
     .rs-loader-mini { font-size: 12px; color: #94a3b8; font-style: italic; }
     .rs-empty-links { font-size: 13px; color: #94a3b8; font-style: italic; background: #f8fafc; padding: 16px; border-radius: 12px; text-align: center; border: 1.5px dashed #e2e8f0; }
+
+    /* PAGINATION */
+    .registry-footer { padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; }
+    .pagination-info { font-size: 13px; color: #64748b; font-weight: 600; }
+    .pagination-info b { color: #1e293b; }
+    .pagination-controls { display: flex; align-items: center; gap: 10px; }
+    .page-numbers { display: flex; gap: 6px; }
+    .btn-page {
+      background: white; border: 1.5px solid #e2e8f0; padding: 8px 16px; border-radius: 10px;
+      font-size: 13px; font-weight: 700; color: #475569; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: all 0.2s; font-family: inherit;
+    }
+    .btn-page:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+    .btn-page:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-number {
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      background: white; border: 1.5px solid #e2e8f0; border-radius: 10px;
+      font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s; font-family: inherit;
+    }
+    .btn-number:hover { border-color: #cbd5e1; color: #1e293b; }
+    .btn-number.active { background: #008766; border-color: #008766; color: white; }
   `]
 })
 export class ReferentielListComponent implements OnInit, OnDestroy {
@@ -597,6 +635,15 @@ export class ReferentielListComponent implements OnInit, OnDestroy {
   onSearchChange(q: string) { this.searchSubject.next(q); }
 
   goToPage(p: number) { this.page = p; this.loadData(); }
+
+  getPageArray(): number[] {
+    const maxVisible = 5;
+    const half = Math.floor(maxVisible / 2);
+    let start = Math.max(0, this.page - half);
+    let end = Math.min(this.totalPages, start + maxVisible);
+    if (end - start < maxVisible) start = Math.max(0, end - maxVisible);
+    return Array.from({ length: end - start }, (_, i) => start + i);
+  }
 
   onSelectItem(item: any) { 
     this.selectedItem = item; 

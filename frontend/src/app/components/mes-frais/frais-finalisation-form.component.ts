@@ -36,37 +36,34 @@ import { FactureFormComponent } from './facture-form.component';
           <div class="invoice-section">
             <h4 class="section-title">Sélection du Bénéficiaire (Automatique)</h4>
             <div class="beneficiary-grid">
-              <div class="beneficiary-card" 
+              <div class="beneficiary-card clickable" 
                    [class.active]="activeBeneficiary === 'avocat'"
-                   [class.clickable]="isValide()"
                    (click)="onSelectBeneficiary('avocat')">
                 <div class="b-icon">⚖️</div>
                 <div class="b-info">
                   <span class="b-role">Avocat</span>
                   <span class="b-name">{{ getBeneficiaryName('avocat') }}</span>
-                  <span class="b-action-hint" *ngIf="isValide()">Générer Facture →</span>
+                  <span class="b-action-hint">Générer Facture →</span>
                 </div>
               </div>
-              <div class="beneficiary-card" 
+              <div class="beneficiary-card clickable" 
                    [class.active]="activeBeneficiary === 'huissier'"
-                   [class.clickable]="isValide()"
                    (click)="onSelectBeneficiary('huissier')">
                 <div class="b-icon">📜</div>
                 <div class="b-info">
                   <span class="b-role">Huissier</span>
                   <span class="b-name">{{ getBeneficiaryName('huissier') }}</span>
-                  <span class="b-action-hint" *ngIf="isValide()">Générer Facture →</span>
+                  <span class="b-action-hint">Générer Facture →</span>
                 </div>
               </div>
-              <div class="beneficiary-card" 
+              <div class="beneficiary-card clickable" 
                    [class.active]="activeBeneficiary === 'expert'"
-                   [class.clickable]="isValide()"
                    (click)="onSelectBeneficiary('expert')">
                 <div class="b-icon">🔍</div>
                 <div class="b-info">
                   <span class="b-role">Expert</span>
                   <span class="b-name">{{ getBeneficiaryName('expert') }}</span>
-                  <span class="b-action-hint" *ngIf="isValide()">Générer Facture →</span>
+                  <span class="b-action-hint">Générer Facture →</span>
                 </div>
               </div>
             </div>
@@ -343,6 +340,7 @@ import { FactureFormComponent } from './facture-form.component';
 })
 export class FraisFinalisationFormComponent implements OnInit {
   @Input() dossier!: Dossier;
+  @Input() initialBeneficiary?: 'avocat' | 'huissier' | 'expert';
   @Output() close = new EventEmitter<void>();
   @Output() workflowAction = new EventEmitter<any>();
 
@@ -375,6 +373,11 @@ export class FraisFinalisationFormComponent implements OnInit {
     this.form.autresFraisFinal = this.dossier.autresFraisFinal || 0;
     
     this.calculate();
+
+    if (this.initialBeneficiary) {
+      this.activeBeneficiary = this.initialBeneficiary;
+      this.showFacture = true;
+    }
   }
 
   getStatutLabel(): string {
@@ -399,9 +402,7 @@ export class FraisFinalisationFormComponent implements OnInit {
   onSelectBeneficiary(type: 'avocat' | 'huissier' | 'expert') {
     console.log("Card clicked:", type, "Current Status:", this.dossier.financialStatut);
     this.activeBeneficiary = type;
-    if (this.isValide()) {
-      this.showFacture = true;
-    }
+    this.showFacture = true;
   }
 
   canEdit(): boolean {

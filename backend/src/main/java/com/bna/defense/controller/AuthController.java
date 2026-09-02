@@ -121,10 +121,10 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Erreur : Ce nom d'utilisateur est déjà pris !"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Ce nom d'utilisateur est déjà pris. Veuillez en choisir un autre."));
         }
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Erreur : Cet e-mail est déjà utilisé !"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Cet e-mail est déjà associé à un compte existant."));
         }
 
         try {
@@ -133,6 +133,8 @@ public class AuthController {
             user.setEmail(signUpRequest.getEmail());
             user.setPassword(signUpRequest.getPassword());
             user.setFullName(signUpRequest.getFullName());
+            // New self-registered users start as SUSPENDED — requires admin approval to activate
+            user.setEnabled(false);
         
             if (signUpRequest.getManagerId() != null) {
                 user.setManager(userRepository.findById(signUpRequest.getManagerId()).orElse(null));
@@ -170,9 +172,9 @@ public class AuthController {
             }
 
             userService.createUser(user, roleTypes);
-            return ResponseEntity.ok(new MessageResponse("Utilisateur enregistré avec succès !"));
+            return ResponseEntity.ok(new MessageResponse("Compte créé avec succès ! Votre demande d'accès est en attente de validation par l'administrateur."));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Erreur : " + e.getMessage()));
+            return ResponseEntity.badRequest().body(new MessageResponse("Erreur lors de la création : " + e.getMessage()));
         }
     }
 

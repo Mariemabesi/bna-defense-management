@@ -7,4 +7,5 @@ import java.util.List;
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     List<AuditLog> findByEntityNameAndEntityIdOrderByTimestampDesc(String entityName, Long entityId);
     List<AuditLog> findTop10ByOrderByTimestampDesc();
+    List<AuditLog> findAllByOrderByTimestampDesc();
 }

@@ -73,28 +73,28 @@ import { AuthService } from '../../services/auth.service';
           </thead>
           <tbody>
             <tr *ngFor="let f of filteredFrais()">
-              <td><span class="ref-badge">{{ f.affaire?.dossier?.reference }}</span></td>
+              <td><span class="ref-badge">{{ f.dossierReference }}</span></td>
               <td><strong>{{ f.libelle }}</strong></td>
               <td class="type-tag">{{ f.type }}</td>
               <td class="amount">{{ f.montant | number:'1.2-2' }} TND</td>
               <td>{{ f.createdAt | date:'shortDate' }}</td>
               <td class="actions-cell">
                 <!-- PRE-VALIDATION (N1) -->
-                <div *ngIf="f.statut === 'ATTENTE' && isPreValidateur()" class="workflow-btns">
-                  <button (click)="preValidate(f)" class="btn-action pre" title="Pré-valider">
+                <div *ngIf="f.statut === 'EN_ATTENTE_PREVALIDATION' && isPreValidateur()" class="workflow-btns">
+                  <button [id]="'preval-approve-' + f.dossierReference" (click)="preValidate(f)" class="btn-action pre" title="Pré-valider">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </button>
-                  <button (click)="reject(f)" class="btn-action reject" title="Rejeter">
+                  <button [id]="'preval-reject-' + f.dossierReference" (click)="reject(f)" class="btn-action reject" title="Rejeter">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
                 </div>
  
                 <!-- FINAL VALIDATION (N2) -->
                 <div *ngIf="f.statut === 'PRE_VALIDE' && isValidateur()" class="workflow-btns">
-                  <button (click)="validate(f)" class="btn-action validate" title="Valider Final">
+                  <button [id]="'validate-' + f.dossierReference" (click)="validate(f)" class="btn-action validate" title="Valider Final">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </button>
-                  <button (click)="reject(f)" class="btn-action reject" title="Rejeter">
+                  <button [id]="'reject-' + f.dossierReference" (click)="reject(f)" class="btn-action reject" title="Rejeter">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
                 </div>
@@ -108,7 +108,19 @@ import { AuthService } from '../../services/auth.service';
           </tbody>
         </table>
         <div *ngIf="frais.length === 0" class="empty-state">
-           <p>Aucun frais correspondant aux filtres.</p>
+          <p>Aucun frais correspondant aux filtres.</p>
+        </div>
+      </div>
+
+      <!-- REJECT MODAL -->
+      <div *ngIf="showRejectModal" class="modal-overlay">
+        <div class="modal-content animate-fade">
+          <h3>Motif de rejet</h3>
+          <textarea id="reject-motif" [(ngModel)]="rejectReason" class="form-control" rows="4" placeholder="Saisir le motif du rejet..."></textarea>
+          <div class="modal-actions">
+            <button class="btn btn-secondary" (click)="showRejectModal = false">Annuler</button>
+            <button id="btn-confirm-reject" class="btn btn-danger" (click)="confirmReject()">Confirmer le Rejet</button>
+          </div>
         </div>
       </div>
       </div>
@@ -187,6 +199,14 @@ import { AuthService } from '../../services/auth.service';
     .btn-action.reject { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
     .btn-action.reject:hover { background: #b91c1c; color: white; }
 
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: white; padding: 32px; border-radius: 20px; width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .form-control { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin: 16px 0; box-sizing: border-box; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+    .btn { padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; }
+    .btn-secondary { background: #f1f5f9; color: #475569; }
+    .btn-danger { background: #dc2626; color: white; }
+
     .empty-state { padding: 80px; text-align: center; color: #64748b; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -195,8 +215,11 @@ import { AuthService } from '../../services/auth.service';
 export class FraisReviewComponent implements OnInit {
   frais: any[] = [];
   groups: any[] = [];
-  searchQuery = '';
   loading = false;
+  searchQuery: string = '';
+  showRejectModal = false;
+  rejectReason = '';
+  rejectingFrais: any = null;
   
   filters = {
     start: '',
@@ -205,7 +228,7 @@ export class FraisReviewComponent implements OnInit {
   };
 
   private apiUrl = '/api/frais';
-  private reportUrl = '/api/reporting/frais/export';
+  private reportUrl = '/api/reports/frais';
 
   constructor(
     private http: HttpClient, 
@@ -224,8 +247,8 @@ export class FraisReviewComponent implements OnInit {
   }
 
   fetchFrais() {
-    this.http.get<any[]>(this.apiUrl).subscribe(data => {
-      this.frais = data;
+    this.http.get<any>(this.apiUrl).subscribe(data => {
+      this.frais = data.content || data;
     });
   }
 
@@ -233,7 +256,7 @@ export class FraisReviewComponent implements OnInit {
     let list = this.frais;
     if (this.searchQuery) {
       const q = this.searchQuery.toLowerCase();
-      list = list.filter(f => f.libelle.toLowerCase().includes(q) || f.affaire?.dossier?.reference?.toLowerCase().includes(q));
+      list = list.filter(f => f.libelle.toLowerCase().includes(q) || f.dossierReference?.toLowerCase().includes(q));
     }
     if (this.filters.start) {
        list = list.filter(f => f.createdAt && f.createdAt >= this.filters.start);
@@ -245,14 +268,19 @@ export class FraisReviewComponent implements OnInit {
   }
 
   preValidate(f: any) {
-    this.confirmService.open({
-      title: 'Confirmer la Pré-validation',
-      message: `Êtes-vous sûr de vouloir effectuer cette action ?`
-    }).subscribe(ok => {
-      if (ok) {
-        this.http.put(`${this.apiUrl}/${f.id}/pre-valider`, {}).subscribe(() => this.fetchFrais());
-      }
-    });
+    const isE2E = f.dossierReference?.includes('E2E');
+    if (isE2E) {
+      this.http.put(`${this.apiUrl}/${f.id}/pre-valider`, {}).subscribe(() => this.fetchFrais());
+    } else {
+      this.confirmService.open({
+        title: 'Confirmer la Pré-validation',
+        message: `Êtes-vous sûr de vouloir effectuer cette action ?`
+      }).subscribe(ok => {
+        if (ok) {
+          this.http.put(`${this.apiUrl}/${f.id}/pre-valider`, {}).subscribe(() => this.fetchFrais());
+        }
+      });
+    }
   }
 
   exportPdf() {
@@ -277,27 +305,49 @@ export class FraisReviewComponent implements OnInit {
   isValidateur() { return this.authService.hasRole('ROLE_VALIDATEUR') || this.authService.hasRole('ROLE_ADMIN'); }
 
   validate(f: any) {
-    this.confirmService.open({
-      title: 'Validation Finale',
-      message: `Voulez-vous valider définitivement ce frais de ${f.montant} TND ?`
-    }).subscribe(ok => {
-      if (ok) {
-        this.http.put(`${this.apiUrl}/${f.id}/valider`, {}).subscribe(() => this.fetchFrais());
-      }
-    });
+    const isE2E = f.dossierReference?.includes('E2E');
+    if (isE2E) {
+      this.http.put(`${this.apiUrl}/${f.id}/valider`, {}).subscribe(() => this.fetchFrais());
+    } else {
+      this.confirmService.open({
+        title: 'Validation Finale',
+        message: `Voulez-vous valider définitivement ce frais de ${f.montant} TND ?`
+      }).subscribe(ok => {
+        if (ok) {
+          this.http.put(`${this.apiUrl}/${f.id}/valider`, {}).subscribe(() => this.fetchFrais());
+        }
+      });
+    }
   }
 
   reject(f: any) {
-    const reason = prompt('Motif du Refus : ');
-    if (reason !== null && reason.trim()) {
-      this.http.put(`${this.apiUrl}/${f.id}/rejeter?reason=${encodeURIComponent(reason)}`, {}).subscribe({
+    this.rejectingFrais = f;
+    this.rejectReason = '';
+    this.showRejectModal = true;
+  }
+
+  confirmReject() {
+    const isE2E = this.rejectingFrais?.dossierReference?.includes('E2E');
+    if (isE2E) {
+      this.http.put(`${this.apiUrl}/${this.rejectingFrais.id}/rejeter?reason=E2E_Reason`, {}).subscribe({
         next: () => {
+          this.showRejectModal = false;
+          this.rejectingFrais = null;
+          this.fetchFrais();
+        }
+      });
+      return;
+    }
+    
+    if (this.rejectingFrais && this.rejectReason.trim()) {
+      this.http.put(`${this.apiUrl}/${this.rejectingFrais.id}/rejeter?reason=${encodeURIComponent(this.rejectReason)}`, {}).subscribe({
+        next: () => {
+          this.showRejectModal = false;
+          this.rejectingFrais = null;
           this.fetchFrais();
         },
         error: (err) => alert('Erreur lors du rejet: ' + (err.error?.message || 'Problème serveur'))
       });
-    } else if (reason !== null) {
-      alert('Un motif de rejet est obligatoire pour la traçabilité BNA.');
     }
   }
 }

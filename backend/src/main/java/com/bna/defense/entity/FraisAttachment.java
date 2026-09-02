@@ -9,6 +9,7 @@ public class FraisAttachment extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "frais_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonBackReference
     private Frais frais;
 
     @Column(nullable = false)

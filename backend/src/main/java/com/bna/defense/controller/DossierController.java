@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.security.Principal;
@@ -65,7 +66,7 @@ public class DossierController {
 
     @PostMapping
     @PreAuthorize("hasRole('CHARGE_DOSSIER') or hasRole('ADMIN')")
-    public Dossier createDossier(@RequestBody Dossier dossier, Principal principal) {
+    public Dossier createDossier(@Valid @RequestBody Dossier dossier, Principal principal) {
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
         return dossierService.createDossier(dossier, user);
     }
@@ -486,8 +487,14 @@ public class DossierController {
      */
     @PostMapping("/{id}/nvidia-analyze")
     @PreAuthorize("@permissionService.canAccessDossier(authentication, #id) or hasRole('ADMIN')")
-    public ResponseEntity<Dossier> analyzeWithNvidia(@PathVariable Long id, Principal principal) {
-        return ResponseEntity.ok(dossierService.analyzeWithNvidia(id, principal.getName()));
+    public ResponseEntity<?> analyzeWithNvidia(@PathVariable Long id, Principal principal) {
+        try {
+            return ResponseEntity.ok(dossierService.analyzeWithNvidia(id, principal.getName()));
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
     }
 
 }

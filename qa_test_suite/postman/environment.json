@@ -1,0 +1,105 @@
+{
+  "id": "e81d77cb-002d-4ff5-b9f4-18fa8f949c2a",
+  "name": "BNA Defense Management - QA Local",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "admin_username",
+      "value": "admin",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "admin_password",
+      "value": "admin123",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "charge_username",
+      "value": "charge",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "charge_password",
+      "value": "password123",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "preval_username",
+      "value": "preval",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "preval_password",
+      "value": "password123",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "val_username",
+      "value": "val",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "val_password",
+      "value": "password123",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "temp_dossier_id",
+      "value": "1",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "temp_dossier_ref",
+      "value": "DOS-2026-0001",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "temp_affaire_id",
+      "value": "1",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "temp_procedure_id",
+      "value": "1",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "temp_frais_id",
+      "value": "1",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "temp_user_id",
+      "value": "2",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2026-06-07T19:00:00.000Z",
+  "_postman_exported_using": "Postman/10.0.0"
+}

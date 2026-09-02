@@ -81,6 +81,9 @@ public class User extends BaseEntity {
     public User getManager() { return manager; }
     public void setManager(User manager) { this.manager = manager; }
 
+    public boolean isSuperValidateur() { return superValidateur; }
+    public void setSuperValidateur(boolean superValidateur) { this.superValidateur = superValidateur; }
+
     public boolean isAdmin() {
         return roles != null && roles.stream().anyMatch(r -> r.getName() != null && r.getName().name().equals("ROLE_ADMIN"));
     }
@@ -101,11 +104,5 @@ public class User extends BaseEntity {
         return hasRole("ROLE_VALIDATEUR");
     }
 
-    public boolean isSuperValidateur() {
-        return superValidateur || hasRole("ROLE_SUPER_VALIDATEUR");
-    }
-
-    public void setSuperValidateur(boolean superValidateur) {
-        this.superValidateur = superValidateur;
-    }
+    
 }

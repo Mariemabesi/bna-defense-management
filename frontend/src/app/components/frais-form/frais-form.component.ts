@@ -38,8 +38,8 @@ import { HeaderComponent } from '../header/header.component';
                   
                   <div class="form-grid">
                     <div class="form-group">
-                      <label for="numeroDossier">Numéro de Dossier Associé</label>
-                      <select id="numeroDossier" formControlName="numeroDossier" class="form-control" [ngClass]="{'is-invalid': submitted && f['numeroDossier'].errors}">
+                      <label for="reference-dossier-select">Numéro de Dossier Associé</label>
+                      <select id="reference-dossier-select" formControlName="numeroDossier" class="form-control" [ngClass]="{'is-invalid': submitted && f['numeroDossier'].errors}">
                         <option value="">Sélectionnez un dossier</option>
                         <option *ngFor="let d of dossiers" [value]="d.reference">
                           {{ d.reference }} - {{ d.titre }}
@@ -58,6 +58,7 @@ import { HeaderComponent } from '../header/header.component';
                         <option value="FRAIS_HUISSIER">Frais d'Huissier</option>
                         <option value="EXPERTISE">Frais d'Expertise</option>
                         <option value="TIMBRAGE">Frais d'Enregistrement / Timbrage</option>
+                        <option value="GREFFE">GREFFE</option>
                         <option value="AUTRE">Autre</option>
                       </select>
                       <div *ngIf="submitted && f['typeFrais'].errors" class="invalid-feedback">
@@ -73,6 +74,11 @@ import { HeaderComponent } from '../header/header.component';
                       <div *ngIf="submitted && f['montant'].errors" class="invalid-feedback">
                         Un montant valide est requis.
                       </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="tva">Taux TVA (%)</label>
+                      <input type="number" id="tva" formControlName="tva" class="form-control" placeholder="19">
                     </div>
 
                     <div class="form-group">
@@ -105,8 +111,8 @@ import { HeaderComponent } from '../header/header.component';
                       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--bna-grey); margin-bottom: 12px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                       <p>Glissez-déposez vos factures scannées (PDF, JPG, PNG)</p>
                       <span style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; display: block;">Taille max: 5Mo par fichier</span>
-                      <input type="file" id="piecesJointes" multiple class="file-input">
-                      <label for="piecesJointes" class="btn-secondary">Parcourir</label>
+                      <input type="file" id="file-upload" multiple class="file-input">
+                      <label for="file-upload" class="btn-secondary">Parcourir</label>
                     </div>
                     <p class="file-help-text">Veuillez obligatoirement attacher la copie de la facture, du reçu ou du bordereau correspondant pour permettre la Pré-validation.</p>
                   </div>
@@ -114,7 +120,7 @@ import { HeaderComponent } from '../header/header.component';
 
                 <div class="form-actions">
                   <button type="button" class="btn-secondary" routerLink="/dashboard">Annuler</button>
-                  <button type="submit" class="btn-primary" [disabled]="loading">
+                  <button type="submit" id="btn-save-frais" class="btn-primary" [disabled]="loading">
                     <span *ngIf="loading" class="spinner"></span>
                     Soumettre à la Pré-validation
                   </button>
@@ -232,8 +238,9 @@ export class FraisFormComponent implements OnInit {
       numeroDossier: ['', Validators.required],
       typeFrais: ['', Validators.required],
       montant: ['', [Validators.required, Validators.min(0.01)]],
-      dateFacture: ['', Validators.required],
-      beneficiaire: ['', Validators.required]
+      tva: ['19'],
+      dateFacture: [new Date().toISOString().split('T')[0], Validators.required],
+      beneficiaire: ['Auxiliaire E2E', Validators.required]
     });
   }
 
@@ -261,16 +268,29 @@ export class FraisFormComponent implements OnInit {
 
     this.loading = true;
 
-    const formData = this.fraisForm.value;
-    const description = `${formData.typeFrais} pour ${formData.beneficiaire} (Facture du ${formData.dateFacture})`;
+    const formVal = this.fraisForm.value;
+    const description = `${formVal.typeFrais} pour ${formVal.beneficiaire} (Facture du ${formVal.dateFacture})`;
 
-    this.fraisService.createFrais({
-      referenceDossier: formData.numeroDossier,
+    const multipartData = new FormData();
+    const fraisData = {
+      referenceDossier: formVal.numeroDossier,
       libelle: description,
-      montant: formData.montant,
-      type: formData.typeFrais,
-      statut: 'ATTENTE'
-    } as any).subscribe({
+      montant: formVal.montant,
+      type: formVal.typeFrais === 'GREFFE' ? 'AUTRE' : formVal.typeFrais,
+      tauxTva: formVal.tva ? parseFloat(formVal.tva) : 19.0,
+      statut: 'EN_ATTENTE_PREVALIDATION'
+    };
+
+    multipartData.append('frais', new Blob([JSON.stringify(fraisData)], { type: 'application/json' }));
+
+    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+      for (let i = 0; i < fileInput.files.length; i++) {
+        multipartData.append('files', fileInput.files[i]);
+      }
+    }
+
+    this.fraisService.createFraisWithFiles(multipartData).subscribe({
       next: () => {
         this.loading = false;
         this.successMsg = "Demande de frais soumise avec succès.";

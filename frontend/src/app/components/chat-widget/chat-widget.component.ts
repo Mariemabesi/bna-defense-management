@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService, ChatMessage, ChatPartner } from '../../services/chat.service';
 import { AuthService } from '../../services/auth.service';
-import { Subscription, interval } from 'rxjs';
+import { WebSocketService } from '../../services/web-socket.service';
+import { NotificationService } from '../../services/notification.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-chat-widget',
@@ -178,7 +180,9 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
 
   constructor(
     private chatService: ChatService,
-    private authService: AuthService
+    private authService: AuthService,
+    private webSocketService: WebSocketService,
+    private notificationService: NotificationService
   ) {
     const user = this.authService.currentUserValue;
     if (user) {
@@ -188,14 +192,30 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadPartners();
-    // Poll for new messages every 5 seconds if open
-    this.pollingSub = interval(5000).subscribe(() => {
-      if (this.isOpen) {
-        if (this.selectedPartner) {
-          this.loadHistory(this.selectedPartner.id);
-        } else {
-          this.loadPartners();
-        }
+
+    // Listen for real-time incoming chat messages via WebSocket
+    this.webSocketService.chatMessage$.subscribe((msg: any) => {
+      if (this.selectedPartner && this.selectedPartner.id === msg.senderId) {
+        const chatMsg: ChatMessage = {
+          senderId: msg.senderId,
+          senderName: msg.senderName,
+          content: msg.content,
+          timestamp: msg.timestamp || new Date().toISOString(),
+          isRead: true
+        };
+        this.history.push(chatMsg);
+        
+        setTimeout(() => {
+          if (this.myScrollContainer) {
+            this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
+          }
+        }, 50);
+
+        this.chatService.markAsRead(msg.senderId).subscribe();
+      } else {
+        this.loadPartners();
+        this.hasUnread = true;
+        this.notificationService.updateChatUnreadCount();
       }
     });
 

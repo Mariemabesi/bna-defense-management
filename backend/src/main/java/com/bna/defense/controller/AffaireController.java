@@ -28,7 +28,7 @@ public class AffaireController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String searchTerm,
-            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Affaire.TypeAffaire type,
             @RequestParam(required = false) Affaire.StatutAffaire statut) {
         if (principal == null) return org.springframework.data.domain.Page.empty();
         com.bna.defense.entity.User user = userService.findByUsername(principal.getName());
